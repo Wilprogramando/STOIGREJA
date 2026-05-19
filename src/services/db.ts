@@ -12,37 +12,46 @@ if (supabaseUrl && supabaseKey) {
   supabase = createClient(supabaseUrl, supabaseKey);
   console.log('✅ Supabase conectado');
 } else {
-  console.log('⚠️ Supabase não configurado, usando localStorage');
+  console.log('⚠️ Supabase não configurado');
 }
  
 const DB_PREFIX = 'repertorio_igreja_';
- 
-// ==================== HELPER: Usar Supabase ou LocalStorage ====================
- 
-async function useSupabase(): Promise<boolean> {
-  return !!supabase;
-}
  
 // ==================== HINOS ====================
  
 export async function addHino(hino: Hino): Promise<string> {
   try {
     if (supabase) {
+      const dadosSupabase = {
+        id: hino.id,
+        nome: hino.nome,
+        tom: hino.tom,
+        cantor: hino.cantor,
+        letra: hino.letra || '',
+        categoria: hino.categoria,
+        observacoes: hino.observacoes || '',
+        tipo: hino.tipo || 'comum',
+        numeroHarpa: hino.numeroHarpa || null,
+        criadoEm: hino.criadoEm || new Date().toISOString(),
+        atualizadoEm: hino.atualizadoEm || new Date().toISOString()
+      };
+ 
       const { data, error } = await supabase
         .from('hinos_cadastro')
-        .insert([hino])
-        .select('id');
+        .insert([dadosSupabase]);
       
-      if (error) throw error;
+      if (error) {
+        console.error('❌ Erro Supabase:', error);
+        throw error;
+      }
+ 
       console.log('✅ Hino salvo no Supabase:', hino.nome);
-      return data?.[0]?.id || hino.id;
+      return hino.id;
     } else {
-      // Fallback para localStorage
-      const id = hino.id || crypto.randomUUID();
-      const chave = `${DB_PREFIX}hino_${id}`;
+      const chave = `${DB_PREFIX}hino_${hino.id}`;
       localStorage.setItem(chave, JSON.stringify(hino));
-      console.log('✅ Hino salvo localmente:', hino.nome);
-      return id;
+      console.log('✅ Hino salvo localmente');
+      return hino.id;
     }
   } catch (error) {
     console.error('❌ Erro ao salvar hino:', error);
@@ -59,10 +68,9 @@ export async function getAllHinos(): Promise<Hino[]> {
         .order('nome', { ascending: true });
       
       if (error) throw error;
-      console.log('✅ Hinos carregados do Supabase:', data?.length || 0);
+      console.log('✅ Hinos carregados:', data?.length || 0);
       return data || [];
     } else {
-      // Fallback para localStorage
       const hinos: Hino[] = [];
       for (let i = 0; i < localStorage.length; i++) {
         const chave = localStorage.key(i);
@@ -73,7 +81,6 @@ export async function getAllHinos(): Promise<Hino[]> {
           }
         }
       }
-      console.log('✅ Hinos carregados localmente:', hinos.length);
       return hinos;
     }
   } catch (error) {
@@ -107,17 +114,28 @@ export async function getHino(id: string): Promise<Hino | undefined> {
 export async function updateHino(hino: Hino): Promise<void> {
   try {
     if (supabase) {
+      const dadosSupabase = {
+        nome: hino.nome,
+        tom: hino.tom,
+        cantor: hino.cantor,
+        letra: hino.letra || '',
+        categoria: hino.categoria,
+        observacoes: hino.observacoes || '',
+        tipo: hino.tipo || 'comum',
+        numeroHarpa: hino.numeroHarpa || null,
+        atualizadoEm: new Date().toISOString()
+      };
+ 
       const { error } = await supabase
         .from('hinos_cadastro')
-        .update(hino)
+        .update(dadosSupabase)
         .eq('id', hino.id);
       
       if (error) throw error;
-      console.log('✅ Hino atualizado no Supabase:', hino.nome);
+      console.log('✅ Hino atualizado');
     } else {
       const chave = `${DB_PREFIX}hino_${hino.id}`;
       localStorage.setItem(chave, JSON.stringify(hino));
-      console.log('✅ Hino atualizado localmente');
     }
   } catch (error) {
     console.error('❌ Erro ao atualizar hino:', error);
@@ -134,11 +152,10 @@ export async function deleteHino(id: string): Promise<void> {
         .eq('id', id);
       
       if (error) throw error;
-      console.log('✅ Hino deletado do Supabase');
+      console.log('✅ Hino deletado');
     } else {
       const chave = `${DB_PREFIX}hino_${id}`;
       localStorage.removeItem(chave);
-      console.log('✅ Hino deletado localmente');
     }
   } catch (error) {
     console.error('❌ Erro ao deletar hino:', error);
@@ -172,20 +189,28 @@ export async function getHinosByType(tipo: string): Promise<Hino[]> {
 export async function addRepertorio(repertorio: Repertorio): Promise<string> {
   try {
     if (supabase) {
+      const dadosSupabase = {
+        id: repertorio.id,
+        nome: repertorio.nome,
+        data_culto: repertorio.data,
+        horario_culto: repertorio.horario || '',
+        observacoes: repertorio.observacoes || '',
+        lista_hinos: repertorio.hinos || [],
+        criado_em: repertorio.criadoEm || new Date().toISOString(),
+        atualizado_em: repertorio.atualizadoEm || new Date().toISOString()
+      };
+ 
       const { data, error } = await supabase
         .from('repertorios_cultos')
-        .insert([repertorio])
-        .select('id');
+        .insert([dadosSupabase]);
       
       if (error) throw error;
-      console.log('✅ Repertório salvo no Supabase:', repertorio.nome);
-      return data?.[0]?.id || repertorio.id;
+      console.log('✅ Repertório salvo');
+      return repertorio.id;
     } else {
-      const id = repertorio.id || crypto.randomUUID();
-      const chave = `${DB_PREFIX}repertorio_${id}`;
+      const chave = `${DB_PREFIX}repertorio_${repertorio.id}`;
       localStorage.setItem(chave, JSON.stringify(repertorio));
-      console.log('✅ Repertório salvo localmente');
-      return id;
+      return repertorio.id;
     }
   } catch (error) {
     console.error('❌ Erro ao salvar repertório:', error);
@@ -202,8 +227,17 @@ export async function getAllRepertorios(): Promise<Repertorio[]> {
         .order('data_culto', { ascending: false });
       
       if (error) throw error;
-      console.log('✅ Repertórios carregados do Supabase:', data?.length || 0);
-      return data || [];
+ 
+      return (data || []).map((rep: any) => ({
+        id: rep.id,
+        nome: rep.nome,
+        data: rep.data_culto,
+        horario: rep.horario_culto,
+        observacoes: rep.observacoes,
+        hinos: rep.lista_hinos,
+        criadoEm: rep.criado_em,
+        atualizadoEm: rep.atualizado_em
+      }));
     } else {
       const repertorios: Repertorio[] = [];
       for (let i = 0; i < localStorage.length; i++) {
@@ -215,7 +249,6 @@ export async function getAllRepertorios(): Promise<Repertorio[]> {
           }
         }
       }
-      console.log('✅ Repertórios carregados localmente:', repertorios.length);
       return repertorios;
     }
   } catch (error) {
@@ -227,17 +260,25 @@ export async function getAllRepertorios(): Promise<Repertorio[]> {
 export async function updateRepertorio(repertorio: Repertorio): Promise<void> {
   try {
     if (supabase) {
+      const dadosSupabase = {
+        nome: repertorio.nome,
+        data_culto: repertorio.data,
+        horario_culto: repertorio.horario || '',
+        observacoes: repertorio.observacoes || '',
+        lista_hinos: repertorio.hinos || [],
+        atualizado_em: new Date().toISOString()
+      };
+ 
       const { error } = await supabase
         .from('repertorios_cultos')
-        .update(repertorio)
+        .update(dadosSupabase)
         .eq('id', repertorio.id);
       
       if (error) throw error;
-      console.log('✅ Repertório atualizado no Supabase');
+      console.log('✅ Repertório atualizado');
     } else {
       const chave = `${DB_PREFIX}repertorio_${repertorio.id}`;
       localStorage.setItem(chave, JSON.stringify(repertorio));
-      console.log('✅ Repertório atualizado localmente');
     }
   } catch (error) {
     console.error('❌ Erro ao atualizar repertório:', error);
@@ -254,11 +295,10 @@ export async function deleteRepertorio(id: string): Promise<void> {
         .eq('id', id);
       
       if (error) throw error;
-      console.log('✅ Repertório deletado do Supabase');
+      console.log('✅ Repertório deletado');
     } else {
       const chave = `${DB_PREFIX}repertorio_${id}`;
       localStorage.removeItem(chave);
-      console.log('✅ Repertório deletado localmente');
     }
   } catch (error) {
     console.error('❌ Erro ao deletar repertório:', error);
@@ -278,7 +318,7 @@ export async function getConfiguracoes(): Promise<Configuracoes | null> {
         .maybeSingle();
       
       if (error && error.code !== 'PGRST116') throw error;
-      console.log('✅ Configurações carregadas do Supabase');
+      console.log('✅ Configurações carregadas');
       return data || null;
     } else {
       const chave = `${DB_PREFIX}config`;
@@ -300,12 +340,11 @@ export async function saveConfiguracoes(config: Configuracoes): Promise<void> {
         .upsert([config], { onConflict: 'id' });
       
       if (error) throw error;
-      console.log('✅ Configurações salvas no Supabase');
+      console.log('✅ Configurações salvas');
     } else {
       const chave = `${DB_PREFIX}config`;
       config.id = 'config';
       localStorage.setItem(chave, JSON.stringify(config));
-      console.log('✅ Configurações salvas localmente');
     }
   } catch (error) {
     console.error('❌ Erro ao salvar configurações:', error);
@@ -324,7 +363,7 @@ export async function getAllHarpa(): Promise<HarpaItem[]> {
         .order('numero_harpa', { ascending: true });
       
       if (error) throw error;
-      console.log('✅ Harpa carregada do Supabase:', data?.length || 0);
+      console.log('✅ Harpa carregada:', data?.length || 0);
       return data?.map((item: any) => ({
         numero: item.numero_harpa,
         nome: item.nome_hino
@@ -363,13 +402,10 @@ export async function addHarpaItems(items: HarpaItem[]): Promise<void> {
         .insert(itemsFormatted);
       
       if (error) throw error;
-      console.log('✅ Harpa salva no Supabase:', items.length);
+      console.log('✅ Harpa salva');
     } else {
       const chave = `${DB_PREFIX}harpa_list`;
-      const existentes = await getAllHarpa();
-      const todosItems = [...existentes, ...items];
-      localStorage.setItem(chave, JSON.stringify(todosItems));
-      console.log('✅ Harpa salva localmente');
+      localStorage.setItem(chave, JSON.stringify(items));
     }
   } catch (error) {
     console.error('❌ Erro ao salvar Harpa:', error);
@@ -383,11 +419,7 @@ export async function getHarpaItem(numero: number): Promise<HarpaItem | undefine
  
 export async function initializeHarpaBase(): Promise<void> {
   const harpaData = await getAllHarpa();
-  if (harpaData.length === 0) {
-    console.log('📚 Harpa vazia');
-  } else {
-    console.log('✅ Harpa inicializada com', harpaData.length, 'hinos');
-  }
+  console.log('✅ Harpa inicializada com', harpaData.length, 'hinos');
 }
  
 // ==================== IMPORT/EXPORT ====================
@@ -448,7 +480,7 @@ export async function clearAllData(): Promise<void> {
     if (supabase) {
       await supabase.from('hinos_cadastro').delete().neq('id', '');
       await supabase.from('repertorios_cultos').delete().neq('id', '');
-      console.log('✅ Dados deletados do Supabase');
+      console.log('✅ Dados deletados');
     } else {
       const chaves: string[] = [];
       for (let i = 0; i < localStorage.length; i++) {
@@ -458,7 +490,6 @@ export async function clearAllData(): Promise<void> {
         }
       }
       chaves.forEach(chave => localStorage.removeItem(chave));
-      console.log('✅ Dados deletados localmente');
     }
   } catch (error) {
     console.error('❌ Erro ao deletar dados:', error);
