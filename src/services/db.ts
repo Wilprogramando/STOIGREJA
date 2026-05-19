@@ -22,13 +22,15 @@ const DB_PREFIX = 'repertorio_igreja_';
 export async function addHino(hino: Hino): Promise<string> {
   try {
     if (supabase) {
+      const id = hino.id || `hino_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+      
       const dadosSupabase = {
-        id: hino.id,
-        nome: hino.nome,
-        tom: hino.tom,
-        cantor: hino.cantor,
+        id: id,
+        nome: hino.nome || 'Sem nome',
+        tom: hino.tom || '',
+        cantor: hino.cantor || '',
         letra: hino.letra || '',
-        categoria: hino.categoria,
+        categoria: hino.categoria || 'Louvor',
         observacoes: hino.observacoes || '',
         tipo: hino.tipo || 'comum',
         numeroHarpa: hino.numeroHarpa || null,
@@ -36,7 +38,9 @@ export async function addHino(hino: Hino): Promise<string> {
         atualizadoEm: hino.atualizadoEm || new Date().toISOString()
       };
  
-      const { data, error } = await supabase
+      console.log('📝 Salvando hino:', dadosSupabase);
+ 
+      const { error } = await supabase
         .from('hinos_cadastro')
         .insert([dadosSupabase]);
       
@@ -45,13 +49,14 @@ export async function addHino(hino: Hino): Promise<string> {
         throw error;
       }
  
-      console.log('✅ Hino salvo no Supabase:', hino.nome);
-      return hino.id;
+      console.log('✅ Hino salvo:', hino.nome);
+      return id;
     } else {
-      const chave = `${DB_PREFIX}hino_${hino.id}`;
+      const id = hino.id || `hino_${Date.now()}`;
+      const chave = `${DB_PREFIX}hino_${id}`;
       localStorage.setItem(chave, JSON.stringify(hino));
       console.log('✅ Hino salvo localmente');
-      return hino.id;
+      return id;
     }
   } catch (error) {
     console.error('❌ Erro ao salvar hino:', error);
@@ -115,11 +120,11 @@ export async function updateHino(hino: Hino): Promise<void> {
   try {
     if (supabase) {
       const dadosSupabase = {
-        nome: hino.nome,
-        tom: hino.tom,
-        cantor: hino.cantor,
+        nome: hino.nome || 'Sem nome',
+        tom: hino.tom || '',
+        cantor: hino.cantor || '',
         letra: hino.letra || '',
-        categoria: hino.categoria,
+        categoria: hino.categoria || 'Louvor',
         observacoes: hino.observacoes || '',
         tipo: hino.tipo || 'comum',
         numeroHarpa: hino.numeroHarpa || null,
@@ -192,15 +197,15 @@ export async function addRepertorio(repertorio: Repertorio): Promise<string> {
       const dadosSupabase = {
         id: repertorio.id,
         nome: repertorio.nome,
-        data_culto: repertorio.data,
-        horario_culto: repertorio.horario || '',
+        dataCulto: repertorio.data,
+        horarioCulto: repertorio.horario || '',
         observacoes: repertorio.observacoes || '',
-        lista_hinos: repertorio.hinos || [],
-        criado_em: repertorio.criadoEm || new Date().toISOString(),
-        atualizado_em: repertorio.atualizadoEm || new Date().toISOString()
+        listaHinos: repertorio.hinos || [],
+        criadoEm: repertorio.criadoEm || new Date().toISOString(),
+        atualizadoEm: repertorio.atualizadoEm || new Date().toISOString()
       };
  
-      const { data, error } = await supabase
+      const { error } = await supabase
         .from('repertorios_cultos')
         .insert([dadosSupabase]);
       
@@ -224,19 +229,19 @@ export async function getAllRepertorios(): Promise<Repertorio[]> {
       const { data, error } = await supabase
         .from('repertorios_cultos')
         .select('*')
-        .order('data_culto', { ascending: false });
+        .order('dataCulto', { ascending: false });
       
       if (error) throw error;
  
       return (data || []).map((rep: any) => ({
         id: rep.id,
         nome: rep.nome,
-        data: rep.data_culto,
-        horario: rep.horario_culto,
+        data: rep.dataCulto,
+        horario: rep.horarioCulto,
         observacoes: rep.observacoes,
-        hinos: rep.lista_hinos,
-        criadoEm: rep.criado_em,
-        atualizadoEm: rep.atualizado_em
+        hinos: rep.listaHinos,
+        criadoEm: rep.criadoEm,
+        atualizadoEm: rep.atualizadoEm
       }));
     } else {
       const repertorios: Repertorio[] = [];
@@ -262,11 +267,11 @@ export async function updateRepertorio(repertorio: Repertorio): Promise<void> {
     if (supabase) {
       const dadosSupabase = {
         nome: repertorio.nome,
-        data_culto: repertorio.data,
-        horario_culto: repertorio.horario || '',
+        dataCulto: repertorio.data,
+        horarioCulto: repertorio.horario || '',
         observacoes: repertorio.observacoes || '',
-        lista_hinos: repertorio.hinos || [],
-        atualizado_em: new Date().toISOString()
+        listaHinos: repertorio.hinos || [],
+        atualizadoEm: new Date().toISOString()
       };
  
       const { error } = await supabase
@@ -360,13 +365,13 @@ export async function getAllHarpa(): Promise<HarpaItem[]> {
       const { data, error } = await supabase
         .from('harpa_cristaa')
         .select('*')
-        .order('numero_harpa', { ascending: true });
+        .order('numeroHarpa', { ascending: true });
       
       if (error) throw error;
       console.log('✅ Harpa carregada:', data?.length || 0);
       return data?.map((item: any) => ({
-        numero: item.numero_harpa,
-        nome: item.nome_hino
+        numero: item.numeroHarpa,
+        nome: item.nomeHino
       })) || [];
     } else {
       const chave = `${DB_PREFIX}harpa_list`;
@@ -393,8 +398,8 @@ export async function addHarpaItems(items: HarpaItem[]): Promise<void> {
   try {
     if (supabase) {
       const itemsFormatted = items.map(item => ({
-        numero_harpa: item.numero,
-        nome_hino: item.nome
+        numeroHarpa: item.numero,
+        nomeHino: item.nome
       }));
       
       const { error } = await supabase
