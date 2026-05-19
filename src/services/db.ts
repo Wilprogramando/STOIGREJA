@@ -1,24 +1,24 @@
 import { createClient } from '@supabase/supabase-js';
 import { Hino, Repertorio, Configuracoes, HarpaItem } from '../types';
- 
+
 // ==================== CONFIGURAÇÃO SUPABASE ====================
- 
+
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || '';
 const supabaseKey = import.meta.env.VITE_SUPABASE_KEY || '';
- 
+
 let supabase: any = null;
- 
+
 if (supabaseUrl && supabaseKey) {
   supabase = createClient(supabaseUrl, supabaseKey);
   console.log('✅ Supabase conectado');
 } else {
   console.log('⚠️ Supabase não configurado');
 }
- 
+
 const DB_PREFIX = 'repertorio_igreja_';
- 
+
 // ==================== HINOS ====================
- 
+
 export async function addHino(hino: Hino): Promise<string> {
   try {
     if (supabase) {
@@ -37,7 +37,7 @@ export async function addHino(hino: Hino): Promise<string> {
         criado_em: hino.criadoEm || new Date().toISOString(),
         atualizado_em: hino.atualizadoEm || new Date().toISOString()
       };
- 
+
       const { error } = await supabase
         .from('hinos_cadastro')
         .insert([dadosSupabase]);
@@ -46,7 +46,7 @@ export async function addHino(hino: Hino): Promise<string> {
         console.error('❌ Erro Supabase:', error);
         throw error;
       }
- 
+
       console.log('✅ Hino salvo:', hino.nome);
       return id;
     } else {
@@ -61,7 +61,7 @@ export async function addHino(hino: Hino): Promise<string> {
     throw error;
   }
 }
- 
+
 export async function getAllHinos(): Promise<Hino[]> {
   try {
     if (supabase) {
@@ -103,7 +103,7 @@ export async function getAllHinos(): Promise<Hino[]> {
     return [];
   }
 }
- 
+
 export async function getHino(id: string): Promise<Hino | undefined> {
   try {
     if (supabase) {
@@ -139,7 +139,7 @@ export async function getHino(id: string): Promise<Hino | undefined> {
     return undefined;
   }
 }
- 
+
 export async function updateHino(hino: Hino): Promise<void> {
   try {
     if (supabase) {
@@ -154,7 +154,7 @@ export async function updateHino(hino: Hino): Promise<void> {
         numero_harpa: hino.numeroHarpa || null,
         atualizado_em: new Date().toISOString()
       };
- 
+
       const { error } = await supabase
         .from('hinos_cadastro')
         .update(dadosSupabase)
@@ -171,7 +171,7 @@ export async function updateHino(hino: Hino): Promise<void> {
     throw error;
   }
 }
- 
+
 export async function deleteHino(id: string): Promise<void> {
   try {
     if (supabase) {
@@ -191,7 +191,7 @@ export async function deleteHino(id: string): Promise<void> {
     throw error;
   }
 }
- 
+
 export async function getHinosByType(tipo: string): Promise<Hino[]> {
   try {
     if (supabase) {
@@ -224,9 +224,9 @@ export async function getHinosByType(tipo: string): Promise<Hino[]> {
     return [];
   }
 }
- 
+
 // ==================== REPERTÓRIOS ====================
- 
+
 export async function addRepertorio(repertorio: Repertorio): Promise<string> {
   try {
     if (supabase) {
@@ -240,7 +240,7 @@ export async function addRepertorio(repertorio: Repertorio): Promise<string> {
         criado_em: repertorio.criadoEm || new Date().toISOString(),
         atualizado_em: repertorio.atualizadoEm || new Date().toISOString()
       };
- 
+
       const { error } = await supabase
         .from('repertorios_cultos')
         .insert([dadosSupabase]);
@@ -258,7 +258,7 @@ export async function addRepertorio(repertorio: Repertorio): Promise<string> {
     throw error;
   }
 }
- 
+
 export async function getAllRepertorios(): Promise<Repertorio[]> {
   try {
     if (supabase) {
@@ -268,7 +268,7 @@ export async function getAllRepertorios(): Promise<Repertorio[]> {
         .order('data_culto', { ascending: false });
       
       if (error) throw error;
- 
+
       return (data || []).map((rep: any) => ({
         id: rep.id,
         nome: rep.nome,
@@ -297,7 +297,7 @@ export async function getAllRepertorios(): Promise<Repertorio[]> {
     return [];
   }
 }
- 
+
 export async function updateRepertorio(repertorio: Repertorio): Promise<void> {
   try {
     if (supabase) {
@@ -309,7 +309,7 @@ export async function updateRepertorio(repertorio: Repertorio): Promise<void> {
         lista_hinos: repertorio.hinos || [],
         atualizado_em: new Date().toISOString()
       };
- 
+
       const { error } = await supabase
         .from('repertorios_cultos')
         .update(dadosSupabase)
@@ -326,7 +326,7 @@ export async function updateRepertorio(repertorio: Repertorio): Promise<void> {
     throw error;
   }
 }
- 
+
 export async function deleteRepertorio(id: string): Promise<void> {
   try {
     if (supabase) {
@@ -346,9 +346,9 @@ export async function deleteRepertorio(id: string): Promise<void> {
     throw error;
   }
 }
- 
+
 // ==================== CONFIGURAÇÕES ====================
- 
+
 export async function getConfiguracoes(): Promise<Configuracoes | null> {
   try {
     if (supabase) {
@@ -381,7 +381,7 @@ export async function getConfiguracoes(): Promise<Configuracoes | null> {
     return null;
   }
 }
- 
+
 export async function saveConfiguracoes(config: Configuracoes): Promise<void> {
   try {
     if (supabase) {
@@ -395,7 +395,7 @@ export async function saveConfiguracoes(config: Configuracoes): Promise<void> {
         logo_sistema: config.logoSistema,
         subtitulo_sistema: config.subtitulo
       };
- 
+
       const { error } = await supabase
         .from('configuracoes_sistema')
         .upsert([dadosSupabase], { onConflict: 'id' });
@@ -412,9 +412,9 @@ export async function saveConfiguracoes(config: Configuracoes): Promise<void> {
     throw error;
   }
 }
- 
+
 // ==================== HARPA ====================
- 
+
 export async function getAllHarpa(): Promise<HarpaItem[]> {
   try {
     if (supabase) {
@@ -439,7 +439,7 @@ export async function getAllHarpa(): Promise<HarpaItem[]> {
     return [];
   }
 }
- 
+
 export async function getHarpaByNumber(numero: number): Promise<HarpaItem | undefined> {
   try {
     const harpa = await getAllHarpa();
@@ -449,7 +449,7 @@ export async function getHarpaByNumber(numero: number): Promise<HarpaItem | unde
     return undefined;
   }
 }
- 
+
 export async function addHarpaItems(items: HarpaItem[]): Promise<void> {
   try {
     if (supabase) {
@@ -473,35 +473,35 @@ export async function addHarpaItems(items: HarpaItem[]): Promise<void> {
     throw error;
   }
 }
- 
+
 export async function getHarpaItem(numero: number): Promise<HarpaItem | undefined> {
   return await getHarpaByNumber(numero);
 }
- 
+
 export async function initializeHarpaBase(): Promise<void> {
   const harpaData = await getAllHarpa();
   console.log('✅ Harpa inicializada com', harpaData.length, 'hinos');
 }
- 
+
 // ==================== IMPORT/EXPORT ====================
- 
+
 export async function importHinosFromCSV(csvText: string): Promise<{ success: number; errors: string[] }> {
   const lines = csvText.trim().split('\n');
   let success = 0;
   const errorList: string[] = [];
   const items: Hino[] = [];
- 
+
   for (let i = 1; i < lines.length; i++) {
     const line = lines[i].trim();
     if (!line) continue;
- 
+
     const parts = line.split('\t').length > 1 ? line.split('\t') : line.split(',');
     
     if (parts.length < 2) {
       errorList.push(`Linha ${i}: Formato inválido`);
       continue;
     }
- 
+
     try {
       const hino: Hino = {
         id: `hino_${Date.now()}_${i}`,
@@ -514,7 +514,7 @@ export async function importHinosFromCSV(csvText: string): Promise<{ success: nu
         criadoEm: new Date().toISOString(),
         atualizadoEm: new Date().toISOString()
       };
- 
+
       if (hino.nome) {
         items.push(hino);
         success++;
@@ -523,19 +523,19 @@ export async function importHinosFromCSV(csvText: string): Promise<{ success: nu
       errorList.push(`Linha ${i}: Erro ao processar`);
     }
   }
- 
+
   if (items.length > 0) {
     for (const item of items) {
       await addHino(item);
     }
   }
- 
+
   console.log(`✅ Importado: ${success} | ❌ Erros: ${errorList.length}`);
   return { success, errors: errorList };
 }
- 
+
 // ==================== OUTROS ====================
- 
+
 export async function clearAllData(): Promise<void> {
   try {
     if (supabase) {
@@ -556,15 +556,15 @@ export async function clearAllData(): Promise<void> {
     console.error('❌ Erro ao deletar dados:', error);
   }
 }
- 
+
 export async function exportData(): Promise<void> {
   console.log('📦 Exportando dados...');
 }
- 
+
 export async function importData(data: any): Promise<void> {
   console.log('📦 Importando dados...');
 }
- 
+
 export default {
   addHino,
   getAllHinos,
