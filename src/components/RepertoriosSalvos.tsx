@@ -16,6 +16,7 @@ export const RepertoriosSalvos: React.FC<RepertoriosSalvosProps> = ({ configurac
   const [loading, setLoading] = useState(true);
   const [modalAberto, setModalAberto] = useState<Repertorio | null>(null);
   const [hinoSelecionado, setHinoSelecionado] = useState<any>(null);
+  const [mostrarPassados, setMostrarPassados] = useState(false);
 
   useEffect(() => {
     loadRepertorios();
@@ -76,6 +77,29 @@ export const RepertoriosSalvos: React.FC<RepertoriosSalvosProps> = ({ configurac
     }
   };
 
+  // ✅ FUNÇÃO: Separar repertórios por data
+  const separarPorData = () => {
+    const hoje = new Date();
+    hoje.setHours(0, 0, 0, 0);
+
+    const futuros = repertorios.filter(rep => {
+      const dataRep = new Date(rep.data);
+      dataRep.setHours(0, 0, 0, 0);
+      return dataRep >= hoje;
+    });
+
+    const passados = repertorios.filter(rep => {
+      const dataRep = new Date(rep.data);
+      dataRep.setHours(0, 0, 0, 0);
+      return dataRep < hoje;
+    });
+
+    return { futuros, passados };
+  };
+
+  const { futuros, passados } = separarPorData();
+  const repertoriosExibidos = mostrarPassados ? passados : futuros;
+
   const handleDeletar = async (id: string) => {
     if (confirm('Tem certeza que deseja deletar este repertório?')) {
       const senha = prompt('Digite a senha para confirmar a exclusão do repertório:');
@@ -99,20 +123,38 @@ export const RepertoriosSalvos: React.FC<RepertoriosSalvosProps> = ({ configurac
 
   const handleDuplicar = async (repertorio: Repertorio) => {
     try {
+      console.log('🔄 INICIANDO DUPLICAÇÃO...');
+      console.log('Repertório original:', repertorio);
+      console.log('Hinos originais:', repertorio.hinos);
+
       // Extrair apenas IDs dos hinos (compatível com antigos e novos)
       const hinosIds = Array.isArray(repertorio.hinos)
         ? repertorio.hinos
-            .filter(h => h !== null && h !== undefined) // ✅ Remove nulls ANTES
+            .filter(h => {
+              console.log('Filtrando:', h, 'tipo:', typeof h);
+              return h !== null && h !== undefined;
+            })
             .map(h => {
-              if (typeof h === 'string') return h;
-              if (typeof h === 'object' && h.hinoId) return h.hinoId;
-              if (typeof h === 'object' && h.id) return h.id;
+              console.log('Mapeando:', h);
+              if (typeof h === 'string') {
+                console.log('  → É string (ID):', h);
+                return h;
+              }
+              if (typeof h === 'object' && h.hinoId) {
+                console.log('  → Tem hinoId:', h.hinoId);
+                return h.hinoId;
+              }
+              if (typeof h === 'object' && h.id) {
+                console.log('  → Tem id:', h.id);
+                return h.id;
+              }
+              console.log('  → Retornando null');
               return null;
             })
             .filter(Boolean)
         : [];
 
-      console.log('Duplicando com hinos IDs:', hinosIds);
+      console.log('✅ IDs extraídos:', hinosIds);
 
       const novoRepertorio: Repertorio = {
         ...repertorio,
@@ -122,12 +164,19 @@ export const RepertoriosSalvos: React.FC<RepertoriosSalvosProps> = ({ configurac
         criadoEm: new Date().toISOString(),
         atualizadoEm: new Date().toISOString()
       };
+
+      console.log('📝 Novo repertório a salvar:', novoRepertorio);
+      
       await addRepertorio(novoRepertorio);
+      console.log('✅ Salvo com sucesso!');
+      
       alert('Repertório duplicado com sucesso!');
-      loadRepertorios();
+      await loadRepertorios();
+      console.log('✅ Repertórios recarregados');
     } catch (error) {
-      console.error('Erro ao duplicar:', error);
-      alert('Erro ao duplicar repertório');
+      console.error('❌ ERRO COMPLETO:', error);
+      console.error('Stack:', error instanceof Error ? error.stack : '');
+      alert(`Erro ao duplicar repertório: ${error instanceof Error ? error.message : String(error)}`);
     }
   };
 
@@ -165,7 +214,7 @@ export const RepertoriosSalvos: React.FC<RepertoriosSalvosProps> = ({ configurac
     }
   };
 
-  const repertoriosFiltrados = repertorios.filter(r =>
+  const repertoriosFiltrados = repertoriosExibidos.filter(r =>
     r.nome.toLowerCase().includes(filtro.toLowerCase()) ||
     new Date(r.data).toLocaleDateString('pt-BR').includes(filtro)
   );
@@ -181,6 +230,41 @@ export const RepertoriosSalvos: React.FC<RepertoriosSalvosProps> = ({ configurac
   return (
     <div className="max-w-6xl mx-auto">
       <h2 className="text-3xl font-bold text-gray-900 mb-8">Repertórios Salvos</h2>
+
+      {/* ✅ BOTÕES DE FILTRO */}
+      <div className="flex gap-3 mb-6">
+        <button
+          onClick={() => setMostrarPassados(false)}
+          className={`px-6 py-3 rounded-lg font-medium transition flex-1 ${
+            !mostrarPassados
+              ? 'bg-indigo-600 text-white shadow-md'
+              : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+          }`}
+        >
+          📅 Próximos Repertórios ({futuros.length})
+        </button>
+        <button
+          onClick={() => setMostrarPassados(true)}
+          className={`px-6 py-3 rounded-lg font-medium transition flex-1 ${
+            mostrarPassados
+              ? 'bg-purple-600 text-white shadow-md'
+              : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+          }`}
+        >
+          📂 Repertórios Passados ({passados.length})
+        </button>
+      </div>
+
+      {/* BARRA DE PESQUISA */}
+      <div className="mb-6">
+        <input
+          type="text"
+          value={filtro}
+          onChange={(e) => setFiltro(e.target.value)}
+          placeholder="Pesquisar por nome ou data..."
+          className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:border-indigo-600"
+        />
+      </div>
 
       {/* Filtro */}
       <div className="bg-white p-4 rounded-lg shadow-md mb-6">
@@ -198,7 +282,12 @@ export const RepertoriosSalvos: React.FC<RepertoriosSalvosProps> = ({ configurac
         {repertoriosFiltrados.length === 0 ? (
           <div className="text-center py-12 bg-white rounded-lg">
             <Music className="mx-auto text-gray-400 mb-4" size={48} />
-            <p className="text-gray-500 text-lg">Nenhum repertório encontrado</p>
+            <p className="text-gray-500 text-lg">
+              {mostrarPassados ? 'Nenhum repertório passado' : 'Nenhum repertório próximo'}
+            </p>
+            {futuros.length === 0 && passados.length === 0 && (
+              <p className="text-gray-400 text-sm mt-2">Crie um novo repertório para começar</p>
+            )}
           </div>
         ) : (
           repertoriosFiltrados.map(repertorio => (
