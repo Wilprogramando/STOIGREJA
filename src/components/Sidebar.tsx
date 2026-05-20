@@ -1,5 +1,5 @@
 import React from 'react';
-import { Home, Plus, BookOpen, Music, List, Settings } from 'lucide-react';
+import { Home, Plus, BookOpen, Music, List, Settings, BarChart3 } from 'lucide-react';
 
 interface SidebarProps {
   currentPage: string;
@@ -15,6 +15,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ currentPage, onPageChange, isO
     { id: 'harpa', label: 'Hinos da Harpa', icon: BookOpen },
     { id: 'montar-repertorio', label: 'Montar Repertório', icon: Music },
     { id: 'repertorios', label: 'Repertórios Salvos', icon: List },
+    { id: 'relatorios', label: 'Relatórios', icon: BarChart3 },
     { id: 'configuracoes', label: 'Configurações', icon: Settings },
   ];
 
