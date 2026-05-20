@@ -275,48 +275,47 @@ export const CadastrarHino: React.FC<CadastrarHinoProps> = ({ configuracoes }) =
         ) : (
           hinosFiltrados.map(hino => (
             <div key={hino.id} className="bg-white p-3 rounded-lg shadow-sm border-l-4 border-indigo-600">
-              {/* Título */}
-              <h3 className="text-sm font-bold text-gray-900 mb-2">{hino.nome}</h3>
+              {/* Título - MAIOR */}
+              <h3 className="text-base font-bold text-gray-900 mb-2">{hino.nome}</h3>
               
-              {/* Informações em 2 linhas */}
-              <div className="space-y-1 text-xs text-gray-600 mb-3">
-                <p>🎵 <span className="font-medium">{hino.tom}</span> • 👤 <span className="font-medium">{hino.cantor}</span></p>
-                <p>📂 <span className="font-medium">{hino.categoria}</span></p>
+              {/* Informações em 1 linha: Tom • Cantor • Categoria */}
+              <div className="text-xs text-gray-600 mb-3">
+                <p>🎵 <span className="font-medium">{hino.tom}</span> • 👤 <span className="font-medium">{hino.cantor}</span> • 📂 <span className="font-medium">{hino.categoria}</span></p>
               </div>
               
-              {/* Botões em grid compacta */}
+              {/* Botões em grid compacta - ÍCONES MENORES */}
               <div className="grid grid-cols-5 gap-1">
                 <button
                   onClick={() => setModalLetra(hino)}
-                  className="p-2 bg-blue-100 text-blue-600 rounded hover:bg-blue-200 transition flex justify-center text-lg"
+                  className="p-1.5 bg-blue-100 text-blue-600 rounded hover:bg-blue-200 transition flex justify-center text-sm"
                   title="Ver letra"
                 >
                   👁️
                 </button>
                 <button
                   onClick={() => handleEditar(hino)}
-                  className="p-2 bg-yellow-100 text-yellow-600 rounded hover:bg-yellow-200 transition flex justify-center text-lg"
+                  className="p-1.5 bg-yellow-100 text-yellow-600 rounded hover:bg-yellow-200 transition flex justify-center text-sm"
                   title="Editar"
                 >
                   ✏️
                 </button>
                 <button
                   onClick={() => generateHinoPdf(hino, configuracoes)}
-                  className="p-2 bg-green-100 text-green-600 rounded hover:bg-green-200 transition flex justify-center text-lg"
+                  className="p-1.5 bg-green-100 text-green-600 rounded hover:bg-green-200 transition flex justify-center text-sm"
                   title="Baixar PDF"
                 >
                   📥
                 </button>
                 <button
                   onClick={() => shareViaWhatsApp(`Confira o hino: ${hino.nome} (Tom: ${hino.tom}, Cantor: ${hino.cantor})`)}
-                  className="p-2 bg-cyan-100 text-cyan-600 rounded hover:bg-cyan-200 transition flex justify-center text-lg"
+                  className="p-1.5 bg-cyan-100 text-cyan-600 rounded hover:bg-cyan-200 transition flex justify-center text-sm"
                   title="Compartilhar"
                 >
                   📤
                 </button>
                 <button
                   onClick={() => setDeletePasswordModal(hino)}
-                  className="p-2 bg-red-100 text-red-600 rounded hover:bg-red-200 transition flex justify-center text-lg"
+                  className="p-1.5 bg-red-100 text-red-600 rounded hover:bg-red-200 transition flex justify-center text-sm"
                   title="Deletar"
                 >
                   🗑️
