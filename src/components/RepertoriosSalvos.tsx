@@ -374,14 +374,14 @@ export const RepertoriosSalvos: React.FC<RepertoriosSalvosProps> = ({ configurac
       )}
 
       {/* Modal de Visualização da Letra do Hino */}
-      {hinoSelecionado && (
+      {hinoSelecionado && hinoSelecionado?.nome && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-lg shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-auto">
             <div className="sticky top-0 bg-gradient-to-r from-blue-600 to-indigo-600 text-white p-6 flex items-center justify-between">
               <div>
-                <h2 className="text-2xl font-bold">{hinoSelecionado.nome}</h2>
+                <h2 className="text-2xl font-bold">{hinoSelecionado?.nome || 'Hino desconhecido'}</h2>
                 <p className="text-blue-100 mt-1">
-                  Tom: {hinoSelecionado.tom} | Cantor: {hinoSelecionado.cantor}
+                  Tom: {hinoSelecionado?.tom || '?'} | Cantor: {hinoSelecionado?.cantor || '?'}
                 </p>
               </div>
               <button
@@ -395,11 +395,11 @@ export const RepertoriosSalvos: React.FC<RepertoriosSalvosProps> = ({ configurac
             <div className="p-6">
               <div className="bg-gray-50 p-6 rounded-lg">
                 <pre className="whitespace-pre-wrap font-sans text-gray-800 leading-relaxed text-lg">
-                  {hinoSelecionado.letra}
+                  {hinoSelecionado?.letra || 'Letra não disponível'}
                 </pre>
               </div>
 
-              {hinoSelecionado.observacoes && (
+              {hinoSelecionado?.observacoes && (
                 <div className="mt-6 p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
                   <h3 className="font-bold text-yellow-900 mb-2">Observações</h3>
                   <pre className="whitespace-pre-wrap font-sans text-yellow-800">
