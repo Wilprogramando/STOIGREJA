@@ -189,8 +189,13 @@ export async function getHinosByType(tipo: string): Promise<Hino[]> {
 export async function addRepertorio(repertorio: Repertorio): Promise<string> {
   try {
     if (supabase) {
-      // Extrair apenas os IDs dos hinos
-      const idsHinos = repertorio.hinos?.map(h => h.hinoId || h.id) || [];
+      // ✅ Extrair apenas IDs - compatível com strings e objetos
+      const idsHinos = repertorio.hinos?.map((h: any) => {
+        if (typeof h === 'string') return h;           // Já é ID
+        if (typeof h === 'object' && h.hinoId) return h.hinoId;
+        if (typeof h === 'object' && h.id) return h.id;
+        return null;
+      }).filter(Boolean) || [];
       
       const dadosSupabase = {
         id: repertorio.id,
@@ -203,7 +208,7 @@ export async function addRepertorio(repertorio: Repertorio): Promise<string> {
         atualizado_em: repertorio.atualizadoEm || new Date().toISOString()
       };
 
-      console.log('📝 Salvando no Supabase:', dadosSupabase);
+      console.log('📝 Salvando no Supabase com IDs:', idsHinos);
 
       const { data, error } = await supabase
         .from('repertorios_cultos')
@@ -265,8 +270,13 @@ export async function getAllRepertorios(): Promise<Repertorio[]> {
 export async function updateRepertorio(repertorio: Repertorio): Promise<void> {
   try {
     if (supabase) {
-      // Extrair apenas os IDs dos hinos
-      const idsHinos = repertorio.hinos?.map(h => h.hinoId || h.id) || [];
+      // ✅ Extrair apenas IDs - compatível com strings e objetos
+      const idsHinos = repertorio.hinos?.map((h: any) => {
+        if (typeof h === 'string') return h;
+        if (typeof h === 'object' && h.hinoId) return h.hinoId;
+        if (typeof h === 'object' && h.id) return h.id;
+        return null;
+      }).filter(Boolean) || [];
       
       const dadosSupabase = {
         nome: repertorio.nome,
@@ -277,7 +287,7 @@ export async function updateRepertorio(repertorio: Repertorio): Promise<void> {
         atualizado_em: new Date().toISOString()
       };
 
-      console.log('📝 Atualizando no Supabase:', dadosSupabase);
+      console.log('📝 Atualizando no Supabase com IDs:', idsHinos);
 
       const { error } = await supabase
         .from('repertorios_cultos')
