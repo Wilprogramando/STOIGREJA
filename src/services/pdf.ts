@@ -14,7 +14,7 @@ export async function generateHinoPdf(
       
       <div style="border-bottom: 2px solid #E65100; margin-bottom: 25px;"></div>
       
-      <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 15px;">
+      <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 15px; page-break-inside: avoid;">
         <h2 style="font-size: 20px; color: #E65100; margin: 0; font-weight: bold; flex: 1;">${hino.nome}</h2>
         ${logo ? `<img src="${logo}" style="max-height: 60px; margin-left: 20px; flex-shrink: 0;">` : ''}
       </div>
@@ -26,18 +26,18 @@ export async function generateHinoPdf(
         ${hino.categoria ? `<p style="font-size: 12px; margin: 6px 0;"><strong style="color: #E65100;">Categoria:</strong> ${hino.categoria}</p>` : ''}
       </div>
       
-      <div style="white-space: pre-wrap; line-height: 1.8; margin-bottom: 25px; font-size: 20px; background-color: white; padding: 15px; border-radius: 3px; page-break-inside: avoid; page-break-before: auto;">
+      <div style="white-space: pre-wrap; line-height: 1.8; margin-bottom: 25px; font-size: 14px; background-color: white; padding: 15px; border-radius: 3px; word-wrap: break-word; overflow-wrap: break-word; page-break-after: auto;">
 ${hino.letra}
       </div>
       
       ${hino.observacoes ? `
-        <div style="background-color: #fff8e1; padding: 12px 15px; border-left: 3px solid #FBC02D; margin-bottom: 20px; border-radius: 3px;">
+        <div style="background-color: #fff8e1; padding: 12px 15px; border-left: 3px solid #FBC02D; margin-bottom: 20px; border-radius: 3px; page-break-inside: avoid;">
           <p style="font-size: 12px; margin: 0; color: #666;"><strong style="color: #E65100;">Observações:</strong></p>
-          <div style="white-space: pre-wrap; font-size: 12px; margin-top: 8px; color: #555;">${hino.observacoes}</div>
+          <div style="white-space: pre-wrap; font-size: 12px; margin-top: 8px; color: #555; word-wrap: break-word; overflow-wrap: break-word;">${hino.observacoes}</div>
         </div>
       ` : ''}
       
-      <div style="border-top: 1px solid #ddd; margin-top: 30px; padding-top: 15px; text-align: center;">
+      <div style="border-top: 1px solid #ddd; margin-top: 30px; padding-top: 15px; text-align: center; page-break-inside: avoid;">
         <p style="font-size: 10px; color: #999; margin: 5px 0; line-height: 1.5;">
           ${configuracoes?.rodapePdf ? configuracoes.rodapePdf + '<br>' : ''}
           Gerado em ${new Date().toLocaleDateString('pt-BR')} às ${new Date().toLocaleTimeString('pt-BR')}
@@ -50,10 +50,10 @@ ${hino.letra}
   element.innerHTML = html;
 
   const opt = {
-    margin: [20, 15, 20, 15],
+    margin: [15, 15, 15, 15],
     filename: `${hino.nome.replace(/\s+/g, '_')}.pdf`,
     image: { type: 'jpeg', quality: 0.98 },
-    html2canvas: { scale: 2 },
+    html2canvas: { scale: 2, useCORS: true },
     jsPDF: { orientation: 'portrait', unit: 'mm', format: 'a4' }
   };
 
@@ -70,16 +70,16 @@ export async function generateRepertorioPdf(
   
   let html = `
     <div style="font-family: 'Arial', sans-serif; padding: 30px; max-width: 950px; color: #333;">
-      <div style="text-align: center; margin-bottom: 25px;">
+      <div style="text-align: center; margin-bottom: 25px; page-break-inside: avoid;">
         ${logoHtml}
         ${configuracoes?.nomeIgreja ? `<h1 style="font-size: 16px; color: #E65100; margin: 10px 0; font-weight: bold;">${configuracoes.nomeIgreja}</h1>` : ''}
       </div>
       
       <div style="border-bottom: 2px solid #E65100; margin-bottom: 25px;"></div>
       
-      <h2 style="font-size: 20px; color: #E65100; text-align: center; margin: 0 0 15px 0; font-weight: bold;">${repertorio.nome}</h2>
+      <h2 style="font-size: 20px; color: #E65100; text-align: center; margin: 0 0 15px 0; font-weight: bold; page-break-inside: avoid;">${repertorio.nome}</h2>
       
-      <div style="text-align: center; margin-bottom: 20px; color: #666; font-size: 12px;">
+      <div style="text-align: center; margin-bottom: 20px; color: #666; font-size: 12px; page-break-inside: avoid;">
         <p style="margin: 4px 0;"><strong style="color: #E65100;">Data:</strong> ${
           repertorio.data 
             ? repertorio.data.includes('-') 
@@ -91,13 +91,13 @@ export async function generateRepertorioPdf(
       </div>
       
       ${repertorio.observacoes ? `
-        <div style="background-color: #fff8e1; padding: 12px 15px; margin-bottom: 20px; border-left: 3px solid #FBC02D; border-radius: 3px;">
+        <div style="background-color: #fff8e1; padding: 12px 15px; margin-bottom: 20px; border-left: 3px solid #FBC02D; border-radius: 3px; page-break-inside: avoid;">
           <p style="font-size: 12px; margin: 0; color: #666;"><strong style="color: #E65100;">Observações:</strong></p>
-          <div style="white-space: pre-wrap; font-size: 12px; margin-top: 8px; color: #555;">${repertorio.observacoes}</div>
+          <div style="white-space: pre-wrap; font-size: 12px; margin-top: 8px; color: #555; word-wrap: break-word; overflow-wrap: break-word;">${repertorio.observacoes}</div>
         </div>
       ` : ''}
       
-      <h3 style="font-size: 20px; color: #E65100; margin-top: 25px; margin-bottom: 15px; border-bottom: 2px solid #E65100; padding-bottom: 8px; font-weight: bold;">Sequência de Hinos</h3>
+      <h3 style="font-size: 20px; color: #E65100; margin-top: 25px; margin-bottom: 15px; border-bottom: 2px solid #E65100; padding-bottom: 8px; font-weight: bold; page-break-inside: avoid;">Sequência de Hinos</h3>
       
       <table style="width: 100%; border-collapse: collapse; margin-bottom: 25px; font-size: 12px;">
         <thead>
