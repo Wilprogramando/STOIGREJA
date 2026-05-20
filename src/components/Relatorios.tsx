@@ -36,11 +36,12 @@ export const Relatorios: React.FC = () => {
       const usageMap = new Map<string, { hino: Hino; count: number; ultimoUso: string }>();
 
       repertorios.forEach(rep => {
-        if (rep.lista_hinos && Array.isArray(rep.lista_hinos)) {
-          rep.lista_hinos.forEach((hinoId: string) => {
+        if (rep.hinos && Array.isArray(rep.hinos)) {
+          rep.hinos.forEach((hinoRef: any) => {
+            const hinoId = hinoRef.id || hinoRef;
             const hino = todosHinos.find(h => h.id === hinoId);
             if (hino) {
-              const dataUso = rep.data_culto || new Date().toISOString();
+              const dataUso = rep.data || new Date().toISOString();
               const current = usageMap.get(hinoId);
               
               if (current) {
