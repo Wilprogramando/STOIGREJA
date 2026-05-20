@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Plus, Edit, Trash2, Eye, Download, Share2, Search } from 'lucide-react';
+import { Plus, Music } from 'lucide-react';
 import { addHino, updateHino, deleteHino, getAllHinos } from '../services/db';
 import { generateHinoPdf, shareViaWhatsApp } from '../services/pdf';
 import { Hino, Configuracoes } from '../types';
@@ -96,50 +96,31 @@ export const CadastrarHino: React.FC<CadastrarHinoProps> = ({ configuracoes }) =
     });
     setEditando(hino);
     setShowForm(true);
+    window.scrollTo(0, 0);
   };
 
-  const handleDeletar = (hino: Hino) => {
-    setDeletePasswordModal(hino);
-  };
-
-  const handleConfirmDelete = async (password: string) => {
-    if (!deletePasswordModal) return;
-
+  const handleDeletar = async (id: string) => {
     try {
-      await deleteHino(deletePasswordModal.id);
-      setDeletePasswordModal(null);
+      await deleteHino(id);
       loadHinos();
+      setDeletePasswordModal(null);
     } catch (error) {
       console.error('Erro ao deletar hino:', error);
       alert('Erro ao deletar hino');
     }
   };
 
-  const handleGerarPdf = async (hino: Hino) => {
-    try {
-      await generateHinoPdf(hino, configuracoes, configuracoes?.logo);
-    } catch (error) {
-      console.error('Erro ao gerar PDF:', error);
-      alert('Erro ao gerar PDF');
-    }
-  };
-
-  const handleCompartilharWhatsApp = (hino: Hino) => {
-    const message = `Segue o hino: *${hino.nome}*\nTom: ${hino.tom}\nCantor: ${hino.cantor}\n\n${hino.letra}`;
-    shareViaWhatsApp(message);
-  };
-
-  const hinosFiltrados = hinos.filter(h => {
-    if (filtros.tom && h.tom !== filtros.tom) return false;
-    if (filtros.cantor && !h.cantor.toLowerCase().includes(filtros.cantor.toLowerCase())) return false;
-    if (filtros.nome && !h.nome.toLowerCase().includes(filtros.nome.toLowerCase())) return false;
-    return true;
+  const hinosFiltrados = hinos.filter(hino => {
+    const nomeMatch = hino.nome.toLowerCase().includes(filtros.nome.toLowerCase());
+    const tomMatch = !filtros.tom || hino.tom === filtros.tom;
+    const cantorMatch = hino.cantor.toLowerCase().includes(filtros.cantor.toLowerCase());
+    return nomeMatch && tomMatch && cantorMatch;
   });
 
   return (
-    <div className="max-w-6xl mx-auto">
-      <div className="flex items-center justify-between mb-8">
-        <h2 className="text-3xl font-bold text-gray-900">Cadastrar Hino</h2>
+    <div className="p-4 pb-20">
+      {/* Botão Novo Hino */}
+      <div className="mb-4 flex gap-2">
         {!showForm && (
           <button
             onClick={() => {
@@ -154,7 +135,7 @@ export const CadastrarHino: React.FC<CadastrarHinoProps> = ({ configuracoes }) =
               });
               setShowForm(true);
             }}
-            className="px-6 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition flex items-center gap-2"
+            className="flex-1 px-4 py-3 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition font-medium flex items-center justify-center gap-2"
           >
             <Plus size={20} />
             Novo Hino
@@ -162,92 +143,80 @@ export const CadastrarHino: React.FC<CadastrarHinoProps> = ({ configuracoes }) =
         )}
       </div>
 
+      {/* Formulário */}
       {showForm && (
-        <div className="bg-white p-6 rounded-lg shadow-md mb-8">
-          <h3 className="text-xl font-bold text-gray-900 mb-6">
+        <div className="bg-white p-4 rounded-lg shadow-md mb-6 border-t-4 border-indigo-600">
+          <h3 className="text-lg font-bold text-gray-900 mb-4">
             {editando ? 'Editar Hino' : 'Novo Hino'}
           </h3>
           
-          <form onSubmit={handleSubmit} className="space-y-4">
+          <form onSubmit={handleSubmit} className="space-y-3">
             {/* Nome, Tom, Cantor, Categoria - Responsivo */}
-            <div className="grid grid-cols-1 lg:grid-cols-12 gap-2 lg:gap-2">
-              <div className="lg:col-span-4">
-                <label className="block text-sm font-medium text-gray-700 mb-1">🎵 Nome do Hino *</label>
-                <input
-                  type="text"
-                  value={formData.nome}
-                  onChange={(e) => setFormData({ ...formData, nome: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-indigo-600 text-sm"
-                  placeholder="Nome do hino"
-                />
-              </div>
+            <div className="space-y-2">
+              <input
+                type="text"
+                value={formData.nome}
+                onChange={(e) => setFormData({ ...formData, nome: e.target.value })}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-indigo-600 text-sm"
+                placeholder="🎵 Nome do hino"
+              />
 
-              <div className="lg:col-span-2">
-                <label className="block text-sm font-medium text-gray-700 mb-1">🎼 Tom</label>
+              <div className="grid grid-cols-2 gap-2">
                 <select
                   value={formData.tom}
                   onChange={(e) => setFormData({ ...formData, tom: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-indigo-600 text-sm"
+                  className="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-indigo-600 text-sm"
                 >
                   {TONS.map(tom => (
-                    <option key={tom} value={tom}>{tom}</option>
+                    <option key={tom} value={tom}>{ton}</option>
                   ))}
                 </select>
-              </div>
 
-              <div className="lg:col-span-3">
-                <label className="block text-sm font-medium text-gray-700 mb-1">👤 Cantor *</label>
-                <input
-                  type="text"
-                  value={formData.cantor}
-                  onChange={(e) => setFormData({ ...formData, cantor: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-indigo-600 text-sm"
-                  placeholder="Cantor"
-                />
-              </div>
-
-              <div className="lg:col-span-3">
-                <label className="block text-sm font-medium text-gray-700 mb-1">📂 Categoria</label>
                 <select
                   value={formData.categoria}
                   onChange={(e) => setFormData({ ...formData, categoria: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-indigo-600 text-sm"
+                  className="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-indigo-600 text-sm"
                 >
                   {CATEGORIAS.map(cat => (
                     <option key={cat} value={cat}>{cat}</option>
                   ))}
                 </select>
               </div>
-            </div>
 
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Letra do Hino</label>
-              <textarea
-                value={formData.letra}
-                onChange={(e) => setFormData({ ...formData, letra: e.target.value })}
-                rows={8}
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-indigo-600"
-                placeholder="Digite a letra completa do hino (opcional)"
+              <input
+                type="text"
+                value={formData.cantor}
+                onChange={(e) => setFormData({ ...formData, cantor: e.target.value })}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-indigo-600 text-sm"
+                placeholder="👤 Cantor"
               />
             </div>
 
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Observações</label>
-              <textarea
-                value={formData.observacoes}
-                onChange={(e) => setFormData({ ...formData, observacoes: e.target.value })}
-                rows={3}
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-indigo-600"
-                placeholder="Observações opcionais"
-              />
-            </div>
+            {/* Letra */}
+            <textarea
+              value={formData.letra}
+              onChange={(e) => setFormData({ ...formData, letra: e.target.value })}
+              rows={6}
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-indigo-600 text-sm"
+              placeholder="Letra do hino (opcional)"
+            />
 
-            <div className="flex gap-4 pt-4">
+            {/* Observações */}
+            <textarea
+              value={formData.observacoes}
+              onChange={(e) => setFormData({ ...formData, observacoes: e.target.value })}
+              rows={2}
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-indigo-600 text-sm"
+              placeholder="Observações (opcional)"
+            />
+
+            {/* Botões */}
+            <div className="grid grid-cols-2 gap-2 pt-2">
               <button
                 type="submit"
-                className="px-6 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition"
+                className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition font-medium text-sm"
               >
-                {editando ? 'Atualizar Hino' : 'Salvar Hino'}
+                {editando ? 'Atualizar' : 'Salvar'}
               </button>
               <button
                 type="button"
@@ -255,7 +224,7 @@ export const CadastrarHino: React.FC<CadastrarHinoProps> = ({ configuracoes }) =
                   setShowForm(false);
                   setEditando(null);
                 }}
-                className="px-6 py-2 bg-gray-400 text-white rounded-lg hover:bg-gray-500 transition"
+                className="px-4 py-2 bg-gray-400 text-white rounded-lg hover:bg-gray-500 transition font-medium text-sm"
               >
                 Cancelar
               </button>
@@ -264,110 +233,101 @@ export const CadastrarHino: React.FC<CadastrarHinoProps> = ({ configuracoes }) =
         </div>
       )}
 
-      {/* Filtros */}
-      <div className="bg-white p-4 rounded-lg shadow-md mb-6">
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Pesquisar por nome</label>
-            <input
-              type="text"
-              placeholder="Digite o nome do hino..."
-              value={filtros.nome}
-              onChange={(e) => setFiltros({ ...filtros, nome: e.target.value })}
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-indigo-600"
-            />
-          </div>
+      {/* Filtros - Compacto para Mobile */}
+      <div className="bg-white p-3 rounded-lg shadow-md mb-4 sticky top-0 z-10">
+        <input
+          type="text"
+          placeholder="🔍 Pesquisar hino..."
+          value={filtros.nome}
+          onChange={(e) => setFiltros({ ...filtros, nome: e.target.value })}
+          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-indigo-600 text-sm mb-2"
+        />
+        
+        <div className="grid grid-cols-2 gap-2">
+          <select
+            value={filtros.tom}
+            onChange={(e) => setFiltros({ ...filtros, tom: e.target.value })}
+            className="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-indigo-600 text-sm"
+          >
+            <option value="">🎵 Todos tons</option>
+            {TONS.map(tom => (
+              <option key={tom} value={tom}>{tom}</option>
+            ))}
+          </select>
 
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Filtrar por tom</label>
-            <select
-              value={filtros.tom}
-              onChange={(e) => setFiltros({ ...filtros, tom: e.target.value })}
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-indigo-600"
-            >
-              <option value="">Todos os tons</option>
-              {TONS.map(tom => (
-                <option key={tom} value={tom}>{tom}</option>
-              ))}
-            </select>
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Filtrar por cantor</label>
-            <input
-              type="text"
-              placeholder="Nome do cantor..."
-              value={filtros.cantor}
-              onChange={(e) => setFiltros({ ...filtros, cantor: e.target.value })}
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-indigo-600"
-            />
-          </div>
+          <input
+            type="text"
+            placeholder="👤 Cantor..."
+            value={filtros.cantor}
+            onChange={(e) => setFiltros({ ...filtros, cantor: e.target.value })}
+            className="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-indigo-600 text-sm"
+          />
         </div>
       </div>
 
-      {/* Lista de Hinos */}
-      <div className="space-y-4">
+      {/* Lista de Hinos - Mobile Friendly */}
+      <div className="space-y-2">
         {hinosFiltrados.length === 0 ? (
           <div className="text-center py-12 bg-white rounded-lg">
             <Music className="mx-auto text-gray-400 mb-4" size={48} />
-            <p className="text-gray-500 text-lg">Nenhum hino cadastrado</p>
+            <p className="text-gray-500 text-base">Nenhum hino cadastrado</p>
           </div>
         ) : (
           hinosFiltrados.map(hino => (
-            <div key={hino.id} className="bg-white p-4 rounded-lg shadow-md hover:shadow-lg transition">
-              <div className="flex items-start justify-between">
-                <div className="flex-1">
-                  <h3 className="text-lg font-bold text-gray-900">{hino.nome}</h3>
-                  <div className="grid grid-cols-2 md:grid-cols-4 gap-2 mt-2 text-sm text-gray-600">
-                    <p>🎵 Tom: <span className="font-medium">{hino.tom}</span></p>
-                    <p>👤 Cantor: <span className="font-medium">{hino.cantor}</span></p>
-                    <p>📂 Categoria: <span className="font-medium">{hino.categoria}</span></p>
-                  </div>
-                </div>
-                
-                <div className="flex gap-2 ml-4">
-                  <button
-                    onClick={() => setModalLetra(hino)}
-                    title="Visualizar letra"
-                    className="p-2 bg-blue-50 text-blue-600 rounded-lg hover:bg-blue-100 transition"
-                  >
-                    <Eye size={20} />
-                  </button>
-                  <button
-                    onClick={() => handleGerarPdf(hino)}
-                    title="Baixar PDF"
-                    className="p-2 bg-orange-50 text-orange-600 rounded-lg hover:bg-orange-100 transition"
-                  >
-                    <Download size={20} />
-                  </button>
-                  <button
-                    onClick={() => handleCompartilharWhatsApp(hino)}
-                    title="Compartilhar no WhatsApp"
-                    className="p-2 bg-green-50 text-green-600 rounded-lg hover:bg-green-100 transition"
-                  >
-                    <Share2 size={20} />
-                  </button>
-                  <button
-                    onClick={() => handleEditar(hino)}
-                    title="Editar"
-                    className="p-2 bg-indigo-50 text-indigo-600 rounded-lg hover:bg-indigo-100 transition"
-                  >
-                    <Edit size={20} />
-                  </button>
-                  <button
-                    onClick={() => handleDeletar(hino)}
-                    title="Deletar"
-                    className="p-2 bg-red-50 text-red-600 rounded-lg hover:bg-red-100 transition"
-                  >
-                    <Trash2 size={20} />
-                  </button>
-                </div>
+            <div key={hino.id} className="bg-white p-3 rounded-lg shadow-sm border-l-4 border-indigo-600">
+              {/* Título */}
+              <h3 className="text-sm font-bold text-gray-900 mb-2">{hino.nome}</h3>
+              
+              {/* Informações em 2 linhas */}
+              <div className="space-y-1 text-xs text-gray-600 mb-3">
+                <p>🎵 <span className="font-medium">{hino.tom}</span> • 👤 <span className="font-medium">{hino.cantor}</span></p>
+                <p>📂 <span className="font-medium">{hino.categoria}</span></p>
+              </div>
+              
+              {/* Botões em grid compacta */}
+              <div className="grid grid-cols-5 gap-1">
+                <button
+                  onClick={() => setModalLetra(hino)}
+                  className="p-2 bg-blue-100 text-blue-600 rounded hover:bg-blue-200 transition flex justify-center text-lg"
+                  title="Ver letra"
+                >
+                  👁️
+                </button>
+                <button
+                  onClick={() => handleEditar(hino)}
+                  className="p-2 bg-yellow-100 text-yellow-600 rounded hover:bg-yellow-200 transition flex justify-center text-lg"
+                  title="Editar"
+                >
+                  ✏️
+                </button>
+                <button
+                  onClick={() => generateHinoPdf(hino, configuracoes)}
+                  className="p-2 bg-green-100 text-green-600 rounded hover:bg-green-200 transition flex justify-center text-lg"
+                  title="Baixar PDF"
+                >
+                  📥
+                </button>
+                <button
+                  onClick={() => shareViaWhatsApp(`Confira o hino: ${hino.nome} (Tom: ${hino.tom}, Cantor: ${hino.cantor})`)}
+                  className="p-2 bg-cyan-100 text-cyan-600 rounded hover:bg-cyan-200 transition flex justify-center text-lg"
+                  title="Compartilhar"
+                >
+                  📤
+                </button>
+                <button
+                  onClick={() => setDeletePasswordModal(hino)}
+                  className="p-2 bg-red-100 text-red-600 rounded hover:bg-red-200 transition flex justify-center text-lg"
+                  title="Deletar"
+                >
+                  🗑️
+                </button>
               </div>
             </div>
           ))
         )}
       </div>
 
+      {/* Modals */}
       {modalLetra && (
         <ModalVisualizaLetra
           hino={modalLetra}
@@ -377,13 +337,11 @@ export const CadastrarHino: React.FC<CadastrarHinoProps> = ({ configuracoes }) =
 
       {deletePasswordModal && (
         <DeletePasswordModal
-          hinoNome={deletePasswordModal.nome}
-          onConfirm={handleConfirmDelete}
-          onCancel={() => setDeletePasswordModal(null)}
+          hino={deletePasswordModal}
+          onDelete={handleDeletar}
+          onClose={() => setDeletePasswordModal(null)}
         />
       )}
     </div>
   );
 };
-
-const Music = Eye; // Placeholder icon
