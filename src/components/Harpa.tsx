@@ -351,11 +351,11 @@ export const Harpa: React.FC<HarpaProps> = ({ configuracoes }) => {
                 </div>
                 
                 {/* Botões Mobile */}
-                <div className="md:hidden flex gap-2 mt-3">
+                <div className="md:hidden flex gap-1 mt-3">
                   {hino.letra && (
                     <button
                       onClick={() => setModalLetra(hino)}
-                      className="p-1.5 bg-blue-100 text-blue-600 rounded hover:bg-blue-200 transition flex justify-center text-sm flex-1"
+                      className="p-1 bg-blue-100 text-blue-600 rounded hover:bg-blue-200 transition flex justify-center text-xs flex-1"
                       title="Ver letra"
                     >
                       👁️
@@ -363,28 +363,28 @@ export const Harpa: React.FC<HarpaProps> = ({ configuracoes }) => {
                   )}
                   <button
                     onClick={() => handleGerarPdf(hino)}
-                    className="p-1.5 bg-green-100 text-green-600 rounded hover:bg-green-200 transition flex justify-center text-sm flex-1"
+                    className="p-1 bg-green-100 text-green-600 rounded hover:bg-green-200 transition flex justify-center text-xs flex-1"
                     title="Baixar PDF"
                   >
                     📥
                   </button>
                   <button
                     onClick={() => handleCompartilharWhatsApp(hino)}
-                    className="p-1.5 bg-cyan-100 text-cyan-600 rounded hover:bg-cyan-200 transition flex justify-center text-sm flex-1"
+                    className="p-1 bg-cyan-100 text-cyan-600 rounded hover:bg-cyan-200 transition flex justify-center text-xs flex-1"
                     title="Compartilhar"
                   >
                     📤
                   </button>
                   <button
                     onClick={() => handleEditar(hino)}
-                    className="p-1.5 bg-yellow-100 text-yellow-600 rounded hover:bg-yellow-200 transition flex justify-center text-sm flex-1"
+                    className="p-1 bg-yellow-100 text-yellow-600 rounded hover:bg-yellow-200 transition flex justify-center text-xs flex-1"
                     title="Editar"
                   >
                     ✏️
                   </button>
                   <button
                     onClick={() => handleDeletar(hino)}
-                    className="p-1.5 bg-red-100 text-red-600 rounded hover:bg-red-200 transition flex justify-center text-sm flex-1"
+                    className="p-1 bg-red-100 text-red-600 rounded hover:bg-red-200 transition flex justify-center text-xs flex-1"
                     title="Deletar"
                   >
                     🗑️
