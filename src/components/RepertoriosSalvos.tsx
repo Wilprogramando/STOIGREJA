@@ -101,19 +101,24 @@ export const RepertoriosSalvos: React.FC<RepertoriosSalvosProps> = ({ configurac
     try {
       // Extrair apenas IDs dos hinos (compatível com antigos e novos)
       const hinosIds = Array.isArray(repertorio.hinos)
-        ? repertorio.hinos.map(h => {
-            if (typeof h === 'string') return h;
-            if (typeof h === 'object' && h.hinoId) return h.hinoId;
-            if (typeof h === 'object' && h.id) return h.id;
-            return null;
-          }).filter(Boolean)
+        ? repertorio.hinos
+            .filter(h => h !== null && h !== undefined) // ✅ Remove nulls ANTES
+            .map(h => {
+              if (typeof h === 'string') return h;
+              if (typeof h === 'object' && h.hinoId) return h.hinoId;
+              if (typeof h === 'object' && h.id) return h.id;
+              return null;
+            })
+            .filter(Boolean)
         : [];
+
+      console.log('Duplicando com hinos IDs:', hinosIds);
 
       const novoRepertorio: Repertorio = {
         ...repertorio,
         id: Date.now().toString(),
         nome: `${repertorio.nome} (Cópia)`,
-        hinos: hinosIds as any, // ✅ Passa apenas IDs
+        hinos: hinosIds as any,
         criadoEm: new Date().toISOString(),
         atualizadoEm: new Date().toISOString()
       };
