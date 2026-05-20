@@ -17,6 +17,7 @@ export const Relatorios: React.FC = () => {
   const [hinosUsage, setHinosUsage] = useState<HinoUsage[]>([]);
   const [loading, setLoading] = useState(true);
   const [topHinos, setTopHinos] = useState<HinoUsage[]>([]);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     loadRelatorio();
@@ -25,21 +26,31 @@ export const Relatorios: React.FC = () => {
   const loadRelatorio = async () => {
     try {
       setLoading(true);
+      setError(null);
 
-      // Buscar todos os repertórios
+      console.log('Carregando repertórios...');
       const repertorios = await getAllRepertorios();
+      console.log('Repertórios carregados:', repertorios.length);
 
-      // Buscar todos os hinos
+      console.log('Carregando hinos...');
       const todosHinos = await getAllHinos();
+      console.log('Hinos carregados:', todosHinos.length);
 
       // Contar uso de cada hino
       const usageMap = new Map<string, { hino: Hino; count: number; ultimoUso: string }>();
 
-      repertorios.forEach(rep => {
+      repertorios.forEach((rep: any) => {
+        console.log('Processando repertório:', rep.nome, 'Hinos:', rep.hinos?.length || 0);
+        
         if (rep.hinos && Array.isArray(rep.hinos)) {
           rep.hinos.forEach((hinoRef: any) => {
-            const hinoId = hinoRef.id || hinoRef;
+            // Tentar pegar o ID do hino (pode ser string ou objeto)
+            const hinoId = typeof hinoRef === 'string' ? hinoRef : hinoRef.id;
+            
+            if (!hinoId) return;
+
             const hino = todosHinos.find(h => h.id === hinoId);
+            
             if (hino) {
               const dataUso = rep.data || new Date().toISOString();
               const current = usageMap.get(hinoId);
@@ -62,13 +73,15 @@ export const Relatorios: React.FC = () => {
         }
       });
 
+      console.log('Hinos únicos usados:', usageMap.size);
+
       // Converter para array e ordenar
       const hinoUsageArray: HinoUsage[] = Array.from(usageMap.values()).map(item => ({
         id: item.hino.id,
         nome: item.hino.nome,
-        tom: item.hino.tom,
-        cantor: item.hino.cantor,
-        categoria: item.hino.categoria,
+        tom: item.hino.tom || 'N/A',
+        cantor: item.hino.cantor || 'N/A',
+        categoria: item.hino.categoria || 'Sem categoria',
         usageCount: item.count,
         ultimoUso: item.ultimoUso
       }));
@@ -76,10 +89,13 @@ export const Relatorios: React.FC = () => {
       // Ordenar por uso (decrescente)
       hinoUsageArray.sort((a, b) => b.usageCount - a.usageCount);
 
+      console.log('Relatório processado:', hinoUsageArray.length, 'hinos');
+
       setHinosUsage(hinoUsageArray);
       setTopHinos(hinoUsageArray.slice(0, 10));
     } catch (error) {
       console.error('Erro ao carregar relatório:', error);
+      setError('Erro ao carregar relatório. Verifique o console para mais detalhes.');
     } finally {
       setLoading(false);
     }
@@ -106,6 +122,20 @@ export const Relatorios: React.FC = () => {
     return (
       <div className="p-4 text-center">
         <p className="text-gray-500">Carregando relatório...</p>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="p-4 bg-red-50 border border-red-200 rounded-lg text-red-700">
+        <p>{error}</p>
+        <button
+          onClick={() => loadRelatorio()}
+          className="mt-2 px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700"
+        >
+          Tentar Novamente
+        </button>
       </div>
     );
   }
@@ -189,6 +219,7 @@ export const Relatorios: React.FC = () => {
       ) : (
         <div className="text-center py-12 bg-white rounded-lg">
           <p className="text-gray-500 text-lg">Nenhum hino foi usado em repertórios ainda</p>
+          <p className="text-sm text-gray-400 mt-2">Crie um repertório e adicione hinos para ver aqui!</p>
         </div>
       )}
 
