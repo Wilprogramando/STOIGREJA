@@ -318,8 +318,23 @@ export async function getConfiguracoes(): Promise<Configuracoes | null> {
         .maybeSingle();
       
       if (error && error.code !== 'PGRST116') throw error;
+      
+      if (!data) return null;
+
+      // Mapear de snake_case (banco) para camelCase (app)
+      const config: Configuracoes = {
+        id: data.id,
+        nomeIgreja: data.nome_igreja || '',
+        responsavel: data.nome_responsavel || '',
+        rodapePdf: data.rodape_pdf || '',
+        logo: data.logo_igreja || undefined,
+        tituloSistema: data.titulo_sistema || 'Repertório da Igreja',
+        logoSistema: data.logo_sistema || undefined,
+        subtitulo: data.subtitulo_sistema || 'Gerenciador de hinos e cultos'
+      };
+
       console.log('✅ Configurações carregadas');
-      return data || null;
+      return config;
     } else {
       const chave = `${DB_PREFIX}config`;
       const dados = localStorage.getItem(chave);
@@ -334,27 +349,40 @@ export async function getConfiguracoes(): Promise<Configuracoes | null> {
 export async function saveConfiguracoes(config: Configuracoes): Promise<void> {
   try {
     if (supabase) {
-      const dadosSupabase = {
-        id: 'config',
-        nome_igreja: config.nomeIgreja,
-        nome_responsavel: config.responsavel,
-        rodape_pdf: config.rodapePdf,
-        logo_igreja: config.logo,
-        titulo_sistema: config.tituloSistema,
-        logo_sistema: config.logoSistema,
-        subtitulo_sistema: config.subtitulo
+      // Garantir que tem um id
+      const configComId = {
+        ...config,
+        id: config.id || 'config'
       };
+
+      const dadosSupabase = {
+        id: configComId.id,
+        nome_igreja: configComId.nomeIgreja || '',
+        nome_responsavel: configComId.responsavel || '',
+        rodape_pdf: configComId.rodapePdf || '',
+        logo_igreja: configComId.logo || null,
+        titulo_sistema: configComId.tituloSistema || 'Repertório da Igreja',
+        logo_sistema: configComId.logoSistema || null,
+        subtitulo_sistema: configComId.subtitulo || 'Gerenciador de hinos e cultos',
+        created_at: new Date().toISOString()
+      };
+
+      console.log('📤 Salvando configurações:', dadosSupabase);
 
       const { error } = await supabase
         .from('configuracoes_sistema')
         .upsert([dadosSupabase], { onConflict: 'id' });
       
-      if (error) throw error;
-      console.log('✅ Configurações salvas');
+      if (error) {
+        console.error('❌ Erro Supabase:', error);
+        throw error;
+      }
+      console.log('✅ Configurações salvas com sucesso');
     } else {
       const chave = `${DB_PREFIX}config`;
-      config.id = 'config';
+      config.id = config.id || 'config';
       localStorage.setItem(chave, JSON.stringify(config));
+      console.log('✅ Configurações salvas localmente');
     }
   } catch (error) {
     console.error('❌ Erro ao salvar configurações:', error);
