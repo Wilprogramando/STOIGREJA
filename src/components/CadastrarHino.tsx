@@ -167,8 +167,8 @@ export const CadastrarHino: React.FC<CadastrarHinoProps> = ({ configuracoes }) =
                   onChange={(e) => setFormData({ ...formData, tom: e.target.value })}
                   className="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-indigo-600 text-sm"
                 >
-                  {TONS.map(tom => (
-                    <option key={tom} value={tom}>{ton}</option>
+                  {TONS.map(ton => (
+                    <option key={ton} value={ton}>{ton}</option>
                   ))}
                 </select>
 
@@ -250,8 +250,8 @@ export const CadastrarHino: React.FC<CadastrarHinoProps> = ({ configuracoes }) =
             className="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-indigo-600 text-sm"
           >
             <option value="">🎵 Todos tons</option>
-            {TONS.map(tom => (
-              <option key={tom} value={tom}>{tom}</option>
+            {TONS.map(ton => (
+              <option key={ton} value={ton}>{ton}</option>
             ))}
           </select>
 
