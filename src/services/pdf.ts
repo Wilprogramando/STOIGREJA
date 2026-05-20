@@ -6,13 +6,6 @@ export async function generateHinoPdf(
   configuracoes: Configuracoes | null,
   logo?: string
 ) {
-  // Verificar se deve usar 2 colunas (letra longa = muitas linhas)
-  const linhas = hino.letra.split('\n').length;
-  const usarDuasColunas = linhas > 20;
-  const styleLetra = usarDuasColunas 
-    ? 'font-family: "Arial", sans-serif; font-size: 12px; line-height: 1.7; color: #333; white-space: pre-wrap; text-align: left; margin-bottom: 20px; column-count: 2; column-gap: 20px; column-rule: 1px solid #f0f0f0;'
-    : 'font-family: "Arial", sans-serif; font-size: 12px; line-height: 1.7; color: #333; white-space: pre-wrap; text-align: left; margin-bottom: 20px;';
-
   const html = `
     <div style="font-family: 'Arial', sans-serif; color: #333; background-color: white;">
       <!-- Cabeçalho -->
@@ -40,8 +33,8 @@ export async function generateHinoPdf(
         ${hino.numeroHarpa ? `<p style="margin: 3px 0;"><strong>Harpa Cristã nº:</strong> ${hino.numeroHarpa}</p>` : ''}
       </div>
 
-      <!-- Letra em 1 ou 2 colunas -->
-      <div style="${styleLetra}">
+      <!-- Letra em 1 coluna simples -->
+      <div style="font-family: 'Arial', sans-serif; font-size: 14px; line-height: 1.7; color: #333; white-space: pre-wrap; text-align: left; margin-bottom: 20px;">
 ${hino.letra}
       </div>
 
@@ -65,7 +58,7 @@ ${hino.letra}
   element.innerHTML = html;
 
   const opt = {
-    margin: [20, 30, 20, 30],
+    margin: [25, 35, 25, 35],
     filename: `${hino.nome.replace(/\s+/g, '_')}.pdf`,
     image: { type: 'jpeg', quality: 0.98 },
     html2canvas: { scale: 2, useCORS: true, logging: false, backgroundColor: '#ffffff' },
