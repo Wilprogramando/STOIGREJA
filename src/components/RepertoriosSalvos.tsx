@@ -21,21 +21,41 @@ export const RepertoriosSalvos: React.FC<RepertoriosSalvosProps> = ({ configurac
     loadRepertorios();
   }, []);
 
-  // ✅ NOVA FUNÇÃO: Converter IDs em objetos de hinos
+  // ✅ NOVA FUNÇÃO ROBUSTA: Converter IDs em objetos de hinos
   const getHinosCompletos = (hinosData: any[]): Hino[] => {
-    if (!hinosData || !Array.isArray(hinosData)) return [];
+    if (!hinosData || !Array.isArray(hinosData)) {
+      console.warn('⚠️ hinosData inválido:', hinosData);
+      return [];
+    }
     
-    return hinosData
-      .map(item => {
-        // Se já é um objeto completo (repertórios antigos), retorna como está
-        if (typeof item === 'object' && item.nome) {
-          return item;
+    const resultado: Hino[] = [];
+    
+    hinosData.forEach((item, idx) => {
+      try {
+        // Se já é um objeto completo (repertórios antigos)
+        if (typeof item === 'object' && item !== null && item.nome) {
+          resultado.push(item);
+          return;
         }
-        // Se é um ID (novos repertórios), procura no banco
-        const hinoCompleto = todosHinos.find(h => h.id === item);
-        return hinoCompleto || null;
-      })
-      .filter(h => h !== null) as Hino[]; // ✅ CORRIGIDO: Filter para remover nulls
+        
+        // Se é um ID (novos repertórios)
+        if (typeof item === 'string') {
+          const hinoCompleto = todosHinos.find(h => h.id === item);
+          if (hinoCompleto) {
+            resultado.push(hinoCompleto);
+          } else {
+            console.warn(`⚠️ Hino com ID ${item} não encontrado no banco`);
+          }
+          return;
+        }
+        
+        console.warn(`⚠️ Item ${idx} tem tipo inválido:`, typeof item, item);
+      } catch (error) {
+        console.error(`❌ Erro ao processar item ${idx}:`, error);
+      }
+    });
+    
+    return resultado;
   };
 
   const loadRepertorios = async () => {
@@ -110,14 +130,23 @@ export const RepertoriosSalvos: React.FC<RepertoriosSalvosProps> = ({ configurac
   };
 
   const handleCompartilharWhatsApp = (repertorio: Repertorio) => {
-    const hinosCompletos = getHinosCompletos(repertorio.hinos);
-    const mensagemHinos = hinosCompletos.length > 0
-      ? hinosCompletos
-          .map((h, i) => `${i + 1}. ${h?.nome || 'Hino desconhecido'} (Tom: ${h?.tom || '?'})`)
-          .join('\n')
-      : 'Nenhum hino adicionado';
-    const message = `*${repertorio.nome}*\n\nData: ${new Date(repertorio.data).toLocaleDateString('pt-BR')}\n\nHinos:\n${mensagemHinos}`;
-    shareViaWhatsApp(message);
+    try {
+      const hinosCompletos = getHinosCompletos(repertorio.hinos).filter(h => h !== null && h !== undefined);
+      const mensagemHinos = hinosCompletos.length > 0
+        ? hinosCompletos
+            .map((h) => {
+              if (!h || !h.nome) return '';
+              return `${h.nome} (Tom: ${h.tom || '?'})`;
+            })
+            .filter(Boolean)
+            .join('\n')
+        : 'Nenhum hino adicionado';
+      const message = `*${repertorio.nome}*\n\nData: ${new Date(repertorio.data).toLocaleDateString('pt-BR')}\n\nHinos:\n${mensagemHinos}`;
+      shareViaWhatsApp(message);
+    } catch (error) {
+      console.error('Erro ao compartilhar:', error);
+      alert('Erro ao compartilhar');
+    }
   };
 
   const repertoriosFiltrados = repertorios.filter(r =>
