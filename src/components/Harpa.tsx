@@ -209,37 +209,38 @@ export const Harpa: React.FC<HarpaProps> = ({ configuracoes }) => {
           </h3>
 
           <form onSubmit={handleSubmit} className="space-y-4">
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Número da Harpa *</label>
-                <div className="flex gap-2">
+            {/* Número, Tom, Cantor - Responsivo */}
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-2 lg:gap-2">
+              <div className="lg:col-span-3">
+                <label className="block text-sm font-medium text-gray-700 mb-1">📖 Número da Harpa *</label>
+                <div className="flex gap-1">
                   <input
                     type="number"
                     value={formData.numeroHarpa}
                     onChange={(e) => setFormData({ ...formData, numeroHarpa: e.target.value })}
                     onBlur={(e) => handleBuscarPorNumero(e.target.value)}
-                    className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-indigo-600"
+                    className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-indigo-600 text-sm"
                     placeholder="Ex: 100"
                   />
                   <button
                     type="button"
                     onClick={() => handleBuscarPorNumero(formData.numeroHarpa)}
-                    className="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition"
+                    className="px-3 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition text-sm font-medium"
                   >
                     Buscar
                   </button>
                 </div>
                 {searchResult && (
-                  <p className="text-green-600 text-sm mt-2">✓ {searchResult.nome}</p>
+                  <p className="text-green-600 text-xs mt-1">✓ {searchResult.nome}</p>
                 )}
               </div>
 
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Tom *</label>
+              <div className="lg:col-span-2">
+                <label className="block text-sm font-medium text-gray-700 mb-1">🎼 Tom</label>
                 <select
                   value={formData.tom}
                   onChange={(e) => setFormData({ ...formData, tom: e.target.value })}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-indigo-600"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-indigo-600 text-sm"
                 >
                   {TONS.map(tom => (
                     <option key={tom} value={tom}>{tom}</option>
@@ -247,13 +248,13 @@ export const Harpa: React.FC<HarpaProps> = ({ configuracoes }) => {
                 </select>
               </div>
 
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Cantor *</label>
+              <div className="lg:col-span-7">
+                <label className="block text-sm font-medium text-gray-700 mb-1">👤 Cantor *</label>
                 <input
                   type="text"
                   value={formData.cantor}
                   onChange={(e) => setFormData({ ...formData, cantor: e.target.value })}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-indigo-600"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-indigo-600 text-sm"
                   placeholder="Nome de quem vai cantar"
                 />
               </div>
@@ -331,62 +332,103 @@ export const Harpa: React.FC<HarpaProps> = ({ configuracoes }) => {
       </div>
 
       {/* Lista de Hinos */}
-      <div className="space-y-4">
+      <div className="space-y-2">
         {hinosFiltrados.length === 0 ? (
           <div className="text-center py-12 bg-white rounded-lg">
             <p className="text-gray-500 text-lg">Nenhum hino da Harpa cadastrado</p>
           </div>
         ) : (
           hinosFiltrados.map(hino => (
-            <div key={hino.id} className="bg-white p-4 rounded-lg shadow-md hover:shadow-lg transition">
-              <div className="flex items-start justify-between">
-                <div className="flex-1">
-                  <h3 className="text-lg font-bold text-gray-900">
-                    Harpa nº {hino.numeroHarpa} - {hino.nome}
-                  </h3>
-                  <div className="grid grid-cols-2 md:grid-cols-3 gap-2 mt-2 text-sm text-gray-600">
-                    <p>🎵 Tom: <span className="font-medium">{hino.tom}</span></p>
-                    <p>👤 Cantor: <span className="font-medium">{hino.cantor}</span></p>
-                  </div>
+            <div key={hino.id} className="bg-white p-3 rounded-lg shadow-sm border-l-4 border-indigo-600">
+              <h3 className="text-lg font-bold text-gray-900 mb-2 md:mb-0">
+                Harpa nº {hino.numeroHarpa} - {hino.nome}
+              </h3>
+              
+              {/* Linha com informações e botões - Desktop em 1 linha, Mobile em 2 */}
+              <div className="md:flex md:items-center md:justify-between md:gap-4">
+                <div className="text-sm text-gray-600 mt-2 md:mt-0">
+                  <p>🎵 <span className="font-medium">{hino.tom}</span> • 👤 <span className="font-medium">{hino.cantor}</span></p>
                 </div>
-
-                <div className="flex gap-2 ml-4">
+                
+                {/* Botões Mobile */}
+                <div className="md:hidden flex gap-2 mt-3">
                   {hino.letra && (
                     <button
                       onClick={() => setModalLetra(hino)}
-                      title="Visualizar letra"
-                      className="p-2 bg-blue-50 text-blue-600 rounded-lg hover:bg-blue-100 transition"
+                      className="p-1.5 bg-blue-100 text-blue-600 rounded hover:bg-blue-200 transition flex justify-center text-sm flex-1"
+                      title="Ver letra"
                     >
-                      <Eye size={20} />
+                      👁️
                     </button>
                   )}
                   <button
                     onClick={() => handleGerarPdf(hino)}
+                    className="p-1.5 bg-green-100 text-green-600 rounded hover:bg-green-200 transition flex justify-center text-sm flex-1"
                     title="Baixar PDF"
-                    className="p-2 bg-orange-50 text-orange-600 rounded-lg hover:bg-orange-100 transition"
                   >
-                    <Download size={20} />
+                    📥
                   </button>
                   <button
                     onClick={() => handleCompartilharWhatsApp(hino)}
-                    title="Compartilhar no WhatsApp"
-                    className="p-2 bg-green-50 text-green-600 rounded-lg hover:bg-green-100 transition"
+                    className="p-1.5 bg-cyan-100 text-cyan-600 rounded hover:bg-cyan-200 transition flex justify-center text-sm flex-1"
+                    title="Compartilhar"
                   >
-                    <Share2 size={20} />
+                    📤
                   </button>
                   <button
                     onClick={() => handleEditar(hino)}
+                    className="p-1.5 bg-yellow-100 text-yellow-600 rounded hover:bg-yellow-200 transition flex justify-center text-sm flex-1"
                     title="Editar"
-                    className="p-2 bg-indigo-50 text-indigo-600 rounded-lg hover:bg-indigo-100 transition"
                   >
-                    <Edit size={20} />
+                    ✏️
                   </button>
                   <button
                     onClick={() => handleDeletar(hino)}
+                    className="p-1.5 bg-red-100 text-red-600 rounded hover:bg-red-200 transition flex justify-center text-sm flex-1"
                     title="Deletar"
-                    className="p-2 bg-red-50 text-red-600 rounded-lg hover:bg-red-100 transition"
                   >
-                    <Trash2 size={20} />
+                    🗑️
+                  </button>
+                </div>
+                
+                {/* Botões Desktop - Na mesma linha */}
+                <div className="hidden md:flex md:gap-2">
+                  {hino.letra && (
+                    <button
+                      onClick={() => setModalLetra(hino)}
+                      className="p-1 bg-blue-100 text-blue-600 rounded hover:bg-blue-200 transition flex justify-center text-base"
+                      title="Ver letra"
+                    >
+                      👁️
+                    </button>
+                  )}
+                  <button
+                    onClick={() => handleGerarPdf(hino)}
+                    className="p-1 bg-green-100 text-green-600 rounded hover:bg-green-200 transition flex justify-center text-base"
+                    title="Baixar PDF"
+                  >
+                    📥
+                  </button>
+                  <button
+                    onClick={() => handleCompartilharWhatsApp(hino)}
+                    className="p-1 bg-cyan-100 text-cyan-600 rounded hover:bg-cyan-200 transition flex justify-center text-base"
+                    title="Compartilhar"
+                  >
+                    📤
+                  </button>
+                  <button
+                    onClick={() => handleEditar(hino)}
+                    className="p-1 bg-yellow-100 text-yellow-600 rounded hover:bg-yellow-200 transition flex justify-center text-base"
+                    title="Editar"
+                  >
+                    ✏️
+                  </button>
+                  <button
+                    onClick={() => handleDeletar(hino)}
+                    className="p-1 bg-red-100 text-red-600 rounded hover:bg-red-200 transition flex justify-center text-base"
+                    title="Deletar"
+                  >
+                    🗑️
                   </button>
                 </div>
               </div>
