@@ -26,7 +26,7 @@ export async function generateHinoPdf(
         ${hino.categoria ? `<p style="margin: 3px 0;"><strong style="color: #E65100;">Categoria:</strong> ${hino.categoria}</p>` : ''}
       </div>
       
-      <div style="white-space: pre-wrap; font-size: 11px; line-height: 1.5; margin-bottom: 20px; background-color: white;">
+      <div style="white-space: pre-wrap; font-size: 13px; line-height: 1.6; margin-bottom: 20px; background-color: white;">
 ${hino.letra}
       </div>
       
@@ -146,7 +146,7 @@ export async function generateRepertorioPdf(
               ${hinoRep.ordem}. ${hinoRep.nome} ${hinoRep.numeroHarpa ? `(Harpa nº ${hinoRep.numeroHarpa})` : ''}
             </h4>
             <p style="font-size: 10px; margin: 5px 0; color: #666;"><strong style="color: #E65100;">Tom:</strong> ${hinoRep.tom} | <strong style="color: #E65100;">Cantor:</strong> ${hinoRep.cantor}</p>
-            <div style="white-space: pre-wrap; font-size: 11px; line-height: 1.4; background-color: #f9f9f9; padding: 8px; border-left: 3px solid #E65100; color: #333;">
+            <div style="white-space: pre-wrap; font-size: 13px; line-height: 1.6; background-color: #f9f9f9; padding: 8px; border-left: 3px solid #E65100; color: #333;">
 ${hinoRep.letra}
             </div>
           </div>
