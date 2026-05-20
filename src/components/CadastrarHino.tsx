@@ -169,9 +169,9 @@ export const CadastrarHino: React.FC<CadastrarHinoProps> = ({ configuracoes }) =
           </h3>
           
           <form onSubmit={handleSubmit} className="space-y-4">
-            {/* Nome, Tom, Cantor, Categoria - TUDO EM 1 LINHA */}
-            <div className="grid grid-cols-12 gap-2">
-              <div className="col-span-4">
+            {/* Nome, Tom, Cantor, Categoria - Responsivo */}
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-2 lg:gap-2">
+              <div className="lg:col-span-4">
                 <label className="block text-sm font-medium text-gray-700 mb-1">🎵 Nome do Hino *</label>
                 <input
                   type="text"
@@ -182,7 +182,7 @@ export const CadastrarHino: React.FC<CadastrarHinoProps> = ({ configuracoes }) =
                 />
               </div>
 
-              <div className="col-span-2">
+              <div className="lg:col-span-2">
                 <label className="block text-sm font-medium text-gray-700 mb-1">🎼 Tom</label>
                 <select
                   value={formData.tom}
@@ -195,7 +195,7 @@ export const CadastrarHino: React.FC<CadastrarHinoProps> = ({ configuracoes }) =
                 </select>
               </div>
 
-              <div className="col-span-3">
+              <div className="lg:col-span-3">
                 <label className="block text-sm font-medium text-gray-700 mb-1">👤 Cantor *</label>
                 <input
                   type="text"
@@ -206,7 +206,7 @@ export const CadastrarHino: React.FC<CadastrarHinoProps> = ({ configuracoes }) =
                 />
               </div>
 
-              <div className="col-span-3">
+              <div className="lg:col-span-3">
                 <label className="block text-sm font-medium text-gray-700 mb-1">📂 Categoria</label>
                 <select
                   value={formData.categoria}
