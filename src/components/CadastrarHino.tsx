@@ -366,9 +366,7 @@ export const CadastrarHino: React.FC<CadastrarHinoProps> = ({ configuracoes }) =
                     className="p-2 bg-blue-50 text-blue-600 rounded hover:bg-blue-100 transition flex justify-center items-center"
                     title="Ver letra"
                   >
-                    <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
-                      <path d="M12 5C7 5 2.73 8.11 1 12.46c1.73 4.35 6 7.54 11 7.54s9.27-3.19 11-7.54C21.27 8.11 17 5 12 5m0 9c-1.66 0-3-1.34-3-3s1.34-3 3-3 3 1.34 3 3-1.34 3-3 3z" />
-                    </svg>
+                    👁️
                   </button>
                   <button
                     onClick={() => handleEditar(hino)}
@@ -394,7 +392,7 @@ export const CadastrarHino: React.FC<CadastrarHinoProps> = ({ configuracoes }) =
                     title="Compartilhar"
                   >
                     <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.684 13.342C9.589 14.06 10.717 14.534 11.968 14.534c3.59 0 6.5-2.893 6.5-6.47 0-3.577-2.91-6.469-6.5-6.469-3.59 0-6.5 2.892-6.5 6.47 0 1.251.474 2.379 1.293 3.285m0 0a6.47 6.47 0 0011.632-4.285v-2.58m0 0a6.5 6.5 0 10-9.36 5.853" />
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7.217 10.907a2.828 2.828 0 100-5.656 2.828 2.828 0 000 5.656zM16.783 10.907a2.828 2.828 0 100-5.656 2.828 2.828 0 000 5.656zM12 14.5a2 2 0 100 4 2 2 0 000-4zm0 0a6 6 0 00-5.197 3.004M7 21h10M7.217 12.907A8.972 8.972 0 0112 14.5m4.783-1.593A8.972 8.972 0 0112 14.5M4 20.5A2.5 2.5 0 016.5 18h11A2.5 2.5 0 0120 20.5" />
                     </svg>
                   </button>
                   <button
