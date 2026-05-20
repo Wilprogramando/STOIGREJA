@@ -112,6 +112,19 @@ export const MontarRepertorio: React.FC<MontarRepertorioProps> = ({
 
     try {
       const agora = new Date().toISOString();
+      
+      // Extrair apenas os IDs dos hinos para salvar no banco (lista_hinos)
+      const idsHinos = hinosNoRepertorio
+        .sort((a, b) => a.ordem - b.ordem)
+        .map(h => h.hinoId);
+
+      console.log('📝 Salvando repertório:', {
+        nome: formData.nome,
+        data: formData.data,
+        hinos_ids: idsHinos,
+        total_hinos: idsHinos.length
+      });
+
       const repertorio: Repertorio = {
         id: repertorioAtual?.id || Date.now().toString(),
         nome: formData.nome,
@@ -133,7 +146,7 @@ export const MontarRepertorio: React.FC<MontarRepertorioProps> = ({
 
       if (onSave) onSave();
     } catch (error) {
-      console.error('Erro ao salvar repertório:', error);
+      console.error('❌ Erro ao salvar repertório:', error);
       alert('Erro ao salvar repertório');
     }
   };
