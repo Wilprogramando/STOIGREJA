@@ -34,7 +34,7 @@ export async function generateHinoPdf(
       </div>
 
       <!-- Letra em 1 coluna simples -->
-      <div style="font-family: 'Arial', sans-serif; font-size: 13px; line-height: 1.8; color: #333; white-space: pre-wrap; text-align: left; margin-bottom: 20px;">
+      <div style="font-family: 'Arial', sans-serif; font-size: 12px; line-height: 1.7; color: #333; white-space: pre-wrap; text-align: left; margin-bottom: 20px;">
 ${hino.letra}
       </div>
 
@@ -58,7 +58,7 @@ ${hino.letra}
   element.innerHTML = html;
 
   const opt = {
-    margin: [15, 25, 15, 25],
+    margin: [20, 30, 20, 30],
     filename: `${hino.nome.replace(/\s+/g, '_')}.pdf`,
     image: { type: 'jpeg', quality: 0.98 },
     html2canvas: { scale: 2, useCORS: true, logging: false, backgroundColor: '#ffffff' },
