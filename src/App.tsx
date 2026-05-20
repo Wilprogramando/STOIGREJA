@@ -7,6 +7,7 @@ import { Harpa } from './components/Harpa';
 import { MontarRepertorio } from './components/MontarRepertorio';
 import { RepertoriosSalvos } from './components/RepertoriosSalvos';
 import { ConfiguracoesView } from './components/Configuracoes';
+import { Relatorios } from './components/Relatorios';
 import { initializeHarpaBase, getConfiguracoes } from './services/db';
 import { Configuracoes, Repertorio } from './types';
 
@@ -84,6 +85,8 @@ export default function App() {
         );
       case 'configuracoes':
         return <ConfiguracoesView onConfigChange={handleConfigChange} />;
+      case 'relatorios':
+        return <Relatorios />;
       default:
         return <Dashboard onPageChange={handlePageChange} />;
     }
