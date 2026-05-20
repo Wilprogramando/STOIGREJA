@@ -30,8 +30,18 @@ export async function generateHinoPdf(
         ${hino.categoria ? `<p style="margin: 2px 0;"><strong style="color: #E65100;">Categoria:</strong> ${hino.categoria}</p>` : ''}
       </div>
       
-      <div style="column-count: 2; column-gap: 15px; column-rule: 1px solid #ddd; white-space: pre-wrap; font-size: 14px; line-height: 1.6; margin-bottom: 15px; background-color: white;">
-${hino.letra}
+      <div style="white-space: pre-wrap; font-size: 14px; line-height: 1.6; margin-bottom: 15px; background-color: white;">
+${
+  // Calcula aproximadamente quantas linhas a letra tem
+  const linhas = hino.letra.split('\n').length;
+  // Se tem muitas linhas (acima de 25), usa 2 colunas para economizar espaço
+  const usarColunas = linhas > 25;
+  
+  if (usarColunas) {
+    return `<div style="column-count: 2; column-gap: 15px; column-rule: 1px solid #ddd;">${hino.letra}</div>`;
+  }
+  return hino.letra;
+}
       </div>
       
       ${hino.observacoes ? `
