@@ -19,7 +19,7 @@ export async function generateHinoPdf(
       
       <div style="border-bottom: 2px solid #E65100; margin-bottom: 15px;"></div>
       
-      <h2 style="font-size: 16px; color: #E65100; margin: 0 0 10px 0; font-weight: bold;">
+      <h2 style="font-size: 18px; color: #E65100; margin: 0 0 10px 0; font-weight: bold;">
         ${hino.nome}
       </h2>
       
@@ -30,7 +30,7 @@ export async function generateHinoPdf(
         ${hino.categoria ? `<p style="margin: 2px 0;"><strong style="color: #E65100;">Categoria:</strong> ${hino.categoria}</p>` : ''}
       </div>
       
-      <div style="white-space: pre-wrap; font-size: 12px; line-height: 1.5; margin-bottom: 15px; background-color: white;">
+      <div style="column-count: 2; column-gap: 15px; column-rule: 1px solid #ddd; white-space: pre-wrap; font-size: 14px; line-height: 1.6; margin-bottom: 15px; background-color: white;">
 ${hino.letra}
       </div>
       
