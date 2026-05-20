@@ -245,19 +245,22 @@ export const RepertoriosSalvos: React.FC<RepertoriosSalvosProps> = ({ configurac
                     </thead>
                     <tbody>
                       {getHinosCompletos(repertorio.hinos)
-                        .map((hino, idx) => (
+                        .filter(h => h !== null && h !== undefined)
+                        .map((hino, idx) => {
+                          if (!hino) return null;
+                          return (
                           <tr key={hino.id} className="border-b hover:bg-gray-50">
                             <td className="px-4 py-2 font-bold text-indigo-600">{idx + 1}</td>
                             <td className="px-4 py-2">
-                              {hino.nome}
-                              {hino.numeroHarpa && (
+                              {hino?.nome || 'Hino desconhecido'}
+                              {hino?.numeroHarpa && (
                                 <span className="text-gray-500 text-xs ml-2">(Harpa nº {hino.numeroHarpa})</span>
                               )}
                             </td>
-                            <td className="px-4 py-2">{hino.tom}</td>
-                            <td className="px-4 py-2">{hino.cantor}</td>
+                            <td className="px-4 py-2">{hino?.tom || '?'}</td>
+                            <td className="px-4 py-2">{hino?.cantor || '?'}</td>
                             <td className="px-4 py-2 text-center">
-                              {hino.letra && (
+                              {hino?.letra && (
                                 <button
                                   onClick={() => setHinoSelecionado(hino)}
                                   title="Ver letra"
@@ -268,7 +271,8 @@ export const RepertoriosSalvos: React.FC<RepertoriosSalvosProps> = ({ configurac
                               )}
                             </td>
                           </tr>
-                        ))}
+                        );
+                        })}
                     </tbody>
                   </table>
                 </div>
@@ -317,19 +321,23 @@ export const RepertoriosSalvos: React.FC<RepertoriosSalvosProps> = ({ configurac
                   </thead>
                   <tbody>
                     {getHinosCompletos(modalAberto.hinos)
-                      .map((hino, idx) => (
+                      .filter(h => h !== null && h !== undefined)
+                      .map((hino, idx) => {
+                        if (!hino) return null;
+                        return (
                         <tr key={hino.id} className="border-b hover:bg-gray-50">
                           <td className="px-4 py-2 font-bold text-indigo-600">{idx + 1}</td>
                           <td className="px-4 py-2">
-                            {hino.nome}
-                            {hino.numeroHarpa && (
+                            {hino?.nome || 'Hino desconhecido'}
+                            {hino?.numeroHarpa && (
                               <span className="text-gray-500 text-xs ml-2">(Harpa nº {hino.numeroHarpa})</span>
                             )}
                           </td>
-                          <td className="px-4 py-2">{hino.tom}</td>
-                          <td className="px-4 py-2">{hino.cantor}</td>
+                          <td className="px-4 py-2">{hino?.tom || '?'}</td>
+                          <td className="px-4 py-2">{hino?.cantor || '?'}</td>
                         </tr>
-                      ))}
+                      );
+                      })}
                   </tbody>
                 </table>
               </div>
