@@ -26,7 +26,7 @@ export async function generateHinoPdf(
         ${hino.categoria ? `<p style="font-size: 12px; margin: 6px 0;"><strong style="color: #E65100;">Categoria:</strong> ${hino.categoria}</p>` : ''}
       </div>
       
-      <div style="white-space: pre-wrap; line-height: 1.8; margin-bottom: 25px; font-size: 14px; background-color: white; padding: 15px; border-radius: 3px; word-wrap: break-word; overflow-wrap: break-word; page-break-after: auto;">
+      <div style="white-space: pre-wrap; line-height: 1.6; margin-bottom: 25px; font-size: 12px; background-color: white; padding: 10px; border-radius: 3px; word-wrap: break-word; overflow-wrap: break-word; page-break-after: auto;">
 ${hino.letra}
       </div>
       
@@ -50,10 +50,10 @@ ${hino.letra}
   element.innerHTML = html;
 
   const opt = {
-    margin: [15, 15, 15, 15],
+    margin: [10, 10, 10, 10],
     filename: `${hino.nome.replace(/\s+/g, '_')}.pdf`,
     image: { type: 'jpeg', quality: 0.98 },
-    html2canvas: { scale: 2, useCORS: true },
+    html2canvas: { scale: 2, useCORS: true, logging: false },
     jsPDF: { orientation: 'portrait', unit: 'mm', format: 'a4' }
   };
 
@@ -136,13 +136,13 @@ export async function generateRepertorioPdf(
     repertorio.hinos.forEach((hinoRep) => {
       if (hinoRep.letra) {
         html += `
-          <div style="margin-bottom: 30px; page-break-inside: avoid;">
-            <h4 style="color: #E65100; margin: 0 0 10px 0; font-size: 12px; font-weight: bold;">
+          <div style="margin-bottom: 30px; page-break-after: auto;">
+            <h4 style="color: #E65100; margin: 0 0 10px 0; font-size: 12px; font-weight: bold; page-break-inside: avoid;">
               ${hinoRep.ordem}. ${hinoRep.nome} ${hinoRep.numeroHarpa ? `(Harpa nº ${hinoRep.numeroHarpa})` : ''}
             </h4>
             <div style="background-color: #f9f9f9; padding: 12px 15px; border-left: 3px solid #E65100; border-radius: 3px;">
-              <p style="font-size: 11px; margin: 0 0 8px 0; color: #666;"><strong style="color: #E65100;">Tom:</strong> ${hinoRep.tom} | <strong style="color: #E65100;">Cantor:</strong> ${hinoRep.cantor}</p>
-              <div style="white-space: pre-wrap; line-height: 1.7; margin-top: 10px; font-size: 20px; color: #333; page-break-inside: avoid;">
+              <p style="font-size: 11px; margin: 0 0 8px 0; color: #666; page-break-inside: avoid;"><strong style="color: #E65100;">Tom:</strong> ${hinoRep.tom} | <strong style="color: #E65100;">Cantor:</strong> ${hinoRep.cantor}</p>
+              <div style="white-space: pre-wrap; line-height: 1.6; margin-top: 10px; font-size: 12px; color: #333; word-wrap: break-word; overflow-wrap: break-word;">
 ${hinoRep.letra}
               </div>
             </div>
@@ -166,10 +166,10 @@ ${hinoRep.letra}
   element.innerHTML = html;
 
   const opt = {
-    margin: [20, 15, 20, 15],
+    margin: [10, 10, 10, 10],
     filename: `${repertorio.nome.replace(/\s+/g, '_')}.pdf`,
     image: { type: 'jpeg', quality: 0.98 },
-    html2canvas: { scale: 2 },
+    html2canvas: { scale: 2, logging: false },
     jsPDF: { orientation: 'portrait', unit: 'mm', format: 'a4' }
   };
 
