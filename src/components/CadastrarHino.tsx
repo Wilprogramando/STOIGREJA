@@ -337,9 +337,9 @@ export const CadastrarHino: React.FC<CadastrarHinoProps> = ({ configuracoes }) =
 
       {deletePasswordModal && (
         <DeletePasswordModal
-          hino={deletePasswordModal}
-          onDelete={handleDeletar}
-          onClose={() => setDeletePasswordModal(null)}
+          hinoNome={deletePasswordModal.nome}
+          onConfirm={() => handleDeletar(deletePasswordModal.id)}
+          onCancel={() => setDeletePasswordModal(null)}
         />
       )}
     </div>
