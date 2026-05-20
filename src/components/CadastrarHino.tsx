@@ -151,7 +151,6 @@ export const CadastrarHino: React.FC<CadastrarHinoProps> = ({ configuracoes }) =
           </h3>
           
           <form onSubmit={handleSubmit} className="space-y-3">
-            {/* Nome, Tom, Cantor, Categoria - Responsivo */}
             <div className="space-y-2">
               <input
                 type="text"
@@ -192,7 +191,6 @@ export const CadastrarHino: React.FC<CadastrarHinoProps> = ({ configuracoes }) =
               />
             </div>
 
-            {/* Letra */}
             <textarea
               value={formData.letra}
               onChange={(e) => setFormData({ ...formData, letra: e.target.value })}
@@ -201,7 +199,6 @@ export const CadastrarHino: React.FC<CadastrarHinoProps> = ({ configuracoes }) =
               placeholder="Letra do hino (opcional)"
             />
 
-            {/* Observações */}
             <textarea
               value={formData.observacoes}
               onChange={(e) => setFormData({ ...formData, observacoes: e.target.value })}
@@ -210,7 +207,6 @@ export const CadastrarHino: React.FC<CadastrarHinoProps> = ({ configuracoes }) =
               placeholder="Observações (opcional)"
             />
 
-            {/* Botões */}
             <div className="grid grid-cols-2 gap-2 pt-2">
               <button
                 type="submit"
@@ -234,7 +230,7 @@ export const CadastrarHino: React.FC<CadastrarHinoProps> = ({ configuracoes }) =
       )}
 
       {/* Filtros - Compacto para Mobile */}
-      <div className="bg-white p-3 rounded-lg shadow-md mb-4 sticky top-0 z-10">
+      <div className="bg-white p-3 rounded-lg shadow-md mb-4">
         <input
           type="text"
           placeholder="🔍 Pesquisar hino..."
@@ -275,15 +271,12 @@ export const CadastrarHino: React.FC<CadastrarHinoProps> = ({ configuracoes }) =
         ) : (
           hinosFiltrados.map(hino => (
             <div key={hino.id} className="bg-white p-3 rounded-lg shadow-sm border-l-4 border-indigo-600">
-              {/* Título - MAIOR */}
               <h3 className="text-base font-bold text-gray-900 mb-2">{hino.nome}</h3>
               
-              {/* Informações em 1 linha: Tom • Cantor • Categoria */}
               <div className="text-xs text-gray-600 mb-3">
                 <p>🎵 <span className="font-medium">{hino.tom}</span> • 👤 <span className="font-medium">{hino.cantor}</span> • 📂 <span className="font-medium">{hino.categoria}</span></p>
               </div>
               
-              {/* Botões em grid compacta - ÍCONES MENORES */}
               <div className="grid grid-cols-5 gap-1">
                 <button
                   onClick={() => setModalLetra(hino)}
@@ -326,7 +319,6 @@ export const CadastrarHino: React.FC<CadastrarHinoProps> = ({ configuracoes }) =
         )}
       </div>
 
-      {/* Modals */}
       {modalLetra && (
         <ModalVisualizaLetra
           hino={modalLetra}
