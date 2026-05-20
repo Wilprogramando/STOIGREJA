@@ -6,12 +6,8 @@ export async function generateHinoPdf(
   configuracoes: Configuracoes | null,
   logo?: string
 ) {
-  // Verificar se deve usar 2 colunas (letra longa = muitas linhas)
-  const linhas = hino.letra.split('\n').length;
-  const usarDuasColunas = linhas > 25;
-  const styleLetra = usarDuasColunas 
-    ? 'font-family: "Arial", sans-serif; font-size: 13px; line-height: 1.8; color: #333; white-space: pre-wrap; column-count: 2; column-gap: 25px; column-rule: 1px solid #f0f0f0; text-align: left;'
-    : 'font-family: "Arial", sans-serif; font-size: 13px; line-height: 1.8; color: #333; white-space: pre-wrap; text-align: left;';
+  // Sempre usar 2 colunas para a letra
+  const styleLetra = 'font-family: "Arial", sans-serif; font-size: 13px; line-height: 1.8; color: #333; white-space: pre-wrap; column-count: 2; column-gap: 25px; column-rule: 1px solid #f0f0f0; text-align: left;';
 
   const html = `
     <div style="font-family: 'Arial', sans-serif; color: #333; background-color: white;">
