@@ -40,19 +40,22 @@ export const Relatorios: React.FC = () => {
       const usageMap = new Map<string, { hino: Hino; count: number; ultimoUso: string }>();
 
       repertorios.forEach((rep: any) => {
-        console.log('Processando repertório:', rep.nome, 'Hinos:', rep.lista_hinos?.length || 0);
+        console.log('Processando repertório:', rep.nome, 'Hinos:', rep.hinos?.length || 0);
         
-        if (rep.lista_hinos && Array.isArray(rep.lista_hinos)) {
-          rep.lista_hinos.forEach((hinoRef: any) => {
+        if (rep.hinos && Array.isArray(rep.hinos)) {
+          rep.hinos.forEach((hinoRef: any) => {
             // Tentar pegar o ID do hino (pode ser string ou objeto)
-            const hinoId = typeof hinoRef === 'string' ? hinoRef : hinoRef.id;
+            const hinoId = typeof hinoRef === 'string' ? hinoRef : hinoRef?.id;
             
-            if (!hinoId) return;
+            if (!hinoId) {
+              console.warn('Hino sem ID:', hinoRef);
+              return;
+            }
 
             const hino = todosHinos.find(h => h.id === hinoId);
             
             if (hino) {
-              const dataUso = rep.data_culto || rep.data || new Date().toISOString();
+              const dataUso = rep.data || new Date().toISOString();
               const current = usageMap.get(hinoId);
               
               if (current) {
@@ -68,6 +71,8 @@ export const Relatorios: React.FC = () => {
                   ultimoUso: dataUso
                 });
               }
+            } else {
+              console.warn('Hino não encontrado:', hinoId);
             }
           });
         }
