@@ -36,9 +36,41 @@ export const MontarRepertorio: React.FC<MontarRepertorioProps> = ({
         horario: repertorioAtual.horario || '',
         observacoes: repertorioAtual.observacoes || ''
       });
-      setHinosNoRepertorio(repertorioAtual.hinos);
+      
+      // ✅ Converter IDs (strings) em objetos HinoNoRepertorio
+      const hinosProcessados = repertorioAtual.hinos
+        .filter((h: any) => h !== null && h !== undefined)
+        .map((h: any, idx: number) => {
+          // Se já é objeto completo (edição de repertório antigo)
+          if (typeof h === 'object' && h.hinoId) {
+            return h;
+          }
+          
+          // Se é ID (string), procura no banco
+          if (typeof h === 'string') {
+            const hinoCompleto = hinos.find(hn => hn.id === h);
+            if (hinoCompleto) {
+              return {
+                id: Date.now().toString() + '_' + idx,
+                hinoId: hinoCompleto.id,
+                ordem: idx + 1,
+                nome: hinoCompleto.nome,
+                tom: hinoCompleto.tom,
+                cantor: hinoCompleto.cantor,
+                letra: hinoCompleto.letra,
+                numeroHarpa: hinoCompleto.numeroHarpa,
+                observacoes: hinoCompleto.observacoes
+              };
+            }
+          }
+          
+          return null;
+        })
+        .filter(Boolean);
+      
+      setHinosNoRepertorio(hinosProcessados);
     }
-  }, [repertorioAtual]);
+  }, [repertorioAtual, hinos]);
 
   const loadHinos = async () => {
     const todos = await getAllHinos();
@@ -112,19 +144,6 @@ export const MontarRepertorio: React.FC<MontarRepertorioProps> = ({
 
     try {
       const agora = new Date().toISOString();
-      
-      // Extrair apenas os IDs dos hinos para salvar no banco (lista_hinos)
-      const idsHinos = hinosNoRepertorio
-        .sort((a, b) => a.ordem - b.ordem)
-        .map(h => h.hinoId);
-
-      console.log('📝 Salvando repertório:', {
-        nome: formData.nome,
-        data: formData.data,
-        hinos_ids: idsHinos,
-        total_hinos: idsHinos.length
-      });
-
       const repertorio: Repertorio = {
         id: repertorioAtual?.id || Date.now().toString(),
         nome: formData.nome,
@@ -146,7 +165,7 @@ export const MontarRepertorio: React.FC<MontarRepertorioProps> = ({
 
       if (onSave) onSave();
     } catch (error) {
-      console.error('❌ Erro ao salvar repertório:', error);
+      console.error('Erro ao salvar repertório:', error);
       alert('Erro ao salvar repertório');
     }
   };
