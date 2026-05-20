@@ -189,23 +189,28 @@ export async function getHinosByType(tipo: string): Promise<Hino[]> {
 export async function addRepertorio(repertorio: Repertorio): Promise<string> {
   try {
     if (supabase) {
+      // ✅ CORRIGIDO: Extrair apenas os IDs dos hinos
+      const idsHinos = repertorio.hinos?.map(h => h.hinoId || h.id) || [];
+      
       const dadosSupabase = {
         id: repertorio.id,
         nome: repertorio.nome,
         data_culto: repertorio.data,
         horario_culto: repertorio.horario || '',
         observacoes: repertorio.observacoes || '',
-        lista_hinos: repertorio.hinos || [],
+        lista_hinos: idsHinos,
         criado_em: repertorio.criadoEm || new Date().toISOString(),
         atualizado_em: repertorio.atualizadoEm || new Date().toISOString()
       };
+
+      console.log('📝 Salvando repertório com hinos:', idsHinos);
 
       const { data, error } = await supabase
         .from('repertorios_cultos')
         .insert([dadosSupabase]);
       
       if (error) throw error;
-      console.log('✅ Repertório salvo');
+      console.log('✅ Repertório salvo com', idsHinos.length, 'hinos');
       return repertorio.id;
     } else {
       const chave = `${DB_PREFIX}repertorio_${repertorio.id}`;
@@ -260,14 +265,19 @@ export async function getAllRepertorios(): Promise<Repertorio[]> {
 export async function updateRepertorio(repertorio: Repertorio): Promise<void> {
   try {
     if (supabase) {
+      // ✅ CORRIGIDO: Extrair apenas os IDs dos hinos
+      const idsHinos = repertorio.hinos?.map(h => h.hinoId || h.id) || [];
+      
       const dadosSupabase = {
         nome: repertorio.nome,
         data_culto: repertorio.data,
         horario_culto: repertorio.horario || '',
         observacoes: repertorio.observacoes || '',
-        lista_hinos: repertorio.hinos || [],
+        lista_hinos: idsHinos,
         atualizado_em: new Date().toISOString()
       };
+
+      console.log('📝 Atualizando repertório com hinos:', idsHinos);
 
       const { error } = await supabase
         .from('repertorios_cultos')
@@ -275,7 +285,7 @@ export async function updateRepertorio(repertorio: Repertorio): Promise<void> {
         .eq('id', repertorio.id);
       
       if (error) throw error;
-      console.log('✅ Repertório atualizado');
+      console.log('✅ Repertório atualizado com', idsHinos.length, 'hinos');
     } else {
       const chave = `${DB_PREFIX}repertorio_${repertorio.id}`;
       localStorage.setItem(chave, JSON.stringify(repertorio));
