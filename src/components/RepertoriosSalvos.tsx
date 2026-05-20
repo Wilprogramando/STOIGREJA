@@ -35,16 +35,20 @@ export const RepertoriosSalvos: React.FC<RepertoriosSalvosProps> = ({ configurac
         const hinoCompleto = todosHinos.find(h => h.id === item);
         return hinoCompleto || null;
       })
-      .filter(Boolean) as Hino[];
+      .filter(h => h !== null) as Hino[]; // ✅ CORRIGIDO: Filter para remover nulls
   };
 
   const loadRepertorios = async () => {
     setLoading(true);
     try {
-      const todos = await getAllRepertorios();
+      console.log('Carregando repertórios e hinos...');
       const hinos = await getAllHinos();
-      setRepertorios(todos);
+      console.log('Hinos carregados:', hinos.length);
       setTodosHinos(hinos);
+      
+      const todos = await getAllRepertorios();
+      console.log('Repertórios carregados:', todos.length);
+      setRepertorios(todos);
     } catch (error) {
       console.error('Erro ao carregar repertórios:', error);
     } finally {
@@ -107,9 +111,11 @@ export const RepertoriosSalvos: React.FC<RepertoriosSalvosProps> = ({ configurac
 
   const handleCompartilharWhatsApp = (repertorio: Repertorio) => {
     const hinosCompletos = getHinosCompletos(repertorio.hinos);
-    const mensagemHinos = hinosCompletos
-      .map((h, i) => `${i + 1}. ${h.nome} (Tom: ${h.tom})`)
-      .join('\n');
+    const mensagemHinos = hinosCompletos.length > 0
+      ? hinosCompletos
+          .map((h, i) => `${i + 1}. ${h?.nome || 'Hino desconhecido'} (Tom: ${h?.tom || '?'})`)
+          .join('\n')
+      : 'Nenhum hino adicionado';
     const message = `*${repertorio.nome}*\n\nData: ${new Date(repertorio.data).toLocaleDateString('pt-BR')}\n\nHinos:\n${mensagemHinos}`;
     shareViaWhatsApp(message);
   };
