@@ -129,6 +129,18 @@ export const Harpa: React.FC<HarpaProps> = ({ configuracoes }) => {
     setShowForm(true);
   };
 
+  const handleDuplicar = (hino: Hino) => {
+    setFormData({
+      numeroHarpa: '',
+      tom: hino.tom,
+      cantor: hino.cantor + ' (Cópia)',
+      letra: hino.letra,
+      observacoes: hino.observacoes || ''
+    });
+    setEditando(null);
+    setShowForm(true);
+  };
+
   const handleDeletar = (hino: Hino) => {
     setDeletePasswordModal(hino);
   };
@@ -352,83 +364,113 @@ export const Harpa: React.FC<HarpaProps> = ({ configuracoes }) => {
                 
                 {/* Botões Mobile */}
                 <div className="md:hidden flex gap-1 mt-3">
-                  {hino.letra && (
-                    <button
-                      onClick={() => setModalLetra(hino)}
-                      className="p-1 bg-blue-100 text-blue-600 rounded hover:bg-blue-200 transition flex justify-center text-xs flex-1"
-                      title="Ver letra"
-                    >
-                      👁️
-                    </button>
-                  )}
                   <button
-                    onClick={() => handleGerarPdf(hino)}
-                    className="p-1 bg-green-100 text-green-600 rounded hover:bg-green-200 transition flex justify-center text-xs flex-1"
-                    title="Baixar PDF"
+                    onClick={() => setModalLetra(hino)}
+                    className="p-1.5 bg-blue-100 text-blue-600 rounded hover:bg-blue-200 transition flex justify-center flex-1"
+                    title="Ver letra"
                   >
-                    📥
-                  </button>
-                  <button
-                    onClick={() => handleCompartilharWhatsApp(hino)}
-                    className="p-1 bg-cyan-100 text-cyan-600 rounded hover:bg-cyan-200 transition flex justify-center text-xs flex-1"
-                    title="Compartilhar"
-                  >
-                    📤
+                    👁️
                   </button>
                   <button
                     onClick={() => handleEditar(hino)}
-                    className="p-1 bg-yellow-100 text-yellow-600 rounded hover:bg-yellow-200 transition flex justify-center text-xs flex-1"
+                    className="p-1.5 bg-yellow-100 text-yellow-600 rounded hover:bg-yellow-200 transition flex justify-center flex-1"
                     title="Editar"
                   >
-                    ✏️
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                    </svg>
+                  </button>
+                  <button
+                    onClick={() => handleGerarPdf(hino)}
+                    className="p-1.5 bg-orange-100 text-orange-600 rounded hover:bg-orange-200 transition flex justify-center flex-1"
+                    title="Baixar PDF"
+                  >
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                    </svg>
+                  </button>
+                  <button
+                    onClick={() => handleCompartilharWhatsApp(hino)}
+                    className="p-1.5 bg-green-100 text-green-600 rounded hover:bg-green-200 transition flex justify-center flex-1"
+                    title="Compartilhar"
+                  >
+                    <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
+                      <path d="M17.5 2c1.933 0 3.5 1.567 3.5 3.5v4.5h-2V5.5c0-.827-.673-1.5-1.5-1.5h-11c-.827 0-1.5.673-1.5 1.5v11c0 .827.673 1.5 1.5 1.5h4.5v2h-4.5c-1.933 0-3.5-1.567-3.5-3.5v-11c0-1.933 1.567-3.5 3.5-3.5h11zm0 8l-6 6v-4h-6v-4h6v-4l6 6z" />
+                    </svg>
+                  </button>
+                  <button
+                    onClick={() => handleDuplicar(hino)}
+                    className="p-1.5 bg-purple-100 text-purple-600 rounded hover:bg-purple-200 transition flex justify-center flex-1"
+                    title="Duplicar"
+                  >
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                    </svg>
                   </button>
                   <button
                     onClick={() => handleDeletar(hino)}
-                    className="p-1 bg-red-100 text-red-600 rounded hover:bg-red-200 transition flex justify-center text-xs flex-1"
+                    className="p-1.5 bg-red-100 text-red-600 rounded hover:bg-red-200 transition flex justify-center flex-1"
                     title="Deletar"
                   >
-                    🗑️
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                    </svg>
                   </button>
                 </div>
                 
-                {/* Botões Desktop - Na mesma linha */}
+                {/* Botões Desktop - Na mesma linha com ícones SVG */}
                 <div className="hidden md:flex md:gap-2">
-                  {hino.letra && (
-                    <button
-                      onClick={() => setModalLetra(hino)}
-                      className="p-1 bg-blue-100 text-blue-600 rounded hover:bg-blue-200 transition flex justify-center text-base"
-                      title="Ver letra"
-                    >
-                      👁️
-                    </button>
-                  )}
                   <button
-                    onClick={() => handleGerarPdf(hino)}
-                    className="p-1 bg-green-100 text-green-600 rounded hover:bg-green-200 transition flex justify-center text-base"
-                    title="Baixar PDF"
+                    onClick={() => setModalLetra(hino)}
+                    className="p-2 bg-blue-50 text-blue-600 rounded hover:bg-blue-100 transition flex justify-center items-center"
+                    title="Ver letra"
                   >
-                    📥
-                  </button>
-                  <button
-                    onClick={() => handleCompartilharWhatsApp(hino)}
-                    className="p-1 bg-cyan-100 text-cyan-600 rounded hover:bg-cyan-200 transition flex justify-center text-base"
-                    title="Compartilhar"
-                  >
-                    📤
+                    👁️
                   </button>
                   <button
                     onClick={() => handleEditar(hino)}
-                    className="p-1 bg-yellow-100 text-yellow-600 rounded hover:bg-yellow-200 transition flex justify-center text-base"
+                    className="p-2 bg-yellow-50 text-yellow-600 rounded hover:bg-yellow-100 transition flex justify-center items-center"
                     title="Editar"
                   >
-                    ✏️
+                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                    </svg>
+                  </button>
+                  <button
+                    onClick={() => handleGerarPdf(hino)}
+                    className="p-2 bg-orange-50 text-orange-600 rounded hover:bg-orange-100 transition flex justify-center items-center"
+                    title="Baixar PDF"
+                  >
+                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                    </svg>
+                  </button>
+                  <button
+                    onClick={() => handleCompartilharWhatsApp(hino)}
+                    className="p-2 bg-green-50 text-green-600 rounded hover:bg-green-100 transition flex justify-center items-center"
+                    title="Compartilhar"
+                  >
+                    <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
+                      <path d="M17.5 2c1.933 0 3.5 1.567 3.5 3.5v4.5h-2V5.5c0-.827-.673-1.5-1.5-1.5h-11c-.827 0-1.5.673-1.5 1.5v11c0 .827.673 1.5 1.5 1.5h4.5v2h-4.5c-1.933 0-3.5-1.567-3.5-3.5v-11c0-1.933 1.567-3.5 3.5-3.5h11zm0 8l-6 6v-4h-6v-4h6v-4l6 6z" />
+                    </svg>
+                  </button>
+                  <button
+                    onClick={() => handleDuplicar(hino)}
+                    className="p-2 bg-purple-50 text-purple-600 rounded hover:bg-purple-100 transition flex justify-center items-center"
+                    title="Duplicar"
+                  >
+                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                    </svg>
                   </button>
                   <button
                     onClick={() => handleDeletar(hino)}
-                    className="p-1 bg-red-100 text-red-600 rounded hover:bg-red-200 transition flex justify-center text-base"
+                    className="p-2 bg-red-50 text-red-600 rounded hover:bg-red-100 transition flex justify-center items-center"
                     title="Deletar"
                   >
-                    🗑️
+                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                    </svg>
                   </button>
                 </div>
               </div>
