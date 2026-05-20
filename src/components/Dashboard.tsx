@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { Music, BookOpen, Calendar, FileText, Plus } from 'lucide-react';
+import { Music, BookOpen, Calendar, FileText, Plus, BarChart3 } from 'lucide-react';
 import { getAllHinos, getAllRepertorios, getHinosByType } from '../services/db';
 import { Hino, Repertorio } from '../types';
+import { Relatorios } from './Relatorios';
 
 interface DashboardProps {
   onPageChange: (page: string) => void;
@@ -134,7 +135,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ onPageChange }) => {
         </div>
 
         {/* Botões de Ação */}
-        <div className="mt-8 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        <div className="mt-8 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
           <button
             onClick={() => onPageChange('cadastrar-hino')}
             className="p-4 bg-gradient-to-br from-blue-500 to-blue-600 text-white rounded-lg shadow-md hover:shadow-lg transition flex items-center justify-center gap-2"
@@ -155,6 +156,13 @@ export const Dashboard: React.FC<DashboardProps> = ({ onPageChange }) => {
           >
             <FileText size={20} />
             <span>Ver Repertórios</span>
+          </button>
+          <button
+            onClick={() => onPageChange('relatorios')}
+            className="p-4 bg-gradient-to-br from-purple-500 to-purple-600 text-white rounded-lg shadow-md hover:shadow-lg transition flex items-center justify-center gap-2"
+          >
+            <BarChart3 size={20} />
+            <span>Relatórios</span>
           </button>
         </div>
       </div>
