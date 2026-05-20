@@ -80,7 +80,13 @@ export async function generateRepertorioPdf(
       <h2 style="font-size: 20px; color: #E65100; text-align: center; margin: 0 0 15px 0; font-weight: bold;">${repertorio.nome}</h2>
       
       <div style="text-align: center; margin-bottom: 20px; color: #666; font-size: 12px;">
-        <p style="margin: 4px 0;"><strong style="color: #E65100;">Data:</strong> ${new Date(repertorio.data).toLocaleDateString('pt-BR')}</p>
+        <p style="margin: 4px 0;"><strong style="color: #E65100;">Data:</strong> ${
+          repertorio.data 
+            ? repertorio.data.includes('-') 
+              ? repertorio.data.split('-').reverse().join('/')
+              : repertorio.data
+            : 'Data não definida'
+        }</p>
         ${repertorio.horario ? `<p style="margin: 4px 0;"><strong style="color: #E65100;">Horário:</strong> ${repertorio.horario}</p>` : ''}
       </div>
       

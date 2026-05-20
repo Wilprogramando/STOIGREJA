@@ -22,23 +22,21 @@ const DB_PREFIX = 'repertorio_igreja_';
 export async function addHino(hino: Hino): Promise<string> {
   try {
     if (supabase) {
-      const id = hino.id || `hino_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
-      
       const dadosSupabase = {
-        id: id,
-        nome: hino.nome || 'Sem nome',
-        tom: hino.tom || '',
-        cantor: hino.cantor || '',
+        id: hino.id,
+        nome: hino.nome,
+        tom: hino.tom,
+        cantor: hino.cantor,
         letra: hino.letra || '',
-        categoria: hino.categoria || 'Louvor',
+        categoria: hino.categoria,
         observacoes: hino.observacoes || '',
         tipo: hino.tipo || 'comum',
-        numero_harpa: hino.numeroHarpa || null,
-        criado_em: hino.criadoEm || new Date().toISOString(),
-        atualizado_em: hino.atualizadoEm || new Date().toISOString()
+        numeroHarpa: hino.numeroHarpa || null,
+        criadoEm: hino.criadoEm || new Date().toISOString(),
+        atualizadoEm: hino.atualizadoEm || new Date().toISOString()
       };
 
-      const { error } = await supabase
+      const { data, error } = await supabase
         .from('hinos_cadastro')
         .insert([dadosSupabase]);
       
@@ -47,14 +45,13 @@ export async function addHino(hino: Hino): Promise<string> {
         throw error;
       }
 
-      console.log('✅ Hino salvo:', hino.nome);
-      return id;
+      console.log('✅ Hino salvo no Supabase:', hino.nome);
+      return hino.id;
     } else {
-      const id = hino.id || `hino_${Date.now()}`;
-      const chave = `${DB_PREFIX}hino_${id}`;
+      const chave = `${DB_PREFIX}hino_${hino.id}`;
       localStorage.setItem(chave, JSON.stringify(hino));
       console.log('✅ Hino salvo localmente');
-      return id;
+      return hino.id;
     }
   } catch (error) {
     console.error('❌ Erro ao salvar hino:', error);
@@ -72,19 +69,7 @@ export async function getAllHinos(): Promise<Hino[]> {
       
       if (error) throw error;
       console.log('✅ Hinos carregados:', data?.length || 0);
-      return data?.map((h: any) => ({
-        id: h.id,
-        nome: h.nome,
-        tom: h.tom,
-        cantor: h.cantor,
-        letra: h.letra,
-        categoria: h.categoria,
-        observacoes: h.observacoes,
-        tipo: h.tipo,
-        numeroHarpa: h.numero_harpa,
-        criadoEm: h.criado_em,
-        atualizadoEm: h.atualizado_em
-      })) || [];
+      return data || [];
     } else {
       const hinos: Hino[] = [];
       for (let i = 0; i < localStorage.length; i++) {
@@ -114,21 +99,7 @@ export async function getHino(id: string): Promise<Hino | undefined> {
         .single();
       
       if (error && error.code !== 'PGRST116') throw error;
-      if (!data) return undefined;
-      
-      return {
-        id: data.id,
-        nome: data.nome,
-        tom: data.tom,
-        cantor: data.cantor,
-        letra: data.letra,
-        categoria: data.categoria,
-        observacoes: data.observacoes,
-        tipo: data.tipo,
-        numeroHarpa: data.numero_harpa,
-        criadoEm: data.criado_em,
-        atualizadoEm: data.atualizado_em
-      };
+      return data || undefined;
     } else {
       const chave = `${DB_PREFIX}hino_${id}`;
       const dados = localStorage.getItem(chave);
@@ -144,15 +115,15 @@ export async function updateHino(hino: Hino): Promise<void> {
   try {
     if (supabase) {
       const dadosSupabase = {
-        nome: hino.nome || 'Sem nome',
-        tom: hino.tom || '',
-        cantor: hino.cantor || '',
+        nome: hino.nome,
+        tom: hino.tom,
+        cantor: hino.cantor,
         letra: hino.letra || '',
-        categoria: hino.categoria || 'Louvor',
+        categoria: hino.categoria,
         observacoes: hino.observacoes || '',
         tipo: hino.tipo || 'comum',
-        numero_harpa: hino.numeroHarpa || null,
-        atualizado_em: new Date().toISOString()
+        numeroHarpa: hino.numeroHarpa || null,
+        atualizadoEm: new Date().toISOString()
       };
 
       const { error } = await supabase
@@ -202,19 +173,7 @@ export async function getHinosByType(tipo: string): Promise<Hino[]> {
         .order('nome', { ascending: true });
       
       if (error) throw error;
-      return data?.map((h: any) => ({
-        id: h.id,
-        nome: h.nome,
-        tom: h.tom,
-        cantor: h.cantor,
-        letra: h.letra,
-        categoria: h.categoria,
-        observacoes: h.observacoes,
-        tipo: h.tipo,
-        numeroHarpa: h.numero_harpa,
-        criadoEm: h.criado_em,
-        atualizadoEm: h.atualizado_em
-      })) || [];
+      return data || [];
     } else {
       const todos = await getAllHinos();
       return todos.filter(h => h.tipo === tipo);
@@ -241,7 +200,7 @@ export async function addRepertorio(repertorio: Repertorio): Promise<string> {
         atualizado_em: repertorio.atualizadoEm || new Date().toISOString()
       };
 
-      const { error } = await supabase
+      const { data, error } = await supabase
         .from('repertorios_cultos')
         .insert([dadosSupabase]);
       
@@ -359,18 +318,8 @@ export async function getConfiguracoes(): Promise<Configuracoes | null> {
         .maybeSingle();
       
       if (error && error.code !== 'PGRST116') throw error;
-      if (!data) return null;
-      
-      return {
-        id: data.id,
-        nomeIgreja: data.nome_igreja,
-        responsavel: data.nome_responsavel,
-        rodapePdf: data.rodape_pdf,
-        logo: data.logo_igreja,
-        tituloSistema: data.titulo_sistema,
-        logoSistema: data.logo_sistema,
-        subtitulo: data.subtitulo_sistema
-      };
+      console.log('✅ Configurações carregadas');
+      return data || null;
     } else {
       const chave = `${DB_PREFIX}config`;
       const dados = localStorage.getItem(chave);
@@ -385,20 +334,10 @@ export async function getConfiguracoes(): Promise<Configuracoes | null> {
 export async function saveConfiguracoes(config: Configuracoes): Promise<void> {
   try {
     if (supabase) {
-      const dadosSupabase = {
-        id: 'config',
-        nome_igreja: config.nomeIgreja,
-        nome_responsavel: config.responsavel,
-        rodape_pdf: config.rodapePdf,
-        logo_igreja: config.logo,
-        titulo_sistema: config.tituloSistema,
-        logo_sistema: config.logoSistema,
-        subtitulo_sistema: config.subtitulo
-      };
-
+      config.id = 'config';
       const { error } = await supabase
         .from('configuracoes_sistema')
-        .upsert([dadosSupabase], { onConflict: 'id' });
+        .upsert([config], { onConflict: 'id' });
       
       if (error) throw error;
       console.log('✅ Configurações salvas');
@@ -485,7 +424,7 @@ export async function initializeHarpaBase(): Promise<void> {
 
 // ==================== IMPORT/EXPORT ====================
 
-export async function importHinosFromCSV(csvText: string): Promise<{ success: number; errors: string[] }> {
+export async function importHinosFromCSV(csvText: string, tipoImportacao: 'harpa' | 'comum' = 'comum'): Promise<{ success: number; errors: string[] }> {
   const lines = csvText.trim().split('\n');
   let success = 0;
   const errorList: string[] = [];
@@ -497,23 +436,55 @@ export async function importHinosFromCSV(csvText: string): Promise<{ success: nu
 
     const parts = line.split('\t').length > 1 ? line.split('\t') : line.split(',');
     
-    if (parts.length < 2) {
-      errorList.push(`Linha ${i}: Formato inválido`);
-      continue;
-    }
-
     try {
-      const hino: Hino = {
-        id: `hino_${Date.now()}_${i}`,
-        nome: parts[1]?.trim() || '',
-        tom: parts[2]?.trim() || '',
-        cantor: parts[3]?.trim() || '',
-        categoria: 'Importado',
-        tipo: 'comum',
-        letra: '',
-        criadoEm: new Date().toISOString(),
-        atualizadoEm: new Date().toISOString()
-      };
+      let hino: Hino;
+
+      if (tipoImportacao === 'harpa') {
+        // Formato: Número\tNome\tTom\tCantor\tCategoria
+        if (parts.length < 2) {
+          errorList.push(`Linha ${i}: Formato inválido para Harpa`);
+          continue;
+        }
+
+        const numero = parseInt(parts[0]?.trim() || '0');
+        if (isNaN(numero)) {
+          errorList.push(`Linha ${i}: Número inválido`);
+          continue;
+        }
+
+        hino = {
+          id: `hino_harpa_${Date.now()}_${i}`,
+          nome: parts[1]?.trim() || `Hino nº ${numero}`,
+          tom: parts[2]?.trim() || 'C',
+          cantor: parts[3]?.trim() || 'Coral',
+          categoria: parts[4]?.trim() || 'Louvor',
+          tipo: 'harpa',
+          letra: '',
+          numeroHarpa: numero,
+          observacoes: '',
+          criadoEm: new Date().toISOString(),
+          atualizadoEm: new Date().toISOString()
+        };
+      } else {
+        // Formato: Nome\tTom\tCantor\tCategoria\tObservações
+        if (parts.length < 1) {
+          errorList.push(`Linha ${i}: Formato inválido`);
+          continue;
+        }
+
+        hino = {
+          id: `hino_comum_${Date.now()}_${i}`,
+          nome: parts[0]?.trim() || '',
+          tom: parts[1]?.trim() || 'C',
+          cantor: parts[2]?.trim() || 'Coral',
+          categoria: parts[3]?.trim() || 'Manancial',
+          tipo: 'comum',
+          letra: '',
+          observacoes: parts[4]?.trim() || '',
+          criadoEm: new Date().toISOString(),
+          atualizadoEm: new Date().toISOString()
+        };
+      }
 
       if (hino.nome) {
         items.push(hino);
@@ -557,12 +528,74 @@ export async function clearAllData(): Promise<void> {
   }
 }
 
-export async function exportData(): Promise<void> {
-  console.log('📦 Exportando dados...');
+export async function exportData(): Promise<any> {
+  try {
+    const hinos = await getAllHinos();
+    const repertorios = await getAllRepertorios();
+    const config = await getConfiguracoes();
+
+    const backupData = {
+      version: '1.0',
+      exportedAt: new Date().toISOString(),
+      data: {
+        hinos,
+        repertorios,
+        configuracoes: config || {}
+      }
+    };
+
+    console.log('✅ Dados exportados com sucesso');
+    return backupData;
+  } catch (error) {
+    console.error('❌ Erro ao exportar dados:', error);
+    throw error;
+  }
 }
 
-export async function importData(data: any): Promise<void> {
-  console.log('📦 Importando dados...');
+export async function importData(backupData: any): Promise<void> {
+  try {
+    // Validar estrutura do backup
+    if (!backupData.data || !Array.isArray(backupData.data.hinos)) {
+      throw new Error('Formato de backup inválido');
+    }
+
+    // Limpar dados antigos
+    await clearAllData();
+
+    // Restaurar hinos
+    const hinos = backupData.data.hinos || [];
+    for (const hino of hinos) {
+      try {
+        await addHino(hino);
+      } catch (err) {
+        console.warn('Erro ao importar hino:', hino.nome, err);
+      }
+    }
+
+    // Restaurar repertórios
+    const repertorios = backupData.data.repertorios || [];
+    for (const rep of repertorios) {
+      try {
+        await addRepertorio(rep);
+      } catch (err) {
+        console.warn('Erro ao importar repertório:', rep.nome, err);
+      }
+    }
+
+    // Restaurar configurações
+    if (backupData.data.configuracoes && backupData.data.configuracoes.id) {
+      try {
+        await saveConfiguracoes(backupData.data.configuracoes);
+      } catch (err) {
+        console.warn('Erro ao importar configurações:', err);
+      }
+    }
+
+    console.log('✅ Dados importados com sucesso');
+  } catch (error) {
+    console.error('❌ Erro ao importar dados:', error);
+    throw error;
+  }
 }
 
 export default {
