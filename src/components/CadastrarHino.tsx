@@ -275,51 +275,91 @@ export const CadastrarHino: React.FC<CadastrarHinoProps> = ({ configuracoes }) =
         ) : (
           hinosFiltrados.map(hino => (
             <div key={hino.id} className="bg-white p-3 rounded-lg shadow-sm border-l-4 border-indigo-600">
-              {/* Título - MAIOR */}
-              <h3 className="text-lg font-bold text-gray-900 mb-2">{hino.nome}</h3>
+              <h3 className="text-lg font-bold text-gray-900 mb-2 md:mb-0">{hino.nome}</h3>
               
-              {/* Informações em 1 linha: Tom • Cantor • Categoria */}
-              <div className="text-sm text-gray-600 mb-3">
-                <p>🎵 <span className="font-medium">{hino.tom}</span> • 👤 <span className="font-medium">{hino.cantor}</span> • 📂 <span className="font-medium">{hino.categoria}</span></p>
-              </div>
-              
-              {/* Botões - Responsivos (Mobile: compacto flex | Desktop: 1 linha diminuído) */}
-              <div className="flex gap-2 md:gap-2 md:justify-end md:mt-0">
-                <button
-                  onClick={() => setModalLetra(hino)}
-                  className="p-1.5 md:p-1 bg-blue-100 text-blue-600 rounded hover:bg-blue-200 transition flex justify-center text-sm md:text-base"
-                  title="Ver letra"
-                >
-                  👁️
-                </button>
-                <button
-                  onClick={() => handleEditar(hino)}
-                  className="p-1.5 md:p-1 bg-yellow-100 text-yellow-600 rounded hover:bg-yellow-200 transition flex justify-center text-sm md:text-base"
-                  title="Editar"
-                >
-                  ✏️
-                </button>
-                <button
-                  onClick={() => generateHinoPdf(hino, configuracoes)}
-                  className="p-1.5 md:p-1 bg-green-100 text-green-600 rounded hover:bg-green-200 transition flex justify-center text-sm md:text-base"
-                  title="Baixar PDF"
-                >
-                  📥
-                </button>
-                <button
-                  onClick={() => shareViaWhatsApp(`Confira o hino: ${hino.nome} (Tom: ${hino.tom}, Cantor: ${hino.cantor})`)}
-                  className="p-1.5 md:p-1 bg-cyan-100 text-cyan-600 rounded hover:bg-cyan-200 transition flex justify-center text-sm md:text-base"
-                  title="Compartilhar"
-                >
-                  📤
-                </button>
-                <button
-                  onClick={() => setDeletePasswordModal(hino)}
-                  className="p-1.5 md:p-1 bg-red-100 text-red-600 rounded hover:bg-red-200 transition flex justify-center text-sm md:text-base"
-                  title="Deletar"
-                >
-                  🗑️
-                </button>
+              {/* Linha com informações e botões - Desktop em 1 linha, Mobile em 2 */}
+              <div className="md:flex md:items-center md:justify-between md:gap-4">
+                <div className="text-sm text-gray-600 mt-2 md:mt-0">
+                  <p>🎵 <span className="font-medium">{hino.tom}</span> • 👤 <span className="font-medium">{hino.cantor}</span> • 📂 <span className="font-medium">{hino.categoria}</span></p>
+                </div>
+                
+                {/* Botões */}
+                <div className="md:hidden flex gap-2 mt-3">
+                  <button
+                    onClick={() => setModalLetra(hino)}
+                    className="p-1.5 bg-blue-100 text-blue-600 rounded hover:bg-blue-200 transition flex justify-center text-sm flex-1"
+                    title="Ver letra"
+                  >
+                    👁️
+                  </button>
+                  <button
+                    onClick={() => handleEditar(hino)}
+                    className="p-1.5 bg-yellow-100 text-yellow-600 rounded hover:bg-yellow-200 transition flex justify-center text-sm flex-1"
+                    title="Editar"
+                  >
+                    ✏️
+                  </button>
+                  <button
+                    onClick={() => generateHinoPdf(hino, configuracoes)}
+                    className="p-1.5 bg-green-100 text-green-600 rounded hover:bg-green-200 transition flex justify-center text-sm flex-1"
+                    title="Baixar PDF"
+                  >
+                    📥
+                  </button>
+                  <button
+                    onClick={() => shareViaWhatsApp(`Confira o hino: ${hino.nome} (Tom: ${hino.tom}, Cantor: ${hino.cantor})`)}
+                    className="p-1.5 bg-cyan-100 text-cyan-600 rounded hover:bg-cyan-200 transition flex justify-center text-sm flex-1"
+                    title="Compartilhar"
+                  >
+                    📤
+                  </button>
+                  <button
+                    onClick={() => setDeletePasswordModal(hino)}
+                    className="p-1.5 bg-red-100 text-red-600 rounded hover:bg-red-200 transition flex justify-center text-sm flex-1"
+                    title="Deletar"
+                  >
+                    🗑️
+                  </button>
+                </div>
+                
+                {/* Botões Desktop - Na mesma linha */}
+                <div className="hidden md:flex md:gap-2">
+                  <button
+                    onClick={() => setModalLetra(hino)}
+                    className="p-1 bg-blue-100 text-blue-600 rounded hover:bg-blue-200 transition flex justify-center text-base"
+                    title="Ver letra"
+                  >
+                    👁️
+                  </button>
+                  <button
+                    onClick={() => handleEditar(hino)}
+                    className="p-1 bg-yellow-100 text-yellow-600 rounded hover:bg-yellow-200 transition flex justify-center text-base"
+                    title="Editar"
+                  >
+                    ✏️
+                  </button>
+                  <button
+                    onClick={() => generateHinoPdf(hino, configuracoes)}
+                    className="p-1 bg-green-100 text-green-600 rounded hover:bg-green-200 transition flex justify-center text-base"
+                    title="Baixar PDF"
+                  >
+                    📥
+                  </button>
+                  <button
+                    onClick={() => shareViaWhatsApp(`Confira o hino: ${hino.nome} (Tom: ${hino.tom}, Cantor: ${hino.cantor})`)}
+                    className="p-1 bg-cyan-100 text-cyan-600 rounded hover:bg-cyan-200 transition flex justify-center text-base"
+                    title="Compartilhar"
+                  >
+                    📤
+                  </button>
+                  <button
+                    onClick={() => setDeletePasswordModal(hino)}
+                    className="p-1 bg-red-100 text-red-600 rounded hover:bg-red-200 transition flex justify-center text-base"
+                    title="Deletar"
+                  >
+                    🗑️
+                  </button>
+                </div>
               </div>
             </div>
           ))
