@@ -31,9 +31,9 @@ export async function addHino(hino: Hino): Promise<string> {
         categoria: hino.categoria,
         observacoes: hino.observacoes || '',
         tipo: hino.tipo || 'comum',
-        numeroHarpa: hino.numeroHarpa || null,
-        criadoEm: hino.criadoEm || new Date().toISOString(),
-        atualizadoEm: hino.atualizadoEm || new Date().toISOString()
+        numero_harpa: hino.numeroHarpa || null,
+        criado_em: hino.criadoEm || new Date().toISOString(),
+        atualizado_em: hino.atualizadoEm || new Date().toISOString()
       };
 
       const { data, error } = await supabase
@@ -122,8 +122,8 @@ export async function updateHino(hino: Hino): Promise<void> {
         categoria: hino.categoria,
         observacoes: hino.observacoes || '',
         tipo: hino.tipo || 'comum',
-        numeroHarpa: hino.numeroHarpa || null,
-        atualizadoEm: new Date().toISOString()
+        numero_harpa: hino.numeroHarpa || null,
+        atualizado_em: new Date().toISOString()
       };
 
       const { error } = await supabase
@@ -334,10 +334,20 @@ export async function getConfiguracoes(): Promise<Configuracoes | null> {
 export async function saveConfiguracoes(config: Configuracoes): Promise<void> {
   try {
     if (supabase) {
-      config.id = 'config';
+      const dadosSupabase = {
+        id: 'config',
+        nome_igreja: config.nomeIgreja,
+        nome_responsavel: config.responsavel,
+        rodape_pdf: config.rodapePdf,
+        logo_igreja: config.logo,
+        titulo_sistema: config.tituloSistema,
+        logo_sistema: config.logoSistema,
+        subtitulo_sistema: config.subtitulo
+      };
+
       const { error } = await supabase
         .from('configuracoes_sistema')
-        .upsert([config], { onConflict: 'id' });
+        .upsert([dadosSupabase], { onConflict: 'id' });
       
       if (error) throw error;
       console.log('✅ Configurações salvas');
