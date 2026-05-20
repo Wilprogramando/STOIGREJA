@@ -10,11 +10,11 @@ export async function generateHinoPdf(
   const linhas = hino.letra.split('\n').length;
   const usarDuasColunas = linhas > 25;
   const styleLetra = usarDuasColunas 
-    ? 'white-space: pre-wrap; font-size: 14px; line-height: 1.6; margin-bottom: 15px; background-color: white; column-count: 2; column-gap: 15px; column-rule: 1px solid #ddd;'
+    ? 'white-space: pre-wrap; font-size: 14px; line-height: 1.6; margin-bottom: 15px; background-color: white; column-count: 2; column-gap: 20px; column-rule: 1px solid #ddd; height: 300px; column-fill: auto;'
     : 'white-space: pre-wrap; font-size: 14px; line-height: 1.6; margin-bottom: 15px; background-color: white;';
 
   const html = `
-    <div style="font-family: 'Arial', sans-serif; color: #333; line-height: 1.4;">
+    <div style="font-family: 'Arial', sans-serif; color: #333; line-height: 1.4; padding: 20px 30px;">
       <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 15px;">
         <div style="flex: 1;">
           ${configuracoes?.nomeIgreja ? `<h1 style="font-size: 14px; color: #E65100; margin: 0; font-weight: bold;">${configuracoes.nomeIgreja}</h1>` : ''}
