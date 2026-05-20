@@ -6,9 +6,6 @@ export async function generateHinoPdf(
   configuracoes: Configuracoes | null,
   logo?: string
 ) {
-  // Letra em formato normal (1 coluna), quebra página naturalmente
-  const styleLetra = 'font-family: "Arial", sans-serif; font-size: 13px; line-height: 1.8; color: #333; white-space: pre-wrap; text-align: left;';
-
   const html = `
     <div style="font-family: 'Arial', sans-serif; color: #333; background-color: white;">
       <!-- Cabeçalho -->
@@ -36,8 +33,8 @@ export async function generateHinoPdf(
         ${hino.numeroHarpa ? `<p style="margin: 3px 0;"><strong>Harpa Cristã nº:</strong> ${hino.numeroHarpa}</p>` : ''}
       </div>
 
-      <!-- Letra em 2 colunas ou 1 coluna -->
-      <div style="${styleLetra}">
+      <!-- Letra em 1 coluna simples -->
+      <div style="font-family: 'Arial', sans-serif; font-size: 13px; line-height: 1.8; color: #333; white-space: pre-wrap; text-align: left; margin-bottom: 20px;">
 ${hino.letra}
       </div>
 
