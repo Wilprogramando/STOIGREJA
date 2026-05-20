@@ -189,7 +189,7 @@ export async function getHinosByType(tipo: string): Promise<Hino[]> {
 export async function addRepertorio(repertorio: Repertorio): Promise<string> {
   try {
     if (supabase) {
-      // ✅ CORRIGIDO: Extrair apenas os IDs dos hinos
+      // Extrair apenas os IDs dos hinos
       const idsHinos = repertorio.hinos?.map(h => h.hinoId || h.id) || [];
       
       const dadosSupabase = {
@@ -203,7 +203,7 @@ export async function addRepertorio(repertorio: Repertorio): Promise<string> {
         atualizado_em: repertorio.atualizadoEm || new Date().toISOString()
       };
 
-      console.log('📝 Salvando repertório com hinos:', idsHinos);
+      console.log('📝 Salvando no Supabase:', dadosSupabase);
 
       const { data, error } = await supabase
         .from('repertorios_cultos')
@@ -239,7 +239,7 @@ export async function getAllRepertorios(): Promise<Repertorio[]> {
         data: rep.data_culto,
         horario: rep.horario_culto,
         observacoes: rep.observacoes,
-        hinos: rep.lista_hinos,
+        hinos: Array.isArray(rep.lista_hinos) ? rep.lista_hinos : [],
         criadoEm: rep.criado_em,
         atualizadoEm: rep.atualizado_em
       }));
@@ -265,7 +265,7 @@ export async function getAllRepertorios(): Promise<Repertorio[]> {
 export async function updateRepertorio(repertorio: Repertorio): Promise<void> {
   try {
     if (supabase) {
-      // ✅ CORRIGIDO: Extrair apenas os IDs dos hinos
+      // Extrair apenas os IDs dos hinos
       const idsHinos = repertorio.hinos?.map(h => h.hinoId || h.id) || [];
       
       const dadosSupabase = {
@@ -277,7 +277,7 @@ export async function updateRepertorio(repertorio: Repertorio): Promise<void> {
         atualizado_em: new Date().toISOString()
       };
 
-      console.log('📝 Atualizando repertório com hinos:', idsHinos);
+      console.log('📝 Atualizando no Supabase:', dadosSupabase);
 
       const { error } = await supabase
         .from('repertorios_cultos')
