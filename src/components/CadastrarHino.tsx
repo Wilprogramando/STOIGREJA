@@ -304,7 +304,7 @@ export const CadastrarHino: React.FC<CadastrarHinoProps> = ({ configuracoes }) =
                 </div>
                 
                 {/* Botões */}
-                <div className="md:hidden flex gap-2 mt-3">
+                <div className="md:hidden flex gap-1 mt-3">
                   <button
                     onClick={() => setModalLetra(hino)}
                     className="p-1.5 bg-blue-100 text-blue-600 rounded hover:bg-blue-200 transition flex justify-center text-sm flex-1"
@@ -314,31 +314,48 @@ export const CadastrarHino: React.FC<CadastrarHinoProps> = ({ configuracoes }) =
                   </button>
                   <button
                     onClick={() => handleEditar(hino)}
-                    className="p-1.5 bg-yellow-100 text-yellow-600 rounded hover:bg-yellow-200 transition flex justify-center text-sm flex-1"
+                    className="p-1.5 bg-yellow-100 text-yellow-600 rounded hover:bg-yellow-200 transition flex justify-center flex-1"
                     title="Editar"
                   >
-                    ✏️
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                    </svg>
                   </button>
                   <button
                     onClick={() => generateHinoPdf(hino, configuracoes)}
-                    className="p-1.5 bg-green-100 text-green-600 rounded hover:bg-green-200 transition flex justify-center text-sm flex-1"
+                    className="p-1.5 bg-orange-100 text-orange-600 rounded hover:bg-orange-200 transition flex justify-center flex-1"
                     title="Baixar PDF"
                   >
-                    📥
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                    </svg>
                   </button>
                   <button
                     onClick={() => shareViaWhatsApp(`Confira o hino: ${hino.nome} (Tom: ${hino.tom}, Cantor: ${hino.cantor})`)}
-                    className="p-1.5 bg-cyan-100 text-cyan-600 rounded hover:bg-cyan-200 transition flex justify-center text-sm flex-1"
+                    className="p-1.5 bg-green-100 text-green-600 rounded hover:bg-green-200 transition flex justify-center flex-1"
                     title="Compartilhar"
                   >
-                    📤
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.684 13.342C9.589 14.06 10.717 14.534 11.968 14.534c3.59 0 6.5-2.893 6.5-6.47 0-3.577-2.91-6.469-6.5-6.469-3.59 0-6.5 2.892-6.5 6.47 0 1.251.474 2.379 1.293 3.285m0 0a6.47 6.47 0 0011.632-4.285v-2.58m0 0a6.5 6.5 0 10-9.36 5.853" />
+                    </svg>
+                  </button>
+                  <button
+                    onClick={() => handleDuplicar(hino)}
+                    className="p-1.5 bg-purple-100 text-purple-600 rounded hover:bg-purple-200 transition flex justify-center flex-1"
+                    title="Duplicar"
+                  >
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                    </svg>
                   </button>
                   <button
                     onClick={() => setDeletePasswordModal(hino)}
-                    className="p-1.5 bg-red-100 text-red-600 rounded hover:bg-red-200 transition flex justify-center text-sm flex-1"
+                    className="p-1.5 bg-red-100 text-red-600 rounded hover:bg-red-200 transition flex justify-center flex-1"
                     title="Deletar"
                   >
-                    🗑️
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                    </svg>
                   </button>
                 </div>
                 
