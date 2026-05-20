@@ -239,7 +239,6 @@ export const RepertoriosSalvos: React.FC<RepertoriosSalvosProps> = ({ configurac
                     </thead>
                     <tbody>
                       {getHinosCompletos(repertorio.hinos)
-                        .sort((a, b) => (a.ordem || 0) - (b.ordem || 0))
                         .map((hino, idx) => (
                           <tr key={hino.id} className="border-b hover:bg-gray-50">
                             <td className="px-4 py-2 font-bold text-indigo-600">{idx + 1}</td>
@@ -312,7 +311,6 @@ export const RepertoriosSalvos: React.FC<RepertoriosSalvosProps> = ({ configurac
                   </thead>
                   <tbody>
                     {getHinosCompletos(modalAberto.hinos)
-                      .sort((a, b) => (a.ordem || 0) - (b.ordem || 0))
                       .map((hino, idx) => (
                         <tr key={hino.id} className="border-b hover:bg-gray-50">
                           <td className="px-4 py-2 font-bold text-indigo-600">{idx + 1}</td>
