@@ -14,7 +14,7 @@ export async function generateHinoPdf(
     : 'white-space: pre-wrap; font-size: 14px; line-height: 1.6; margin-bottom: 15px; background-color: white;';
 
   const html = `
-    <div style="font-family: 'Arial', sans-serif; color: #333; line-height: 1.4; padding: 20px 30px;">
+    <div style="font-family: 'Arial', sans-serif; color: #333; line-height: 1.4; padding: 30px 40px;">
       <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 15px;">
         <div style="flex: 1;">
           ${configuracoes?.nomeIgreja ? `<h1 style="font-size: 14px; color: #E65100; margin: 0; font-weight: bold;">${configuracoes.nomeIgreja}</h1>` : ''}
@@ -59,7 +59,7 @@ ${hino.letra}
   element.innerHTML = html;
 
   const opt = {
-    margin: [4, 4, 4, 4],
+    margin: [15, 20, 15, 20],
     filename: `${hino.nome.replace(/\s+/g, '_')}.pdf`,
     image: { type: 'jpeg', quality: 0.95 },
     html2canvas: { scale: 2, useCORS: true, logging: false, backgroundColor: '#ffffff' },
