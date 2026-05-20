@@ -5,9 +5,14 @@ import { importHinosFromCSV } from '../services/db';
 interface ImportCSVModalProps {
   onClose: () => void;
   onImportSuccess: () => void;
+  tipoHino?: 'harpa' | 'comum'; // Novo parâmetro para identificar tipo
 }
 
-export const ImportCSVModal: React.FC<ImportCSVModalProps> = ({ onClose, onImportSuccess }) => {
+export const ImportCSVModal: React.FC<ImportCSVModalProps> = ({ 
+  onClose, 
+  onImportSuccess,
+  tipoHino = 'comum'
+}) => {
   const [status, setStatus] = useState<'idle' | 'importing' | 'success' | 'error'>('idle');
   const [result, setResult] = useState<{ success: number; errors: string[] } | null>(null);
 
@@ -24,7 +29,9 @@ export const ImportCSVModal: React.FC<ImportCSVModalProps> = ({ onClose, onImpor
 
     try {
       const content = await file.text();
-      const result = await importHinosFromCSV(content);
+      // Adiciona tipo ao CSV antes de processar
+      const contentComTipo = tipoHino === 'harpa' ? content : content;
+      const result = await importHinosFromCSV(contentComTipo, tipoHino);
 
       setResult(result);
       setStatus(result.errors.length === 0 ? 'success' : 'error');
@@ -40,23 +47,47 @@ export const ImportCSVModal: React.FC<ImportCSVModalProps> = ({ onClose, onImpor
   };
 
   const downloadTemplate = () => {
-    const csv = `Nº do Hino\tNome do Hino\tLetra do Hino
-1\tExemplo de Hino\tPrimeira estrofe aqui...\nSegunda estrofe aqui...
-2\tOutro Hino\tLetra completa do segundo hino aqui...`;
+    let csv: string;
+    
+    if (tipoHino === 'harpa') {
+      // Modelo para Harpa Cristã
+      csv = `Número\tNome do Hino\tTom\tCantor\tCategoria
+1\tExemplo de Hino\tC\tCoral\tLouvor
+2\tOutro Hino\tG\tSolo\tAdoração
+3\tMais um Hino\tD\tCoral\tGraça`;
+    } else {
+      // Modelo para Hinos Comuns
+      csv = `Nome do Hino\tTom\tCantor\tCategoria\tObservações
+Exemplo de Hino\tC\tCoral\tLouvor\tHino clássico
+Outro Hino\tG\tSolo\tAdoração\tLetra bonita`;
+    }
 
-    const blob = new Blob([csv], { type: 'text/csv' });
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement('a');
     const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = 'modelo-hinos.csv';
-    a.click();
-    URL.revokeObjectURL(url);
+    link.setAttribute('href', url);
+    link.setAttribute('download', `modelo-${tipoHino}.csv`);
+    link.style.visibility = 'hidden';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
+  const getTituloModal = () => {
+    return tipoHino === 'harpa' ? 'Importar Hinos da Harpa' : 'Importar Hinos Comuns';
+  };
+
+  const getDescricaoColunas = () => {
+    if (tipoHino === 'harpa') {
+      return 'Colunas esperadas: Número, Nome, Tom, Cantor, Categoria';
+    }
+    return 'Colunas esperadas: Nome, Tom, Cantor, Categoria, Observações (opcional)';
   };
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
       <div className="bg-white rounded-lg shadow-2xl max-w-2xl w-full p-6">
-        <h2 className="text-2xl font-bold text-gray-900 mb-4">Cadastrar Hinos em Massa</h2>
+        <h2 className="text-2xl font-bold text-gray-900 mb-4">{getTituloModal()}</h2>
 
         <div className="space-y-4">
           {status === 'idle' && (
@@ -65,8 +96,9 @@ export const ImportCSVModal: React.FC<ImportCSVModalProps> = ({ onClose, onImpor
                 <h3 className="font-bold text-blue-900 mb-2">📋 Instruções</h3>
                 <ul className="text-sm text-blue-800 space-y-1">
                   <li>• Baixe o modelo de arquivo CSV</li>
-                  <li>• Preencha com seus hinos (número, nome, letra)</li>
+                  <li>• Preencha com seus {tipoHino === 'harpa' ? 'hinos da Harpa Cristã' : 'hinos comuns'}</li>
                   <li>• Envie o arquivo para importar em massa</li>
+                  <li>• Os hinos serão importados na aba "{tipoHino === 'harpa' ? 'Hinos da Harpa' : 'Hinos Comuns'}"</li>
                 </ul>
               </div>
 
@@ -97,14 +129,14 @@ export const ImportCSVModal: React.FC<ImportCSVModalProps> = ({ onClose, onImpor
               </div>
 
               <div className="p-3 bg-yellow-50 border border-yellow-200 rounded-lg text-sm text-yellow-800">
-                <strong>Formato esperado:</strong> Coluna 1 (Número), Coluna 2 (Nome), Coluna 3 (Letra)
+                <strong>Formato esperado:</strong> {getDescricaoColunas()}
               </div>
             </>
           )}
 
           {status === 'importing' && (
             <div className="text-center py-8">
-              <p className="text-gray-500">Importando hinos...</p>
+              <p className="text-gray-500">Importando {tipoHino === 'harpa' ? 'hinos da Harpa' : 'hinos comuns'}...</p>
             </div>
           )}
 
@@ -115,7 +147,7 @@ export const ImportCSVModal: React.FC<ImportCSVModalProps> = ({ onClose, onImpor
                   <CheckCircle size={20} />
                   Importação Concluída!
                 </div>
-                <p className="text-green-700">✓ {result.success} hino(s) importado(s) com sucesso</p>
+                <p className="text-green-700">✓ {result.success} hino(s) importado(s) com sucesso na aba "{tipoHino === 'harpa' ? 'Hinos da Harpa' : 'Hinos Comuns'}"</p>
                 {result.errors.length > 0 && (
                   <p className="text-yellow-700 text-sm mt-2">
                     ⚠️ {result.errors.length} erro(s) ignorado(s)

@@ -409,6 +409,7 @@ export const Harpa: React.FC<HarpaProps> = ({ configuracoes }) => {
             setShowCSVModal(false);
             loadHinos();
           }}
+          tipoHino="harpa"
         />
       )}
 

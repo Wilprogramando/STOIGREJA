@@ -11,6 +11,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ onPageChange }) => {
   const [stats, setStats] = useState({
     totalHinos: 0,
     totalHarpa: 0,
+    totalRepertorios: 0,
     proximoRepertorio: null as Repertorio | null,
   });
   const [loading, setLoading] = useState(true);
@@ -33,6 +34,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ onPageChange }) => {
       setStats({
         totalHinos: hinos.filter(h => h.tipo === 'comum').length,
         totalHarpa: harpaHinos.length,
+        totalRepertorios: repertorios.length,
         proximoRepertorio: proximoRep || null,
       });
     } catch (error) {
@@ -71,7 +73,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ onPageChange }) => {
 
       <div className="space-y-8">
         {/* Cards Principais */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-8">
           <StatCard
             icon={Music}
             label="Hinos Comuns"
@@ -89,16 +91,9 @@ export const Dashboard: React.FC<DashboardProps> = ({ onPageChange }) => {
           <StatCard
             icon={Calendar}
             label="Total de Repertórios"
-            value="0"
+            value={stats.totalRepertorios}
             color="border-green-500 text-green-500"
             onClick={() => onPageChange('repertorios')}
-          />
-          <StatCard
-            icon={FileText}
-            label="PDFs Gerados"
-            value="0"
-            color="border-orange-500 text-orange-500"
-            onClick={() => onPageChange('montar-repertorio')}
           />
         </div>
 
@@ -139,20 +134,13 @@ export const Dashboard: React.FC<DashboardProps> = ({ onPageChange }) => {
         </div>
 
         {/* Botões de Ação */}
-        <div className="mt-8 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div className="mt-8 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           <button
             onClick={() => onPageChange('cadastrar-hino')}
             className="p-4 bg-gradient-to-br from-blue-500 to-blue-600 text-white rounded-lg shadow-md hover:shadow-lg transition flex items-center justify-center gap-2"
           >
             <Plus size={20} />
             <span>Cadastrar Hino</span>
-          </button>
-          <button
-            onClick={() => onPageChange('harpa')}
-            className="p-4 bg-gradient-to-br from-purple-500 to-purple-600 text-white rounded-lg shadow-md hover:shadow-lg transition flex items-center justify-center gap-2"
-          >
-            <BookOpen size={20} />
-            <span>Hinos da Harpa</span>
           </button>
           <button
             onClick={() => onPageChange('montar-repertorio')}

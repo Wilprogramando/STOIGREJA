@@ -169,20 +169,22 @@ export const CadastrarHino: React.FC<CadastrarHinoProps> = ({ configuracoes }) =
           </h3>
           
           <form onSubmit={handleSubmit} className="space-y-4">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Nome do Hino *</label>
-                <input
-                  type="text"
-                  value={formData.nome}
-                  onChange={(e) => setFormData({ ...formData, nome: e.target.value })}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-indigo-600"
-                  placeholder="Digite o nome do hino"
-                />
-              </div>
+            {/* Nome do Hino - linha inteira */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Nome do Hino *</label>
+              <input
+                type="text"
+                value={formData.nome}
+                onChange={(e) => setFormData({ ...formData, nome: e.target.value })}
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-indigo-600"
+                placeholder="Digite o nome do hino"
+              />
+            </div>
 
+            {/* Tom, Cantor, Categoria - mesma linha */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Tom *</label>
+                <label className="block text-sm font-medium text-gray-700 mb-1">🎵 Tom *</label>
                 <select
                   value={formData.tom}
                   onChange={(e) => setFormData({ ...formData, tom: e.target.value })}
@@ -195,7 +197,7 @@ export const CadastrarHino: React.FC<CadastrarHinoProps> = ({ configuracoes }) =
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Cantor *</label>
+                <label className="block text-sm font-medium text-gray-700 mb-1">👤 Cantor *</label>
                 <input
                   type="text"
                   value={formData.cantor}
@@ -206,7 +208,7 @@ export const CadastrarHino: React.FC<CadastrarHinoProps> = ({ configuracoes }) =
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Categoria</label>
+                <label className="block text-sm font-medium text-gray-700 mb-1">📂 Categoria</label>
                 <select
                   value={formData.categoria}
                   onChange={(e) => setFormData({ ...formData, categoria: e.target.value })}
