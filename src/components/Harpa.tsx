@@ -353,7 +353,7 @@ export const Harpa: React.FC<HarpaProps> = ({ configuracoes }) => {
           hinosFiltrados.map(hino => (
             <div key={hino.id} className="bg-white p-3 rounded-lg shadow-sm border-l-4 border-indigo-600">
               <h3 className="text-lg font-bold text-gray-900 mb-2 md:mb-0">
-                Harpa nº {hino.numeroHarpa} - {hino.nome}
+                {`Harpa nº ${hino.numeroHarpa !== undefined ? hino.numeroHarpa : '?'} - ${hino.nome}`}
               </h3>
               
               {/* Linha com informações e botões - Desktop em 1 linha, Mobile em 2 */}
