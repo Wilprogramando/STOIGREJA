@@ -413,39 +413,34 @@ export const RepertoriosSalvos: React.FC<RepertoriosSalvosProps> = ({ configurac
                       if (!hino) return null;
                       return (
                         <div key={hino.id} className="bg-gradient-to-r from-indigo-50 to-purple-50 p-4 rounded-lg border border-indigo-200">
-                          <div className="flex items-start justify-between mb-3">
-                            <div className="flex-1 min-w-0">
-                              <div className="flex items-center gap-2">
-                                <span className="inline-block w-6 h-6 bg-indigo-600 text-white rounded-full text-center text-xs font-bold flex-shrink-0">
-                                  {idx + 1}
-                                </span>
-                                <h4 className="font-bold text-gray-900 text-sm break-words">{hino?.nome || 'Hino desconhecido'}</h4>
-                              </div>
-                              {hino?.numeroHarpa && (
-                                <p className="text-xs text-gray-500 mt-1">📖 Harpa nº {hino.numeroHarpa}</p>
-                              )}
-                            </div>
+                          <div className="flex items-center gap-3 mb-3">
+                            <span className="inline-block w-7 h-7 bg-indigo-600 text-white rounded-full text-center text-xs font-bold flex-shrink-0 flex items-center justify-center">
+                              {idx + 1}
+                            </span>
+                            <h4 className="font-bold text-gray-900 text-sm flex-1">{hino?.nome || 'Hino desconhecido'}</h4>
+                            {hino?.numeroHarpa && (
+                              <p className="text-xs text-gray-500">Harpa nº {hino.numeroHarpa}</p>
+                            )}
                           </div>
 
-                          <div className="grid grid-cols-2 gap-2 mb-3 text-sm">
-                            <div className="bg-white p-2 rounded">
-                              <p className="text-gray-600 text-xs">Tom</p>
+                          <div className="flex items-center gap-3 text-sm">
+                            <div className="flex items-center gap-1">
+                              <p className="text-gray-600 text-xs font-medium">Tom:</p>
                               <p className="font-bold text-gray-900">{hino?.tom || '?'}</p>
                             </div>
-                            <div className="bg-white p-2 rounded">
-                              <p className="text-gray-600 text-xs">Cantor</p>
+                            <div className="flex items-center gap-1">
+                              <p className="text-gray-600 text-xs font-medium">Cantor:</p>
                               <p className="font-bold text-gray-900 truncate">{hino?.cantor || '?'}</p>
                             </div>
+                            {hino?.letra && (
+                              <button
+                                onClick={() => setHinoSelecionado(hino)}
+                                className="ml-auto px-3 py-1 bg-blue-600 text-white rounded hover:bg-blue-700 transition text-xs font-medium whitespace-nowrap"
+                              >
+                                👁️ Ver
+                              </button>
+                            )}
                           </div>
-
-                          {hino?.letra && (
-                            <button
-                              onClick={() => setHinoSelecionado(hino)}
-                              className="w-full px-3 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition text-sm font-medium"
-                            >
-                              👁️ Ver Letra
-                            </button>
-                          )}
                         </div>
                       );
                     })}
