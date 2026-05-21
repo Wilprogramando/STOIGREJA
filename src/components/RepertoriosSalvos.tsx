@@ -437,7 +437,7 @@ export const RepertoriosSalvos: React.FC<RepertoriosSalvosProps> = ({ configurac
                                 onClick={() => setHinoSelecionado(hino)}
                                 className="ml-auto px-3 py-1 bg-blue-600 text-white rounded hover:bg-blue-700 transition text-xs font-medium whitespace-nowrap"
                               >
-                                👁️ Ver
+                                Letra
                               </button>
                             )}
                           </div>
