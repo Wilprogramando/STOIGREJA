@@ -61,7 +61,7 @@ export async function addHino(hino: Hino): Promise<string> {
 
 // Helper para mapear dados do Supabase para Hino
 function mapearHinoSupabase(dados: any): Hino {
-  return {
+  const hino: Hino = {
     id: dados.id,
     nome: dados.nome,
     tom: dados.tom,
@@ -70,10 +70,16 @@ function mapearHinoSupabase(dados: any): Hino {
     categoria: dados.categoria || '',
     observacoes: dados.observacoes || '',
     tipo: dados.tipo || 'comum',
-    numeroHarpa: dados.numero_harpa ? parseInt(dados.numero_harpa) : undefined,
+    numeroHarpa: dados.numero_harpa ? parseInt(String(dados.numero_harpa)) : undefined,
     criadoEm: dados.criado_em || new Date().toISOString(),
     atualizadoEm: dados.atualizado_em || new Date().toISOString()
   };
+  
+  if (dados.numero_harpa) {
+    console.log(`🎵 Mapeando Harpa ${dados.numero_harpa}:`, hino.nome);
+  }
+  
+  return hino;
 }
 
 export async function getAllHinos(): Promise<Hino[]> {
@@ -521,15 +527,16 @@ export async function importHinosFromCSV(csvText: string, tipoImportacao: 'harpa
       let hino: Hino;
 
       if (tipoImportacao === 'harpa') {
-        // Formato: Número\tNome\tTom\tCantor\tCategoria
-        if (parts.length < 2) {
-          errorList.push(`Linha ${i}: Formato inválido para Harpa`);
+        // Formato esperado: Numero;Nome;Tom;Letra do hino
+        // Ou: Numero,Nome,Tom,Letra
+        if (parts.length < 3) {
+          errorList.push(`Linha ${i}: Formato inválido para Harpa (esperado: Numero;Nome;Tom;Letra)`);
           continue;
         }
 
         const numero = parseInt(parts[0]?.trim() || '0');
-        if (isNaN(numero)) {
-          errorList.push(`Linha ${i}: Número inválido`);
+        if (isNaN(numero) || numero <= 0) {
+          errorList.push(`Linha ${i}: Número inválido: ${parts[0]}`);
           continue;
         }
 
@@ -540,12 +547,14 @@ export async function importHinosFromCSV(csvText: string, tipoImportacao: 'harpa
           cantor: parts[3]?.trim() || 'Coral',
           categoria: parts[4]?.trim() || 'Louvor',
           tipo: 'harpa',
-          letra: '',
-          numeroHarpa: numero,
+          letra: parts[4]?.trim() || '',  // Usa coluna 4 como letra se disponível
+          numeroHarpa: numero,  // ✅ Aqui está sendo atribuído!
           observacoes: '',
           criadoEm: new Date().toISOString(),
           atualizadoEm: new Date().toISOString()
         };
+
+        console.log(`✅ Hino importado: Harpa ${numero} - ${hino.nome}`);
       } else {
         // Formato: Nome\tTom\tCantor\tCategoria\tObservações
         if (parts.length < 1) {
