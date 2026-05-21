@@ -5,7 +5,7 @@ import { importHinosFromCSV } from '../services/db';
 interface ImportCSVModalProps {
   onClose: () => void;
   onImportSuccess: () => void;
-  tipoHino?: 'harpa' | 'comum'; // Novo parâmetro para identificar tipo
+  tipoHino?: 'harpa' | 'comum';
 }
 
 export const ImportCSVModal: React.FC<ImportCSVModalProps> = ({ 
@@ -16,28 +16,71 @@ export const ImportCSVModal: React.FC<ImportCSVModalProps> = ({
   const [status, setStatus] = useState<'idle' | 'importing' | 'success' | 'error'>('idle');
   const [result, setResult] = useState<{ success: number; errors: string[] } | null>(null);
 
+  // Função para processar Excel
+  const processExcelFile = async (file: File): Promise<string> => {
+    try {
+      const ArrayBuffer = await file.arrayBuffer();
+      
+      // Dynamic import para xlsx
+      const XLSX = (await import('xlsx')).default;
+      const workbook = XLSX.read(new Uint8Array(ArrayBuffer), { type: 'array' });
+      const worksheet = workbook.Sheets[workbook.SheetNames[0]];
+      const jsonData = XLSX.utils.sheet_to_json(worksheet);
+
+      // Converter JSON para CSV
+      let csv = '';
+      
+      if (jsonData.length > 0) {
+        // Pegar headers
+        const headers = Object.keys(jsonData[0]);
+        csv = headers.join(',') + '\n';
+
+        // Adicionar dados, escapando aspas
+        jsonData.forEach((row: any) => {
+          const values = headers.map(header => {
+            let value = row[header] || '';
+            // Se contém vírgula ou quebra de linha, envolver em aspas
+            if (typeof value === 'string' && (value.includes(',') || value.includes('\n') || value.includes('"'))) {
+              value = '"' + value.replace(/"/g, '""') + '"';
+            }
+            return value;
+          });
+          csv += values.join(',') + '\n';
+        });
+      }
+
+      return csv;
+    } catch (error) {
+      console.error('Erro ao processar Excel:', error);
+      throw new Error('Não foi possível processar o arquivo Excel. Certifique-se de que está em .xlsx');
+    }
+  };
+
   const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
-    if (!file.name.endsWith('.csv')) {
-      alert('Por favor, selecione um arquivo CSV');
-      return;
-    }
-
     setStatus('importing');
 
     try {
-      const content = await file.text();
-      // Adiciona tipo ao CSV antes de processar
-      const contentComTipo = tipoHino === 'harpa' ? content : content;
-      const result = await importHinosFromCSV(contentComTipo, tipoHino);
+      let content = '';
+
+      // Processar CSV ou Excel
+      if (file.name.endsWith('.csv')) {
+        content = await file.text();
+      } else if (file.name.endsWith('.xlsx') || file.name.endsWith('.xls')) {
+        content = await processExcelFile(file);
+      } else {
+        throw new Error('Por favor, selecione um arquivo CSV ou Excel (.xlsx)');
+      }
+
+      const result = await importHinosFromCSV(content, tipoHino);
 
       setResult(result);
       setStatus(result.errors.length === 0 ? 'success' : 'error');
 
       if (result.success > 0) {
-        onImportSuccess();
+        // Não chama onImportSuccess aqui, deixa pro botão final
       }
     } catch (error) {
       console.error('Erro ao importar:', error);
@@ -50,16 +93,16 @@ export const ImportCSVModal: React.FC<ImportCSVModalProps> = ({
     let csv: string;
     
     if (tipoHino === 'harpa') {
-      // Modelo para Harpa Cristã
-      csv = `Número\tNome do Hino\tTom\tCantor\tCategoria
-1\tExemplo de Hino\tC\tCoral\tLouvor
-2\tOutro Hino\tG\tSolo\tAdoração
-3\tMais um Hino\tD\tCoral\tGraça`;
+      csv = `Número,Nome,Tom,Letra
+1,CHUVAS DE GRAÇA,C,"1 Deus prometeu com certeza, Chuvas de graça mandar;
+Ele nos dá fortaleza,
+E ricas bênçãos sem par."
+2,SAUDOSA LEMBRANÇA,C,"1 Oh! que saudosa lembrança Tenho de ti, ó Siâo,
+Terra que eu tanto amo, Pois és do meu coração."`;
     } else {
-      // Modelo para Hinos Comuns
-      csv = `Nome do Hino\tTom\tCantor\tCategoria\tObservações
-Exemplo de Hino\tC\tCoral\tLouvor\tHino clássico
-Outro Hino\tG\tSolo\tAdoração\tLetra bonita`;
+      csv = `Nome do Hino,Tom,Cantor,Categoria,Observações
+Exemplo de Hino,C,Coral,Louvor,Hino clássico
+Outro Hino,G,Solo,Adoração,Letra bonita`;
     }
 
     const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
@@ -79,7 +122,7 @@ Outro Hino\tG\tSolo\tAdoração\tLetra bonita`;
 
   const getDescricaoColunas = () => {
     if (tipoHino === 'harpa') {
-      return 'Colunas esperadas: Número, Nome, Tom, Cantor, Categoria';
+      return 'Colunas esperadas: Número, Nome, Tom, Letra';
     }
     return 'Colunas esperadas: Nome, Tom, Cantor, Categoria, Observações (opcional)';
   };
@@ -97,7 +140,7 @@ Outro Hino\tG\tSolo\tAdoração\tLetra bonita`;
                 <ul className="text-sm text-blue-800 space-y-1">
                   <li>• Baixe o modelo de arquivo CSV</li>
                   <li>• Preencha com seus {tipoHino === 'harpa' ? 'hinos da Harpa Cristã' : 'hinos comuns'}</li>
-                  <li>• Envie o arquivo para importar em massa</li>
+                  <li>• Envie o arquivo CSV ou Excel (.xlsx) para importar em massa</li>
                   <li>• Os hinos serão importados na aba "{tipoHino === 'harpa' ? 'Hinos da Harpa' : 'Hinos Comuns'}"</li>
                 </ul>
               </div>
@@ -116,14 +159,14 @@ Outro Hino\tG\tSolo\tAdoração\tLetra bonita`;
                 <label className="cursor-pointer">
                   <input
                     type="file"
-                    accept=".csv"
+                    accept=".csv,.xlsx,.xls"
                     onChange={handleFileSelect}
                     className="hidden"
                   />
                   <div className="flex flex-col items-center gap-2">
                     <Upload size={32} className="text-indigo-600" />
-                    <span className="font-medium text-gray-700">Clique para selecionar arquivo CSV</span>
-                    <span className="text-sm text-gray-500">ou arraste o arquivo aqui</span>
+                    <span className="font-medium text-gray-700">Clique para selecionar arquivo</span>
+                    <span className="text-sm text-gray-500">CSV ou Excel (.xlsx)</span>
                   </div>
                 </label>
               </div>
@@ -136,6 +179,7 @@ Outro Hino\tG\tSolo\tAdoração\tLetra bonita`;
 
           {status === 'importing' && (
             <div className="text-center py-8">
+              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600 mx-auto mb-4"></div>
               <p className="text-gray-500">Importando {tipoHino === 'harpa' ? 'hinos da Harpa' : 'hinos comuns'}...</p>
             </div>
           )}
@@ -150,14 +194,14 @@ Outro Hino\tG\tSolo\tAdoração\tLetra bonita`;
                 <p className="text-green-700">✓ {result.success} hino(s) importado(s) com sucesso na aba "{tipoHino === 'harpa' ? 'Hinos da Harpa' : 'Hinos Comuns'}"</p>
                 {result.errors.length > 0 && (
                   <p className="text-yellow-700 text-sm mt-2">
-                    ⚠️ {result.errors.length} erro(s) ignorado(s)
+                    ⚠️ {result.errors.length} aviso(s)
                   </p>
                 )}
               </div>
 
               {result.errors.length > 0 && (
                 <div className="p-4 bg-yellow-50 border border-yellow-200 rounded-lg max-h-48 overflow-y-auto">
-                  <p className="font-bold text-yellow-900 mb-2">Erros encontrados:</p>
+                  <p className="font-bold text-yellow-900 mb-2">Avisos:</p>
                   <ul className="text-sm text-yellow-800 space-y-1">
                     {result.errors.map((err, i) => (
                       <li key={i}>• {err}</li>
@@ -183,7 +227,7 @@ Outro Hino\tG\tSolo\tAdoração\tLetra bonita`;
           )}
 
           <div className="flex gap-2 pt-4">
-            {status !== 'success' && (
+            {(status === 'idle' || status === 'error') && (
               <button
                 onClick={onClose}
                 className="flex-1 px-4 py-2 bg-gray-400 text-white rounded-lg hover:bg-gray-500 transition"
@@ -192,15 +236,26 @@ Outro Hino\tG\tSolo\tAdoração\tLetra bonita`;
               </button>
             )}
             {status === 'success' && (
-              <button
-                onClick={() => {
-                  onClose();
-                  onImportSuccess();
-                }}
-                className="flex-1 px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition"
-              >
-                Fechar
-              </button>
+              <>
+                <button
+                  onClick={() => {
+                    setStatus('idle');
+                    setResult(null);
+                  }}
+                  className="flex-1 px-4 py-2 bg-gray-400 text-white rounded-lg hover:bg-gray-500 transition"
+                >
+                  Importar Mais
+                </button>
+                <button
+                  onClick={() => {
+                    onClose();
+                    onImportSuccess();
+                  }}
+                  className="flex-1 px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition"
+                >
+                  Fechar
+                </button>
+              </>
             )}
           </div>
         </div>
