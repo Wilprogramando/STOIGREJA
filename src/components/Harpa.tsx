@@ -63,7 +63,7 @@ export const Harpa: React.FC<HarpaProps> = ({ configuracoes }) => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (!formData.numeroHarpa || !formData.cantor) {
+    if (!formData.numeroHarpa) {
       alert('Preencha os campos obrigatórios!');
       return;
     }
@@ -261,7 +261,7 @@ export const Harpa: React.FC<HarpaProps> = ({ configuracoes }) => {
               </div>
 
               <div className="lg:col-span-7">
-                <label className="block text-sm font-medium text-gray-700 mb-1">👤 Cantor *</label>
+                <label className="block text-sm font-medium text-gray-700 mb-1">👤 Cantor</label>
                 <input
                   type="text"
                   value={formData.cantor}
