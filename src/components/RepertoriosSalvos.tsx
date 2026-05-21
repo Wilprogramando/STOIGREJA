@@ -350,6 +350,9 @@ export const RepertoriosSalvos: React.FC<RepertoriosSalvosProps> = ({ configurac
                   </div>
                 </div>
 
+                {/* Espaçamento */}
+                <div className="mt-4"></div>
+
                 {repertorio.observacoes && (
                   <div className="bg-yellow-50 p-3 rounded-lg text-sm text-gray-700 mb-4">
                     <strong>Observações:</strong> {repertorio.observacoes}
