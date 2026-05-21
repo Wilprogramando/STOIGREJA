@@ -68,8 +68,17 @@ export async function getAllHinos(): Promise<Hino[]> {
         .order('nome', { ascending: true });
       
       if (error) throw error;
-      console.log('✅ Hinos carregados:', data?.length || 0);
-      return data || [];
+      
+      // Mapear numero_harpa para numeroHarpa
+      const hinos = (data || []).map((hino: any) => ({
+        ...hino,
+        numeroHarpa: hino.numero_harpa,
+        criadoEm: hino.criado_em,
+        atualizadoEm: hino.atualizado_em
+      }));
+      
+      console.log('✅ Hinos carregados:', hinos.length);
+      return hinos;
     } else {
       const hinos: Hino[] = [];
       for (let i = 0; i < localStorage.length; i++) {
@@ -99,7 +108,16 @@ export async function getHino(id: string): Promise<Hino | undefined> {
         .single();
       
       if (error && error.code !== 'PGRST116') throw error;
-      return data || undefined;
+      
+      if (data) {
+        return {
+          ...data,
+          numeroHarpa: data.numero_harpa,
+          criadoEm: data.criado_em,
+          atualizadoEm: data.atualizado_em
+        };
+      }
+      return undefined;
     } else {
       const chave = `${DB_PREFIX}hino_${id}`;
       const dados = localStorage.getItem(chave);
