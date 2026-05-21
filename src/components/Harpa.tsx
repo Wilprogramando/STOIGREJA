@@ -34,6 +34,7 @@ export const Harpa: React.FC<HarpaProps> = ({ configuracoes }) => {
 
   const [formData, setFormData] = useState({
     numeroHarpa: '',
+    nome: '',
     tom: 'C',
     cantor: '',
     letra: '',
@@ -63,8 +64,8 @@ export const Harpa: React.FC<HarpaProps> = ({ configuracoes }) => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (!formData.numeroHarpa) {
-      alert('Preencha os campos obrigatórios!');
+    if (!formData.numeroHarpa || !formData.nome.trim()) {
+      alert('Preencha o Número e Nome do Hino!');
       return;
     }
 
@@ -74,6 +75,7 @@ export const Harpa: React.FC<HarpaProps> = ({ configuracoes }) => {
       if (editando) {
         const hinoAtualizado: Hino = {
           ...editando,
+          nome: formData.nome.trim(),
           numeroHarpa: parseInt(formData.numeroHarpa),
           tom: formData.tom,
           cantor: formData.cantor,
@@ -85,7 +87,7 @@ export const Harpa: React.FC<HarpaProps> = ({ configuracoes }) => {
       } else {
         const novoHino: Hino = {
           id: Date.now().toString(),
-          nome: searchResult?.nome || `Hino nº ${formData.numeroHarpa}`,
+          nome: formData.nome.trim(),
           numeroHarpa: parseInt(formData.numeroHarpa),
           tom: formData.tom,
           cantor: formData.cantor,
@@ -101,6 +103,7 @@ export const Harpa: React.FC<HarpaProps> = ({ configuracoes }) => {
 
       setFormData({
         numeroHarpa: '',
+        nome: '',
         tom: 'C',
         cantor: '',
         letra: '',
@@ -120,6 +123,7 @@ export const Harpa: React.FC<HarpaProps> = ({ configuracoes }) => {
   const handleEditar = (hino: Hino) => {
     setFormData({
       numeroHarpa: hino.numeroHarpa?.toString() || '',
+      nome: hino.nome,
       tom: hino.tom,
       cantor: hino.cantor,
       letra: hino.letra,
@@ -132,6 +136,7 @@ export const Harpa: React.FC<HarpaProps> = ({ configuracoes }) => {
   const handleDuplicar = (hino: Hino) => {
     setFormData({
       numeroHarpa: '',
+      nome: hino.nome + ' (Cópia)',
       tom: hino.tom,
       cantor: hino.cantor + ' (Cópia)',
       letra: hino.letra,
@@ -196,6 +201,7 @@ export const Harpa: React.FC<HarpaProps> = ({ configuracoes }) => {
                 setEditando(null);
                 setFormData({
                   numeroHarpa: '',
+                  nome: '',
                   tom: 'C',
                   cantor: '',
                   letra: '',
@@ -221,9 +227,9 @@ export const Harpa: React.FC<HarpaProps> = ({ configuracoes }) => {
           </h3>
 
           <form onSubmit={handleSubmit} className="space-y-4">
-            {/* Número, Tom, Cantor - Responsivo */}
+            {/* Número, Nome, Tom, Cantor - Responsivo */}
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-2 lg:gap-2">
-              <div className="lg:col-span-3">
+              <div className="lg:col-span-2">
                 <label className="block text-sm font-medium text-gray-700 mb-1">📖 Número da Harpa *</label>
                 <div className="flex gap-1">
                   <input
@@ -247,6 +253,18 @@ export const Harpa: React.FC<HarpaProps> = ({ configuracoes }) => {
                 )}
               </div>
 
+              <div className="lg:col-span-4">
+                <label className="block text-sm font-medium text-gray-700 mb-1">📝 Nome do Hino *</label>
+                <input
+                  type="text"
+                  value={formData.nome}
+                  onChange={(e) => setFormData({ ...formData, nome: e.target.value })}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-indigo-600 text-sm"
+                  placeholder="Nome do hino"
+                  required
+                />
+              </div>
+
               <div className="lg:col-span-2">
                 <label className="block text-sm font-medium text-gray-700 mb-1">🎼 Tom</label>
                 <select
@@ -260,7 +278,7 @@ export const Harpa: React.FC<HarpaProps> = ({ configuracoes }) => {
                 </select>
               </div>
 
-              <div className="lg:col-span-7">
+              <div className="lg:col-span-4">
                 <label className="block text-sm font-medium text-gray-700 mb-1">👤 Cantor</label>
                 <input
                   type="text"
