@@ -16,72 +16,56 @@ export const ImportCSVModal: React.FC<ImportCSVModalProps> = ({
   const [status, setStatus] = useState<'idle' | 'importing' | 'success' | 'error'>('idle');
   const [result, setResult] = useState<{ success: number; errors: string[] } | null>(null);
 
-  // Função para processar Excel
-  const processExcelFile = async (file: File): Promise<string> => {
-    try {
-      const ArrayBuffer = await file.arrayBuffer();
-      
-      // Dynamic import para xlsx
-      const XLSX = (await import('xlsx')).default;
-      const workbook = XLSX.read(new Uint8Array(ArrayBuffer), { type: 'array' });
-      const worksheet = workbook.Sheets[workbook.SheetNames[0]];
-      const jsonData = XLSX.utils.sheet_to_json(worksheet);
-
-      // Converter JSON para CSV
-      let csv = '';
-      
-      if (jsonData.length > 0) {
-        // Pegar headers
-        const headers = Object.keys(jsonData[0]);
-        csv = headers.join(',') + '\n';
-
-        // Adicionar dados, escapando aspas
-        jsonData.forEach((row: any) => {
-          const values = headers.map(header => {
-            let value = row[header] || '';
-            // Se contém vírgula ou quebra de linha, envolver em aspas
-            if (typeof value === 'string' && (value.includes(',') || value.includes('\n') || value.includes('"'))) {
-              value = '"' + value.replace(/"/g, '""') + '"';
-            }
-            return value;
-          });
-          csv += values.join(',') + '\n';
-        });
-      }
-
-      return csv;
-    } catch (error) {
-      console.error('Erro ao processar Excel:', error);
-      throw new Error('Não foi possível processar o arquivo Excel. Certifique-se de que está em .xlsx');
-    }
-  };
-
   const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
+    if (!file.name.endsWith('.csv')) {
+      alert('Por favor, selecione um arquivo CSV');
+      return;
+    }
+
     setStatus('importing');
 
     try {
-      let content = '';
+      const content = await file.text();
+      
+      // Detectar separador (vírgula ou ponto-e-vírgula)
+      const lines = content.split('\n');
+      const firstLine = lines[0];
+      const separator = firstLine.includes(';') ? ';' : ',';
+      
+      console.log('Separador detectado:', separator);
+      console.log('Primeira linha:', firstLine);
 
-      // Processar CSV ou Excel
-      if (file.name.endsWith('.csv')) {
-        content = await file.text();
-      } else if (file.name.endsWith('.xlsx') || file.name.endsWith('.xls')) {
-        content = await processExcelFile(file);
-      } else {
-        throw new Error('Por favor, selecione um arquivo CSV ou Excel (.xlsx)');
+      // Converter para formato padrão (vírgula) se for ponto-e-vírgula
+      let processedContent = content;
+      if (separator === ';') {
+        processedContent = content.split('\n').map(line => {
+          let result = '';
+          let insideQuotes = false;
+          
+          for (let i = 0; i < line.length; i++) {
+            const char = line[i];
+            
+            if (char === '"') {
+              insideQuotes = !insideQuotes;
+              result += char;
+            } else if (char === ';' && !insideQuotes) {
+              result += ',';
+            } else {
+              result += char;
+            }
+          }
+          
+          return result;
+        }).join('\n');
       }
 
-      const result = await importHinosFromCSV(content, tipoHino);
+      const result = await importHinosFromCSV(processedContent, tipoHino);
 
       setResult(result);
       setStatus(result.errors.length === 0 ? 'success' : 'error');
-
-      if (result.success > 0) {
-        // Não chama onImportSuccess aqui, deixa pro botão final
-      }
     } catch (error) {
       console.error('Erro ao importar:', error);
       setStatus('error');
@@ -93,16 +77,16 @@ export const ImportCSVModal: React.FC<ImportCSVModalProps> = ({
     let csv: string;
     
     if (tipoHino === 'harpa') {
-      csv = `Número,Nome,Tom,Letra
-1,CHUVAS DE GRAÇA,C,"1 Deus prometeu com certeza, Chuvas de graça mandar;
+      csv = `Numero;Nome;C;Letra do hino
+1;CHUVAS DE GRAÇA;C;"1 Deus prometeu com certeza, Chuvas de graça mandar;
 Ele nos dá fortaleza,
 E ricas bênçãos sem par."
-2,SAUDOSA LEMBRANÇA,C,"1 Oh! que saudosa lembrança Tenho de ti, ó Siâo,
+2;SAUDOSA LEMBRANÇA;C;"1 Oh! que saudosa lembrança Tenho de ti, ó Siâo,
 Terra que eu tanto amo, Pois és do meu coração."`;
     } else {
-      csv = `Nome do Hino,Tom,Cantor,Categoria,Observações
-Exemplo de Hino,C,Coral,Louvor,Hino clássico
-Outro Hino,G,Solo,Adoração,Letra bonita`;
+      csv = `Nome do Hino;Tom;Cantor;Categoria;Observações
+Exemplo de Hino;C;Coral;Louvor;Hino clássico
+Outro Hino;G;Solo;Adoração;Letra bonita`;
     }
 
     const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
@@ -122,9 +106,9 @@ Outro Hino,G,Solo,Adoração,Letra bonita`;
 
   const getDescricaoColunas = () => {
     if (tipoHino === 'harpa') {
-      return 'Colunas esperadas: Número, Nome, Tom, Letra';
+      return 'Colunas esperadas: Número; Nome; Tom; Letra do hino (separadas por ;)';
     }
-    return 'Colunas esperadas: Nome, Tom, Cantor, Categoria, Observações (opcional)';
+    return 'Colunas esperadas: Nome; Tom; Cantor; Categoria; Observações (separadas por ;)';
   };
 
   return (
@@ -140,7 +124,8 @@ Outro Hino,G,Solo,Adoração,Letra bonita`;
                 <ul className="text-sm text-blue-800 space-y-1">
                   <li>• Baixe o modelo de arquivo CSV</li>
                   <li>• Preencha com seus {tipoHino === 'harpa' ? 'hinos da Harpa Cristã' : 'hinos comuns'}</li>
-                  <li>• Envie o arquivo CSV ou Excel (.xlsx) para importar em massa</li>
+                  <li>• Use <strong>ponto-e-vírgula (;)</strong> como separador</li>
+                  <li>• Envie o arquivo CSV para importar em massa</li>
                   <li>• Os hinos serão importados na aba "{tipoHino === 'harpa' ? 'Hinos da Harpa' : 'Hinos Comuns'}"</li>
                 </ul>
               </div>
@@ -159,20 +144,24 @@ Outro Hino,G,Solo,Adoração,Letra bonita`;
                 <label className="cursor-pointer">
                   <input
                     type="file"
-                    accept=".csv,.xlsx,.xls"
+                    accept=".csv"
                     onChange={handleFileSelect}
                     className="hidden"
                   />
                   <div className="flex flex-col items-center gap-2">
                     <Upload size={32} className="text-indigo-600" />
-                    <span className="font-medium text-gray-700">Clique para selecionar arquivo</span>
-                    <span className="text-sm text-gray-500">CSV ou Excel (.xlsx)</span>
+                    <span className="font-medium text-gray-700">Clique para selecionar arquivo CSV</span>
+                    <span className="text-sm text-gray-500">ou arraste o arquivo aqui</span>
                   </div>
                 </label>
               </div>
 
               <div className="p-3 bg-yellow-50 border border-yellow-200 rounded-lg text-sm text-yellow-800">
                 <strong>Formato esperado:</strong> {getDescricaoColunas()}
+              </div>
+
+              <div className="p-3 bg-purple-50 border border-purple-200 rounded-lg text-sm text-purple-800">
+                <strong>✅ O sistema detecta automaticamente:</strong> Separador (vírgula ou ponto-e-vírgula)
               </div>
             </>
           )}
