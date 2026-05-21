@@ -59,6 +59,23 @@ export async function addHino(hino: Hino): Promise<string> {
   }
 }
 
+// Helper para mapear dados do Supabase para Hino
+function mapearHinoSupabase(dados: any): Hino {
+  return {
+    id: dados.id,
+    nome: dados.nome,
+    tom: dados.tom,
+    cantor: dados.cantor,
+    letra: dados.letra || '',
+    categoria: dados.categoria || '',
+    observacoes: dados.observacoes || '',
+    tipo: dados.tipo || 'comum',
+    numeroHarpa: dados.numero_harpa ? parseInt(dados.numero_harpa) : undefined,
+    criadoEm: dados.criado_em || new Date().toISOString(),
+    atualizadoEm: dados.atualizado_em || new Date().toISOString()
+  };
+}
+
 export async function getAllHinos(): Promise<Hino[]> {
   try {
     if (supabase) {
@@ -69,15 +86,12 @@ export async function getAllHinos(): Promise<Hino[]> {
       
       if (error) throw error;
       
-      // Mapear numero_harpa para numeroHarpa
-      const hinos = (data || []).map((hino: any) => ({
-        ...hino,
-        numeroHarpa: hino.numero_harpa,
-        criadoEm: hino.criado_em,
-        atualizadoEm: hino.atualizado_em
-      }));
+      const hinos = (data || []).map(mapearHinoSupabase);
       
       console.log('✅ Hinos carregados:', hinos.length);
+      if (hinos.length > 0) {
+        console.log('🔍 Primeiro hino:', hinos[0]);
+      }
       return hinos;
     } else {
       const hinos: Hino[] = [];
@@ -108,16 +122,7 @@ export async function getHino(id: string): Promise<Hino | undefined> {
         .single();
       
       if (error && error.code !== 'PGRST116') throw error;
-      
-      if (data) {
-        return {
-          ...data,
-          numeroHarpa: data.numero_harpa,
-          criadoEm: data.criado_em,
-          atualizadoEm: data.atualizado_em
-        };
-      }
-      return undefined;
+      return data ? mapearHinoSupabase(data) : undefined;
     } else {
       const chave = `${DB_PREFIX}hino_${id}`;
       const dados = localStorage.getItem(chave);
