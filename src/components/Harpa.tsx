@@ -47,6 +47,10 @@ export const Harpa: React.FC<HarpaProps> = ({ configuracoes }) => {
 
   const loadHinos = async () => {
     const todos = await getHinosByType('harpa');
+    console.log('📚 Hinos carregados:', todos.map(h => ({
+      nome: h.nome,
+      numeroHarpa: h.numeroHarpa
+    })));
     setHinos(todos);
   };
 
@@ -98,6 +102,11 @@ export const Harpa: React.FC<HarpaProps> = ({ configuracoes }) => {
           criadoEm: agora,
           atualizadoEm: agora
         };
+        console.log('📝 Salvando hino:', {
+          nome: novoHino.nome,
+          numeroHarpa: novoHino.numeroHarpa,
+          tipo: typeof novoHino.numeroHarpa
+        });
         await addHino(novoHino);
       }
 
