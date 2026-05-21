@@ -228,7 +228,7 @@ export const RepertoriosSalvos: React.FC<RepertoriosSalvosProps> = ({ configurac
   }
 
   return (
-    <div className="max-w-6xl mx-auto">
+    <div className="max-w-6xl mx-auto pb-20">
       <h2 className="text-3xl font-bold text-gray-900 mb-8">Repertórios Salvos</h2>
 
       {/* ✅ BOTÕES DE FILTRO */}
@@ -266,17 +266,6 @@ export const RepertoriosSalvos: React.FC<RepertoriosSalvosProps> = ({ configurac
         />
       </div>
 
-      {/* Filtro */}
-      <div className="bg-white p-4 rounded-lg shadow-md mb-6">
-        <input
-          type="text"
-          placeholder="Pesquisar por nome ou data..."
-          value={filtro}
-          onChange={(e) => setFiltro(e.target.value)}
-          className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-indigo-600"
-        />
-      </div>
-
       {/* Lista */}
       <div className="space-y-4">
         {repertoriosFiltrados.length === 0 ? (
@@ -292,11 +281,11 @@ export const RepertoriosSalvos: React.FC<RepertoriosSalvosProps> = ({ configurac
         ) : (
           repertoriosFiltrados.map(repertorio => (
             <div key={repertorio.id} className="bg-white rounded-lg shadow-md hover:shadow-lg transition">
-              <div className="p-6">
-                <div className="flex items-start justify-between mb-4">
-                  <div className="flex-1">
-                    <h3 className="text-2xl font-bold text-gray-900">{repertorio.nome}</h3>
-                    <div className="flex flex-col md:flex-row gap-4 mt-2 text-gray-600">
+              <div className="p-4 md:p-6">
+                <div className="flex items-start justify-between mb-4 gap-2">
+                  <div className="flex-1 min-w-0">
+                    <h3 className="text-xl md:text-2xl font-bold text-gray-900">{repertorio.nome}</h3>
+                    <div className="flex flex-col md:flex-row gap-2 md:gap-4 mt-2 text-gray-600 text-sm md:text-base">
                       <span className="flex items-center gap-2">
                         <Calendar size={18} />
                         {repertorio.data ? repertorio.data.split('-').reverse().join('/') : 'Data não definida'}
@@ -313,7 +302,7 @@ export const RepertoriosSalvos: React.FC<RepertoriosSalvosProps> = ({ configurac
                     </div>
                   </div>
 
-                  <div className="flex gap-2">
+                  <div className="flex gap-1 md:gap-2 flex-wrap md:flex-nowrap md:flex-col lg:flex-row">
                     <button
                       onClick={() => setModalAberto(repertorio)}
                       title="Visualizar"
@@ -365,8 +354,8 @@ export const RepertoriosSalvos: React.FC<RepertoriosSalvosProps> = ({ configurac
                   </div>
                 )}
 
-                {/* Tabela de Hinos */}
-                <div className="overflow-x-auto">
+                {/* Tabela de Hinos - Desktop */}
+                <div className="hidden md:block overflow-x-auto">
                   <table className="w-full text-sm">
                     <thead className="bg-gray-100">
                       <tr>
@@ -409,6 +398,52 @@ export const RepertoriosSalvos: React.FC<RepertoriosSalvosProps> = ({ configurac
                         })}
                     </tbody>
                   </table>
+                </div>
+
+                {/* Cards de Hinos - Mobile */}
+                <div className="md:hidden space-y-3">
+                  {getHinosCompletos(repertorio.hinos)
+                    .filter(h => h !== null && h !== undefined)
+                    .map((hino, idx) => {
+                      if (!hino) return null;
+                      return (
+                        <div key={hino.id} className="bg-gradient-to-r from-indigo-50 to-purple-50 p-4 rounded-lg border border-indigo-200">
+                          <div className="flex items-start justify-between mb-3">
+                            <div className="flex-1 min-w-0">
+                              <div className="flex items-center gap-2">
+                                <span className="inline-block w-6 h-6 bg-indigo-600 text-white rounded-full text-center text-xs font-bold flex-shrink-0">
+                                  {idx + 1}
+                                </span>
+                                <h4 className="font-bold text-gray-900 text-sm break-words">{hino?.nome || 'Hino desconhecido'}</h4>
+                              </div>
+                              {hino?.numeroHarpa && (
+                                <p className="text-xs text-gray-500 mt-1">📖 Harpa nº {hino.numeroHarpa}</p>
+                              )}
+                            </div>
+                          </div>
+
+                          <div className="grid grid-cols-2 gap-2 mb-3 text-sm">
+                            <div className="bg-white p-2 rounded">
+                              <p className="text-gray-600 text-xs">Tom</p>
+                              <p className="font-bold text-gray-900">{hino?.tom || '?'}</p>
+                            </div>
+                            <div className="bg-white p-2 rounded">
+                              <p className="text-gray-600 text-xs">Cantor</p>
+                              <p className="font-bold text-gray-900 truncate">{hino?.cantor || '?'}</p>
+                            </div>
+                          </div>
+
+                          {hino?.letra && (
+                            <button
+                              onClick={() => setHinoSelecionado(hino)}
+                              className="w-full px-3 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition text-sm font-medium"
+                            >
+                              👁️ Ver Letra
+                            </button>
+                          )}
+                        </div>
+                      );
+                    })}
                 </div>
               </div>
             </div>
