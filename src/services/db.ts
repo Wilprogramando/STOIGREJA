@@ -23,13 +23,21 @@ export async function addHino(hino: Hino): Promise<string> {
   try {
     if (supabase) {
       const dadosSupabase = {
+        id: hino.id,
+        nome: hino.nome,
+        tom: hino.tom,
+        cantor: hino.cantor,
+        letra: hino.letra || '',
+        categoria: hino.categoria,
+        observacoes: hino.observacoes || '',
+        tipo: hino.tipo || 'comum',
         numero_harpa: hino.numeroHarpa || null,
-        nome_hino: hino.nome,
-        created_at: hino.criadoEm || new Date().toISOString()
+        criado_em: hino.criadoEm || new Date().toISOString(),
+        atualizado_em: hino.atualizadoEm || new Date().toISOString()
       };
 
       const { data, error } = await supabase
-        .from('harpe_cristea')
+        .from('hinos_cadastro')
         .insert([dadosSupabase]);
       
       if (error) {
@@ -53,19 +61,18 @@ export async function addHino(hino: Hino): Promise<string> {
 
 // Helper para mapear dados do Supabase para Hino
 function mapearHinoSupabase(dados: any): Hino {
-  // Mapear as colunas de harpe_cristea para o tipo Hino
   const hino: Hino = {
-    id: dados.id || dados.numero_harpa?.toString() || '',
-    nome: dados.nome_hino || '',
-    tom: dados.tom || 'C',
-    cantor: dados.cantor || '',
+    id: dados.id,
+    nome: dados.nome,
+    tom: dados.tom,
+    cantor: dados.cantor,
     letra: dados.letra || '',
-    categoria: dados.categoria || 'Harpa',
+    categoria: dados.categoria || '',
     observacoes: dados.observacoes || '',
-    tipo: 'harpa',
+    tipo: dados.tipo || 'comum',
     numeroHarpa: dados.numero_harpa ? parseInt(String(dados.numero_harpa)) : undefined,
-    criadoEm: dados.created_at || new Date().toISOString(),
-    atualizadoEm: dados.created_at || new Date().toISOString()
+    criadoEm: dados.criado_em || new Date().toISOString(),
+    atualizadoEm: dados.atualizado_em || new Date().toISOString()
   };
   
   if (dados.numero_harpa) {
@@ -79,7 +86,7 @@ export async function getAllHinos(): Promise<Hino[]> {
   try {
     if (supabase) {
       const { data, error } = await supabase
-        .from('harpe_cristea')
+        .from('hinos_cadastro')
         .select('*')
         .order('nome', { ascending: true });
       
@@ -115,7 +122,7 @@ export async function getHino(id: string): Promise<Hino | undefined> {
   try {
     if (supabase) {
       const { data, error } = await supabase
-        .from('harpe_cristea')
+        .from('hinos_cadastro')
         .select('*')
         .eq('id', id)
         .single();
@@ -137,12 +144,19 @@ export async function updateHino(hino: Hino): Promise<void> {
   try {
     if (supabase) {
       const dadosSupabase = {
+        nome: hino.nome,
+        tom: hino.tom,
+        cantor: hino.cantor,
+        letra: hino.letra || '',
+        categoria: hino.categoria,
+        observacoes: hino.observacoes || '',
+        tipo: hino.tipo || 'comum',
         numero_harpa: hino.numeroHarpa || null,
-        nome_hino: hino.nome
+        atualizado_em: new Date().toISOString()
       };
 
       const { error } = await supabase
-        .from('harpe_cristea')
+        .from('hinos_cadastro')
         .update(dadosSupabase)
         .eq('id', hino.id);
       
@@ -162,7 +176,7 @@ export async function deleteHino(id: string): Promise<void> {
   try {
     if (supabase) {
       const { error } = await supabase
-        .from('harpe_cristea')
+        .from('hinos_cadastro')
         .delete()
         .eq('id', id);
       
@@ -182,7 +196,7 @@ export async function getHinosByType(tipo: string): Promise<Hino[]> {
   try {
     if (supabase) {
       const { data, error } = await supabase
-        .from('harpe_cristea')
+        .from('hinos_cadastro')
         .select('*')
         .eq('tipo', tipo)
         .order('nome', { ascending: true });
@@ -586,7 +600,7 @@ export async function importHinosFromCSV(csvText: string, tipoImportacao: 'harpa
 export async function clearAllData(): Promise<void> {
   try {
     if (supabase) {
-      await supabase.from('harpe_cristea').delete().neq('id', '');
+      await supabase.from('hinos_cadastro').delete().neq('id', '');
       await supabase.from('repertorios_cultos').delete().neq('id', '');
       console.log('✅ Dados deletados');
     } else {
