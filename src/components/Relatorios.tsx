@@ -156,18 +156,12 @@ export const Relatorios: React.FC = () => {
         <p className="text-gray-600">Hinos mais usados em repertórios (Top 10)</p>
       </div>
 
-      {/* Stats */}
+      {/* Stats - SEM "Total de Usos" */}
       <div className="mb-6 p-4 bg-indigo-50 rounded-lg border border-indigo-200">
         <div className="flex items-center justify-between">
           <div>
             <p className="text-sm text-indigo-600 font-medium">Total de Hinos Usados</p>
             <p className="text-2xl font-bold text-indigo-900">{hinosUsage.length}</p>
-          </div>
-          <div>
-            <p className="text-sm text-indigo-600 font-medium">Total de Usos</p>
-            <p className="text-2xl font-bold text-indigo-900">
-              {hinosUsage.reduce((sum, h) => sum + h.usageCount, 0)}
-            </p>
           </div>
           <div>
             <p className="text-sm text-indigo-600 font-medium">Hino Mais Usado</p>
