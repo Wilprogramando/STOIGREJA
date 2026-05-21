@@ -282,27 +282,29 @@ export const RepertoriosSalvos: React.FC<RepertoriosSalvosProps> = ({ configurac
           repertoriosFiltrados.map(repertorio => (
             <div key={repertorio.id} className="bg-white rounded-lg shadow-md hover:shadow-lg transition">
               <div className="p-4 md:p-6">
-                <div className="flex items-start justify-between mb-4 gap-2">
-                  <div className="flex-1 min-w-0">
-                    <h3 className="text-xl md:text-2xl font-bold text-gray-900">{repertorio.nome}</h3>
-                    <div className="flex flex-col md:flex-row gap-2 md:gap-4 mt-2 text-gray-600 text-sm md:text-base">
-                      <span className="flex items-center gap-2">
-                        <Calendar size={18} />
-                        {repertorio.data ? repertorio.data.split('-').reverse().join('/') : 'Data não definida'}
+                <div className="flex flex-col gap-3">
+                  {/* Título */}
+                  <h3 className="text-xl md:text-2xl font-bold text-gray-900">{repertorio.nome}</h3>
+
+                  {/* Info em uma linha */}
+                  <div className="flex flex-wrap gap-4 text-gray-600 text-sm md:text-base">
+                    <span className="flex items-center gap-1">
+                      <Calendar size={16} />
+                      {repertorio.data ? repertorio.data.split('-').reverse().join('/') : 'Data não definida'}
+                    </span>
+                    <span className="flex items-center gap-1">
+                      <Music size={16} />
+                      {repertorio.hinos.length} hino(s)
+                    </span>
+                    {repertorio.horario && (
+                      <span className="flex items-center gap-1">
+                        ⏱️ {repertorio.horario}
                       </span>
-                      <span className="flex items-center gap-2">
-                        <Music size={18} />
-                        {repertorio.hinos.length} hino(s)
-                      </span>
-                      {repertorio.horario && (
-                        <span className="flex items-center gap-2">
-                          ⏱️ {repertorio.horario}
-                        </span>
-                      )}
-                    </div>
+                    )}
                   </div>
 
-                  <div className="flex gap-1 md:gap-2 flex-wrap md:flex-nowrap md:flex-col lg:flex-row">
+                  {/* Botões */}
+                  <div className="flex gap-1 flex-wrap">
                     <button
                       onClick={() => setModalAberto(repertorio)}
                       title="Visualizar"
