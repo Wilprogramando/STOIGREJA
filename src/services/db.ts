@@ -59,7 +59,7 @@ export async function addHino(hino: Hino): Promise<string> {
   }
 }
 
-// Helper para mapear dados do Supabase para Hino
+// ✅ Helper para mapear dados do Supabase para Hino
 function mapearHinoSupabase(dados: any): Hino {
   const hino: Hino = {
     id: dados.id,
@@ -192,6 +192,7 @@ export async function deleteHino(id: string): Promise<void> {
   }
 }
 
+// ✅ CORRIGIDO: Agora mapeia corretamente!
 export async function getHinosByType(tipo: string): Promise<Hino[]> {
   try {
     if (supabase) {
@@ -202,7 +203,18 @@ export async function getHinosByType(tipo: string): Promise<Hino[]> {
         .order('nome', { ascending: true });
       
       if (error) throw error;
-      return data || [];
+      
+      // ✅ MAPEAR CORRETAMENTE - Converter snake_case para camelCase
+      const hinos = (data || []).map(mapearHinoSupabase);
+      console.log(`✅ Hinos carregados (tipo: ${tipo}):`, hinos.length);
+      if (hinos.length > 0) {
+        console.log('📋 Detalhes dos hinos:', hinos.map(h => ({
+          nome: h.nome,
+          numeroHarpa: h.numeroHarpa,
+          tipo: typeof h.numeroHarpa
+        })));
+      }
+      return hinos;
     } else {
       const todos = await getAllHinos();
       return todos.filter(h => h.tipo === tipo);
