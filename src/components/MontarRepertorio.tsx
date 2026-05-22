@@ -17,7 +17,6 @@ export const MontarRepertorio: React.FC<MontarRepertorioProps> = ({
 }) => {
   const [hinos, setHinos] = useState<Hino[]>([]);
   const [hinosNoRepertorio, setHinosNoRepertorio] = useState<HinoNoRepertorio[]>([]);
-  const [isEditing, setIsEditing] = useState(false);
   const [formData, setFormData] = useState({
     nome: '',
     data: new Date().toISOString().split('T')[0],
@@ -28,59 +27,18 @@ export const MontarRepertorio: React.FC<MontarRepertorioProps> = ({
   const [hinoFiltrado, setHinoFiltrado] = useState('');
   const [showSelectHino, setShowSelectHino] = useState(false);
 
-  // Carrega todos os hinos uma vez
   useEffect(() => {
     loadHinos();
-  }, []);
-
-  // Atualiza form e lista quando repertorioAtual muda
-  useEffect(() => {
-    if (repertorioAtual && repertorioAtual.id) {
-      setIsEditing(true);
+    if (repertorioAtual) {
       setFormData({
         nome: repertorioAtual.nome,
         data: repertorioAtual.data,
         horario: repertorioAtual.horario || '',
         observacoes: repertorioAtual.observacoes || ''
       });
-      
-      let hinosArray: any[] = [];
-      
-      if (Array.isArray(repertorioAtual.hinos)) {
-        hinosArray = repertorioAtual.hinos.length > 0 
-          ? (typeof repertorioAtual.hinos[0] === 'object' 
-              ? repertorioAtual.hinos 
-              : [])
-          : [];
-      } else if (repertorioAtual.hinos && typeof repertorioAtual.hinos === 'object') {
-        hinosArray = Object.values(repertorioAtual.hinos);
-      }
-      
-      const hinosNormalizados = hinosArray.map((h: any, idx: number) => ({
-        id: h.id || `hino-${idx}-${Date.now()}`,
-        hinoId: h.hinoId || h.id || '',
-        ordem: h.ordem !== undefined ? h.ordem : idx + 1,
-        nome: h.nome || `Hino ${idx + 1}`,
-        tom: h.tom || 'C',
-        cantor: h.cantor || '',
-        letra: h.letra || '',
-        numeroHarpa: h.numeroHarpa || null,
-        observacoes: h.observacoes || ''
-      }));
-      
-      setHinosNoRepertorio(hinosNormalizados);
-    } else if (!repertorioAtual) {
-      // Reset apenas se repertorioAtual for explicitamente null
-      setIsEditing(false);
-      setFormData({
-        nome: '',
-        data: new Date().toISOString().split('T')[0],
-        horario: '',
-        observacoes: ''
-      });
-      setHinosNoRepertorio([]);
+      setHinosNoRepertorio(repertorioAtual.hinos);
     }
-  }, [repertorioAtual?.id]); // Mude a dependência para o ID
+  }, [repertorioAtual]);
 
   const loadHinos = async () => {
     const todos = await getAllHinos();
@@ -155,6 +113,18 @@ export const MontarRepertorio: React.FC<MontarRepertorioProps> = ({
     try {
       const agora = new Date().toISOString();
       
+      // Extrair apenas os IDs dos hinos para salvar no banco (lista_hinos)
+      const idsHinos = hinosNoRepertorio
+        .sort((a, b) => a.ordem - b.ordem)
+        .map(h => h.hinoId);
+
+      console.log('📝 Salvando repertório:', {
+        nome: formData.nome,
+        data: formData.data,
+        hinos_ids: idsHinos,
+        total_hinos: idsHinos.length
+      });
+
       const repertorio: Repertorio = {
         id: repertorioAtual?.id || Date.now().toString(),
         nome: formData.nome,
@@ -234,7 +204,7 @@ export const MontarRepertorio: React.FC<MontarRepertorioProps> = ({
   return (
     <div className="max-w-6xl mx-auto">
       <h2 className="text-3xl font-bold text-gray-900 mb-8">
-        {isEditing ? `Editar Repertório - ${formData.nome}` : 'Montar Novo Repertório'}
+        {repertorioAtual ? 'Editar Repertório' : 'Montar Novo Repertório'}
       </h2>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
