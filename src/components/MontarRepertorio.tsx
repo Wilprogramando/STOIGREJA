@@ -35,14 +35,18 @@ export const MontarRepertorio: React.FC<MontarRepertorioProps> = ({
   // Atualiza form e lista quando repertorioAtual muda
   useEffect(() => {
     if (repertorioAtual) {
+      console.log('🔍 repertorioAtual recebido:', repertorioAtual);
+      console.log('🔍 repertorioAtual.hinos:', repertorioAtual.hinos);
+      
       setFormData({
         nome: repertorioAtual.nome,
         data: repertorioAtual.data,
         horario: repertorioAtual.horario || '',
         observacoes: repertorioAtual.observacoes || ''
       });
+      
       // Converte para array e normaliza dados
-      let hinosArray: HinoNoRepertorio[] = [];
+      let hinosArray: any[] = [];
       
       if (Array.isArray(repertorioAtual.hinos)) {
         hinosArray = repertorioAtual.hinos;
@@ -50,19 +54,26 @@ export const MontarRepertorio: React.FC<MontarRepertorioProps> = ({
         hinosArray = Object.values(repertorioAtual.hinos);
       }
       
-      // Garante que cada hino tem as propriedades necessárias
-      const hinosNormalizados = hinosArray.map((h: any) => ({
-        id: h.id || Date.now().toString(),
-        hinoId: h.hinoId || h.id || '',
-        ordem: h.ordem || 1,
-        nome: h.nome || 'Hino sem nome',
-        tom: h.tom || 'C',
-        cantor: h.cantor || '',
-        letra: h.letra || '',
-        numeroHarpa: h.numeroHarpa || null,
-        observacoes: h.observacoes || ''
-      }));
+      console.log('📋 hinosArray após conversão:', hinosArray);
       
+      // Garante que cada hino tem as propriedades necessárias
+      const hinosNormalizados = hinosArray.map((h: any, idx: number) => {
+        const hino: HinoNoRepertorio = {
+          id: h.id || `hino-${idx}-${Date.now()}`,
+          hinoId: h.hinoId || h.id || '',
+          ordem: h.ordem !== undefined ? h.ordem : idx + 1,
+          nome: h.nome && h.nome !== 'undefined' ? h.nome : `Hino ${idx + 1}`,
+          tom: h.tom || 'C',
+          cantor: h.cantor || '',
+          letra: h.letra || '',
+          numeroHarpa: h.numeroHarpa || null,
+          observacoes: h.observacoes || ''
+        };
+        console.log(`📌 Hino ${idx} normalizado:`, hino);
+        return hino;
+      });
+      
+      console.log('✅ hinosNormalizados final:', hinosNormalizados);
       setHinosNoRepertorio(hinosNormalizados);
     } else {
       // Reset ao criar novo repertório
