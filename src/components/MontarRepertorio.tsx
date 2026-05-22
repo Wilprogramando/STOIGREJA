@@ -41,12 +41,29 @@ export const MontarRepertorio: React.FC<MontarRepertorioProps> = ({
         horario: repertorioAtual.horario || '',
         observacoes: repertorioAtual.observacoes || ''
       });
-      // Converte para array se necessário
-      const hinosArray = Array.isArray(repertorioAtual.hinos) 
-        ? repertorioAtual.hinos 
-        : Object.values(repertorioAtual.hinos || {});
+      // Converte para array e normaliza dados
+      let hinosArray: HinoNoRepertorio[] = [];
       
-      setHinosNoRepertorio(hinosArray as HinoNoRepertorio[]);
+      if (Array.isArray(repertorioAtual.hinos)) {
+        hinosArray = repertorioAtual.hinos;
+      } else if (repertorioAtual.hinos && typeof repertorioAtual.hinos === 'object') {
+        hinosArray = Object.values(repertorioAtual.hinos);
+      }
+      
+      // Garante que cada hino tem as propriedades necessárias
+      const hinosNormalizados = hinosArray.map((h: any) => ({
+        id: h.id || Date.now().toString(),
+        hinoId: h.hinoId || h.id || '',
+        ordem: h.ordem || 1,
+        nome: h.nome || 'Hino sem nome',
+        tom: h.tom || 'C',
+        cantor: h.cantor || '',
+        letra: h.letra || '',
+        numeroHarpa: h.numeroHarpa || null,
+        observacoes: h.observacoes || ''
+      }));
+      
+      setHinosNoRepertorio(hinosNormalizados);
     } else {
       // Reset ao criar novo repertório
       setFormData({
