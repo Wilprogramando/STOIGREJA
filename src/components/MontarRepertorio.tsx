@@ -16,7 +16,7 @@ export const MontarRepertorio: React.FC<MontarRepertorioProps> = ({
   onSave
 }) => {
   const [hinos, setHinos] = useState<Hino[]>([]);
-  const [hinosNoRepertorio, setHinosNoRepertorio] = useState<HinosNoRepertorio[]>([]);
+  const [hinosNoRepertorio, setHinosNoRepertorio] = useState<HinoNoRepertorio[]>([]);
   const [formData, setFormData] = useState({
     nome: '',
     data: new Date().toISOString().split('T')[0],
