@@ -51,6 +51,8 @@ export const Harpa: React.FC<HarpaProps> = ({ configuracoes }) => {
       nome: h.nome,
       numeroHarpa: h.numeroHarpa
     })));
+    // Ordenar por número da Harpa (numérico)
+    todos.sort((a, b) => (a.numeroHarpa || 0) - (b.numeroHarpa || 0));
     setHinos(todos);
   };
 
