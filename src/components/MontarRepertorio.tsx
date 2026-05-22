@@ -16,7 +16,7 @@ export const MontarRepertorio: React.FC<MontarRepertorioProps> = ({
   onSave
 }) => {
   const [hinos, setHinos] = useState<Hino[]>([]);
-  const [hinosNoRepertorio, setHinosNoRepertorio] = useState<HinoNoRepertorio[]>([]);
+  const [hinosNoRepertorio, setHinosNoRepertorio] = useState<HinosNoRepertorio[]>([]);
   const [formData, setFormData] = useState({
     nome: '',
     data: new Date().toISOString().split('T')[0],
@@ -26,6 +26,7 @@ export const MontarRepertorio: React.FC<MontarRepertorioProps> = ({
   const [incluirLetras, setIncluirLetras] = useState(false);
   const [hinoFiltrado, setHinoFiltrado] = useState('');
   const [showSelectHino, setShowSelectHino] = useState(false);
+  const [repertorioCarregado, setRepertorioCarregado] = useState(false);
 
   useEffect(() => {
     loadHinos();
@@ -57,7 +58,9 @@ export const MontarRepertorio: React.FC<MontarRepertorioProps> = ({
       
       console.log('✅ Hinos processados:', hinosProcessados.length);
       setHinosNoRepertorio(hinosProcessados);
-    } else if (!repertorioAtual) {
+      setRepertorioCarregado(true);
+    } else if (repertorioAtual === null && repertorioCarregado) {
+      // Só reseta se foi carregado algo antes e agora ficou null
       console.log('🔄 Resetando formulário');
       setFormData({
         nome: '',
@@ -66,8 +69,9 @@ export const MontarRepertorio: React.FC<MontarRepertorioProps> = ({
         observacoes: ''
       });
       setHinosNoRepertorio([]);
+      setRepertorioCarregado(false);
     }
-  }, [repertorioAtual]);
+  }, [repertorioAtual, repertorioCarregado]);
 
   const loadHinos = async () => {
     const todos = await getAllHinos();
