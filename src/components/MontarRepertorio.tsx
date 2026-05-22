@@ -26,6 +26,7 @@ export const MontarRepertorio: React.FC<MontarRepertorioProps> = ({
   const [incluirLetras, setIncluirLetras] = useState(false);
   const [hinoFiltrado, setHinoFiltrado] = useState('');
   const [showSelectHino, setShowSelectHino] = useState(false);
+  const [tipoSelecionado, setTipoSelecionado] = useState<'comum' | 'harpa' | null>(null);
   const [repertorioCarregado, setRepertorioCarregado] = useState(false);
 
   useEffect(() => {
@@ -102,10 +103,17 @@ export const MontarRepertorio: React.FC<MontarRepertorioProps> = ({
     setHinos(todos);
   };
 
-  const hinosFiltrados = hinos.filter(h =>
-    h.nome.toLowerCase().includes(hinoFiltrado.toLowerCase()) ||
-    h.numeroHarpa?.toString().includes(hinoFiltrado)
-  );
+  const hinosFiltrados = hinos
+    .filter(h => {
+      // Se tipo selecionado, filtrar por tipo
+      if (tipoSelecionado === 'harpa') {
+        return h.tipo === 'harpa' && (h.nome.toLowerCase().includes(hinoFiltrado.toLowerCase()) || h.numeroHarpa?.toString().includes(hinoFiltrado));
+      } else if (tipoSelecionado === 'comum') {
+        return h.tipo !== 'harpa' && h.nome.toLowerCase().includes(hinoFiltrado.toLowerCase());
+      }
+      // Se nenhum tipo selecionado, mostrar todos
+      return h.nome.toLowerCase().includes(hinoFiltrado.toLowerCase()) || h.numeroHarpa?.toString().includes(hinoFiltrado);
+    });
 
   const handleAddHino = (hino: Hino) => {
     const novaOrdem = Math.max(...hinosNoRepertorio.map(h => h.ordem), 0) + 1;
@@ -121,9 +129,21 @@ export const MontarRepertorio: React.FC<MontarRepertorioProps> = ({
       observacoes: hino.observacoes
     };
     console.log('➕ Adicionando hino:', novoItem);
-    setHinosNoRepertorio([...hinosNoRepertorio, novoItem]);
+    const novaLista = [...hinosNoRepertorio, novoItem];
+    // Ordenar: hinos comuns primeiro (sem numeroHarpa), depois harpa
+    novaLista.sort((a, b) => {
+      const aEhComum = !a.numeroHarpa;
+      const bEhComum = !b.numeroHarpa;
+      if (aEhComum && !bEhComum) return -1; // a é comum, b é harpa
+      if (!aEhComum && bEhComum) return 1;  // a é harpa, b é comum
+      return a.ordem - b.ordem; // mesmo tipo, manter ordem
+    });
+    // Reordenar números após sort
+    novaLista.forEach((h, idx) => h.ordem = idx + 1);
+    setHinosNoRepertorio(novaLista);
     setHinoFiltrado('');
     setShowSelectHino(false);
+    setTipoSelecionado(null);
   };
 
   const handleRemoveHino = (id: string) => {
@@ -333,24 +353,62 @@ export const MontarRepertorio: React.FC<MontarRepertorioProps> = ({
           <div className="bg-white p-6 rounded-lg shadow-md">
             <div className="flex items-center justify-between mb-4">
               <h3 className="text-xl font-bold text-gray-900">Sequência de Hinos</h3>
-              <button
-                onClick={() => setShowSelectHino(!showSelectHino)}
-                className="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition flex items-center gap-2"
-              >
-                <Plus size={20} />
-                Adicionar
-              </button>
+              <div className="flex gap-2 flex-wrap">
+                <button
+                  onClick={() => {
+                    setTipoSelecionado('comum');
+                    setShowSelectHino(true);
+                  }}
+                  className={`px-3 py-2 rounded-lg transition flex items-center gap-2 text-sm md:text-base ${
+                    tipoSelecionado === 'comum'
+                      ? 'bg-blue-600 text-white'
+                      : 'bg-blue-100 text-blue-700 hover:bg-blue-200'
+                  }`}
+                >
+                  <Plus size={18} />
+                  Hinos Comuns
+                </button>
+                <button
+                  onClick={() => {
+                    setTipoSelecionado('harpa');
+                    setShowSelectHino(true);
+                  }}
+                  className={`px-3 py-2 rounded-lg transition flex items-center gap-2 text-sm md:text-base ${
+                    tipoSelecionado === 'harpa'
+                      ? 'bg-purple-600 text-white'
+                      : 'bg-purple-100 text-purple-700 hover:bg-purple-200'
+                  }`}
+                >
+                  <Plus size={18} />
+                  Hinos da Harpa
+                </button>
+              </div>
             </div>
 
             {showSelectHino && (
-              <div className="mb-6 p-4 bg-indigo-50 rounded-lg border border-indigo-200">
-                <label className="block text-sm font-medium text-gray-700 mb-2">Buscar hino</label>
+              <div className="mb-6 p-4 bg-gray-50 rounded-lg border border-gray-200">
+                <div className="flex items-center justify-between mb-3">
+                  <label className="block text-sm font-medium text-gray-700">
+                    {tipoSelecionado === 'harpa' ? '🎵 Buscar Hino da Harpa' : '🎶 Buscar Hino Comum'}
+                  </label>
+                  <button
+                    onClick={() => {
+                      setShowSelectHino(false);
+                      setTipoSelecionado(null);
+                      setHinoFiltrado('');
+                    }}
+                    className="text-gray-500 hover:text-gray-700"
+                  >
+                    <X size={20} />
+                  </button>
+                </div>
                 <input
                   type="text"
                   value={hinoFiltrado}
                   onChange={(e) => setHinoFiltrado(e.target.value)}
-                  placeholder="Digite o nome ou número do hino..."
+                  placeholder={tipoSelecionado === 'harpa' ? 'Digite o nome ou número da Harpa...' : 'Digite o nome do hino...'}
                   className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-indigo-600 mb-3"
+                  autoFocus
                 />
 
                 {hinoFiltrado && (
