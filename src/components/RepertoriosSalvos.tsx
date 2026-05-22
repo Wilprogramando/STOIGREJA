@@ -313,7 +313,11 @@ export const RepertoriosSalvos: React.FC<RepertoriosSalvosProps> = ({ configurac
                       <Eye size={20} />
                     </button>
                     <button
-                      onClick={() => onEdit?.(repertorio)}
+                      onClick={() => {
+                        console.log('📝 Clicando em editar - Repertório:', repertorio);
+                        console.log('📝 Hinos no repertório:', repertorio.hinos);
+                        onEdit?.(repertorio);
+                      }}
                       title="Editar"
                       className="p-2 bg-indigo-50 text-indigo-600 rounded-lg hover:bg-indigo-100 transition"
                     >
