@@ -37,11 +37,14 @@ export default function App() {
 
   const handlePageChange = (page: string) => {
     setCurrentPage(page);
-    setRepertorioEditar(null);
+    if (page !== 'montar-repertorio') {
+      setRepertorioEditar(null);
+    }
     setSidebarOpen(false);
   };
 
   const handleEditRepertorio = (repertorio: Repertorio) => {
+    console.log('🔄 Editando repertório:', repertorio.nome);
     setRepertorioEditar(repertorio);
     setCurrentPage('montar-repertorio');
   };
@@ -71,6 +74,7 @@ export default function App() {
       case 'montar-repertorio':
         return (
           <MontarRepertorio
+            key={repertorioEditar?.id || 'novo'}
             repertorioAtual={repertorioEditar}
             configuracoes={configuracoes}
             onSave={handleSaveRepertorio}
@@ -100,7 +104,6 @@ export default function App() {
         isOpen={sidebarOpen}
         onClose={() => setSidebarOpen(false)}
       />
-
       <div className="flex-1 flex flex-col overflow-hidden">
         <Header
           currentPage={currentPage}
@@ -110,7 +113,6 @@ export default function App() {
           logoSistema={configuracoes?.logoSistema}
           subtitulo={configuracoes?.subtitulo}
         />
-
         <main className="flex-1 overflow-auto p-4 md:p-8">
           {renderPage()}
         </main>
