@@ -41,7 +41,12 @@ export const MontarRepertorio: React.FC<MontarRepertorioProps> = ({
         horario: repertorioAtual.horario || '',
         observacoes: repertorioAtual.observacoes || ''
       });
-      setHinosNoRepertorio(repertorioAtual.hinos || []);
+      // Converte para array se necessário
+      const hinosArray = Array.isArray(repertorioAtual.hinos) 
+        ? repertorioAtual.hinos 
+        : Object.values(repertorioAtual.hinos || {});
+      
+      setHinosNoRepertorio(hinosArray as HinoNoRepertorio[]);
     } else {
       // Reset ao criar novo repertório
       setFormData({
