@@ -27,8 +27,13 @@ export const MontarRepertorio: React.FC<MontarRepertorioProps> = ({
   const [hinoFiltrado, setHinoFiltrado] = useState('');
   const [showSelectHino, setShowSelectHino] = useState(false);
 
+  // Carrega todos os hinos uma vez
   useEffect(() => {
     loadHinos();
+  }, []);
+
+  // Atualiza form e lista quando repertorioAtual muda
+  useEffect(() => {
     if (repertorioAtual) {
       setFormData({
         nome: repertorioAtual.nome,
@@ -36,7 +41,16 @@ export const MontarRepertorio: React.FC<MontarRepertorioProps> = ({
         horario: repertorioAtual.horario || '',
         observacoes: repertorioAtual.observacoes || ''
       });
-      setHinosNoRepertorio(repertorioAtual.hinos);
+      setHinosNoRepertorio(repertorioAtual.hinos || []);
+    } else {
+      // Reset ao criar novo repertório
+      setFormData({
+        nome: '',
+        data: new Date().toISOString().split('T')[0],
+        horario: '',
+        observacoes: ''
+      });
+      setHinosNoRepertorio([]);
     }
   }, [repertorioAtual]);
 
@@ -113,18 +127,6 @@ export const MontarRepertorio: React.FC<MontarRepertorioProps> = ({
     try {
       const agora = new Date().toISOString();
       
-      // Extrair apenas os IDs dos hinos para salvar no banco (lista_hinos)
-      const idsHinos = hinosNoRepertorio
-        .sort((a, b) => a.ordem - b.ordem)
-        .map(h => h.hinoId);
-
-      console.log('📝 Salvando repertório:', {
-        nome: formData.nome,
-        data: formData.data,
-        hinos_ids: idsHinos,
-        total_hinos: idsHinos.length
-      });
-
       const repertorio: Repertorio = {
         id: repertorioAtual?.id || Date.now().toString(),
         nome: formData.nome,
