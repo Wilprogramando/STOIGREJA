@@ -35,7 +35,7 @@ export const MontarRepertorio: React.FC<MontarRepertorioProps> = ({
   useEffect(() => {
     if (repertorioAtual?.id) {
       console.log('✏️ Editando repertório:', repertorioAtual.nome);
-      console.log('📋 Repertório completo:', repertorioAtual);
+      console.log('📋 Hinos recebidos:', repertorioAtual.hinos);
       
       setFormData({
         nome: repertorioAtual.nome,
@@ -45,13 +45,29 @@ export const MontarRepertorio: React.FC<MontarRepertorioProps> = ({
       });
       
       const hinosProcessados = (repertorioAtual.hinos || []).map((h: any, idx: number) => {
-        // Extrair ID real (não temporário) do hino
+        // Se h é string (ID), buscar dados do hino
+        if (typeof h === 'string') {
+          const hinoCompleto = hinos.find(hi => hi.id === h);
+          return {
+            id: `hino-rep-${idx}-${Date.now()}`,
+            hinoId: h,
+            ordem: idx + 1,
+            nome: hinoCompleto?.nome || '(Hino não encontrado)',
+            tom: hinoCompleto?.tom || 'C',
+            cantor: hinoCompleto?.cantor || '',
+            letra: hinoCompleto?.letra || '',
+            numeroHarpa: hinoCompleto?.numeroHarpa || null,
+            observacoes: hinoCompleto?.observacoes || ''
+          };
+        }
+        
+        // Se h é objeto (dados completos)
         const hinoIdReal = h.hinoId && !h.hinoId.startsWith('hino-') 
           ? h.hinoId 
           : (h.id && !h.id.startsWith('hino-') ? h.id : '');
         
-        const hinoProcessado: HinoNoRepertorio = {
-          id: h.id || `hino-${idx}-${Date.now()}`,
+        return {
+          id: h.id || `hino-rep-${idx}-${Date.now()}`,
           hinoId: hinoIdReal,
           ordem: h.ordem ?? idx + 1,
           nome: h.nome || '',
@@ -61,15 +77,12 @@ export const MontarRepertorio: React.FC<MontarRepertorioProps> = ({
           numeroHarpa: h.numeroHarpa || null,
           observacoes: h.observacoes || ''
         };
-        console.log(`✅ Hino ${idx + 1}:`, hinoProcessado);
-        return hinoProcessado;
       });
       
-      console.log('📊 Total de hinos processados:', hinosProcessados.length);
+      console.log('✅ Hinos processados:', hinosProcessados.length);
       setHinosNoRepertorio(hinosProcessados);
       setRepertorioCarregado(true);
     } else if (repertorioAtual === null || repertorioAtual === undefined) {
-      // Só reseta se explicitamente passou null ou undefined
       if (repertorioCarregado) {
         console.log('🔄 Limpando formulário');
         setFormData({
@@ -82,7 +95,7 @@ export const MontarRepertorio: React.FC<MontarRepertorioProps> = ({
         setRepertorioCarregado(false);
       }
     }
-  }, [repertorioAtual?.id, repertorioAtual?.hinos?.length]);
+  }, [repertorioAtual?.id, repertorioAtual?.hinos?.length, hinos]);
 
   const loadHinos = async () => {
     const todos = await getAllHinos();
@@ -97,8 +110,8 @@ export const MontarRepertorio: React.FC<MontarRepertorioProps> = ({
   const handleAddHino = (hino: Hino) => {
     const novaOrdem = Math.max(...hinosNoRepertorio.map(h => h.ordem), 0) + 1;
     const novoItem: HinoNoRepertorio = {
-      id: Date.now().toString(),
-      hinoId: hino.id,
+      id: `${hino.id}-${Date.now()}`, // ID único para o item
+      hinoId: hino.id, // SEMPRE o ID real do hino
       ordem: novaOrdem,
       nome: hino.nome,
       tom: hino.tom,
@@ -107,6 +120,7 @@ export const MontarRepertorio: React.FC<MontarRepertorioProps> = ({
       numeroHarpa: hino.numeroHarpa,
       observacoes: hino.observacoes
     };
+    console.log('➕ Adicionando hino:', novoItem);
     setHinosNoRepertorio([...hinosNoRepertorio, novoItem]);
     setHinoFiltrado('');
     setShowSelectHino(false);
