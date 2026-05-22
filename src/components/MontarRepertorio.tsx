@@ -43,24 +43,17 @@ export const MontarRepertorio: React.FC<MontarRepertorioProps> = ({
         observacoes: repertorioAtual.observacoes || ''
       });
       
-      // Os hinos vêm como objetos completos do banco, não precisam normalizar
-      const hinosProcessados = (repertorioAtual.hinos || []).map((h: any, idx: number) => {
-        // Se já tem as propriedades esperadas, retorna como está
-        if (h.nome && h.tom !== undefined) {
-          return {
-            id: h.id || `hino-${idx}-${Date.now()}`,
-            hinoId: h.hinoId || h.id || '',
-            ordem: h.ordem || idx + 1,
-            nome: h.nome,
-            tom: h.tom,
-            cantor: h.cantor || '',
-            letra: h.letra || '',
-            numeroHarpa: h.numeroHarpa || null,
-            observacoes: h.observacoes || ''
-          };
-        }
-        return null;
-      }).filter(Boolean);
+      const hinosProcessados = (repertorioAtual.hinos || []).map((h: any, idx: number) => ({
+        id: h.id || `hino-${idx}-${Date.now()}`,
+        hinoId: h.hinoId || h.id || '',
+        ordem: h.ordem ?? idx + 1,
+        nome: h.nome || '',
+        tom: h.tom || 'C',
+        cantor: h.cantor || '',
+        letra: h.letra || '',
+        numeroHarpa: h.numeroHarpa || null,
+        observacoes: h.observacoes || ''
+      }));
       
       console.log('✅ Hinos processados:', hinosProcessados.length);
       setHinosNoRepertorio(hinosProcessados);
