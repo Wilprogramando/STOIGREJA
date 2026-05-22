@@ -142,16 +142,17 @@ export const MontarRepertorio: React.FC<MontarRepertorioProps> = ({
     try {
       const agora = new Date().toISOString();
       
-      // Extrair apenas os IDs dos hinos para salvar no banco (lista_hinos)
-      const idsHinos = hinosNoRepertorio
-        .sort((a, b) => a.ordem - b.ordem)
-        .map(h => h.hinoId);
+      // Garantir que cada hino tenha hinoId preenchido (usar id se hinoId estiver vazio)
+      const hinosComIds = hinosNoRepertorio.map(h => ({
+        ...h,
+        hinoId: h.hinoId || h.id
+      }));
 
       console.log('📝 Salvando repertório:', {
         nome: formData.nome,
         data: formData.data,
-        hinos_ids: idsHinos,
-        total_hinos: idsHinos.length
+        total_hinos: hinosComIds.length,
+        hinos: hinosComIds.map(h => ({ id: h.id, hinoId: h.hinoId, ordem: h.ordem }))
       });
 
       const repertorio: Repertorio = {
@@ -160,7 +161,7 @@ export const MontarRepertorio: React.FC<MontarRepertorioProps> = ({
         data: formData.data,
         horario: formData.horario || undefined,
         observacoes: formData.observacoes || undefined,
-        hinos: hinosNoRepertorio.sort((a, b) => a.ordem - b.ordem),
+        hinos: hinosComIds.sort((a, b) => a.ordem - b.ordem),
         criadoEm: repertorioAtual?.criadoEm || agora,
         atualizadoEm: agora
       };
