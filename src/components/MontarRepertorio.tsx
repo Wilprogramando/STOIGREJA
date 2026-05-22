@@ -29,14 +29,50 @@ export const MontarRepertorio: React.FC<MontarRepertorioProps> = ({
 
   useEffect(() => {
     loadHinos();
-    if (repertorioAtual) {
+  }, []);
+
+  useEffect(() => {
+    if (repertorioAtual && repertorioAtual.id) {
+      console.log('✏️ Editando repertório:', repertorioAtual.nome);
+      console.log('📋 Hinos recebidos:', repertorioAtual.hinos);
+      
       setFormData({
         nome: repertorioAtual.nome,
         data: repertorioAtual.data,
         horario: repertorioAtual.horario || '',
         observacoes: repertorioAtual.observacoes || ''
       });
-      setHinosNoRepertorio(repertorioAtual.hinos);
+      
+      // Os hinos vêm como objetos completos do banco, não precisam normalizar
+      const hinosProcessados = (repertorioAtual.hinos || []).map((h: any, idx: number) => {
+        // Se já tem as propriedades esperadas, retorna como está
+        if (h.nome && h.tom !== undefined) {
+          return {
+            id: h.id || `hino-${idx}-${Date.now()}`,
+            hinoId: h.hinoId || h.id || '',
+            ordem: h.ordem || idx + 1,
+            nome: h.nome,
+            tom: h.tom,
+            cantor: h.cantor || '',
+            letra: h.letra || '',
+            numeroHarpa: h.numeroHarpa || null,
+            observacoes: h.observacoes || ''
+          };
+        }
+        return null;
+      }).filter(Boolean);
+      
+      console.log('✅ Hinos processados:', hinosProcessados.length);
+      setHinosNoRepertorio(hinosProcessados);
+    } else if (!repertorioAtual) {
+      console.log('🔄 Resetando formulário');
+      setFormData({
+        nome: '',
+        data: new Date().toISOString().split('T')[0],
+        horario: '',
+        observacoes: ''
+      });
+      setHinosNoRepertorio([]);
     }
   }, [repertorioAtual]);
 
