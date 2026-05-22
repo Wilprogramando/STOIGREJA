@@ -34,57 +34,60 @@ export const MontarRepertorio: React.FC<MontarRepertorioProps> = ({
 
   // Atualiza form e lista quando repertorioAtual muda
   useEffect(() => {
-    if (repertorioAtual) {
-      console.log('🔍 repertorioAtual recebido:', repertorioAtual);
-      console.log('🔍 repertorioAtual.hinos:', repertorioAtual.hinos);
-      
-      setFormData({
-        nome: repertorioAtual.nome,
-        data: repertorioAtual.data,
-        horario: repertorioAtual.horario || '',
-        observacoes: repertorioAtual.observacoes || ''
-      });
-      
-      // Converte para array e normaliza dados
-      let hinosArray: any[] = [];
-      
-      if (Array.isArray(repertorioAtual.hinos)) {
-        hinosArray = repertorioAtual.hinos;
-      } else if (repertorioAtual.hinos && typeof repertorioAtual.hinos === 'object') {
-        hinosArray = Object.values(repertorioAtual.hinos);
+    const processarRepertorio = async () => {
+      if (repertorioAtual) {
+        setFormData({
+          nome: repertorioAtual.nome,
+          data: repertorioAtual.data,
+          horario: repertorioAtual.horario || '',
+          observacoes: repertorioAtual.observacoes || ''
+        });
+        
+        // Os hinos já vêm completos no repertorioAtual.hinos
+        let hinosArray: any[] = [];
+        
+        if (Array.isArray(repertorioAtual.hinos)) {
+          // Se são objetos completos, usar direto
+          if (repertorioAtual.hinos.length > 0 && typeof repertorioAtual.hinos[0] === 'object') {
+            hinosArray = repertorioAtual.hinos;
+          } else if (typeof repertorioAtual.hinos[0] === 'string') {
+            // Se são strings (IDs), não conseguimos encontrar, usar vazio
+            hinosArray = [];
+          }
+        } else if (repertorioAtual.hinos && typeof repertorioAtual.hinos === 'object') {
+          hinosArray = Object.values(repertorioAtual.hinos);
+        }
+        
+        // Normaliza cada hino
+        const hinosNormalizados = hinosArray.map((h: any, idx: number) => {
+          const hino: HinoNoRepertorio = {
+            id: h.id || `hino-${idx}-${Date.now()}`,
+            hinoId: h.hinoId || h.id || '',
+            ordem: h.ordem !== undefined ? h.ordem : idx + 1,
+            nome: h.nome || `Hino ${idx + 1}`,
+            tom: h.tom || 'C',
+            cantor: h.cantor || '',
+            letra: h.letra || '',
+            numeroHarpa: h.numeroHarpa || null,
+            observacoes: h.observacoes || ''
+          };
+          return hino;
+        });
+        
+        setHinosNoRepertorio(hinosNormalizados);
+      } else {
+        // Reset ao criar novo repertório
+        setFormData({
+          nome: '',
+          data: new Date().toISOString().split('T')[0],
+          horario: '',
+          observacoes: ''
+        });
+        setHinosNoRepertorio([]);
       }
-      
-      console.log('📋 hinosArray após conversão:', hinosArray);
-      
-      // Garante que cada hino tem as propriedades necessárias
-      const hinosNormalizados = hinosArray.map((h: any, idx: number) => {
-        const hino: HinoNoRepertorio = {
-          id: h.id || `hino-${idx}-${Date.now()}`,
-          hinoId: h.hinoId || h.id || '',
-          ordem: h.ordem !== undefined ? h.ordem : idx + 1,
-          nome: h.nome && h.nome !== 'undefined' ? h.nome : `Hino ${idx + 1}`,
-          tom: h.tom || 'C',
-          cantor: h.cantor || '',
-          letra: h.letra || '',
-          numeroHarpa: h.numeroHarpa || null,
-          observacoes: h.observacoes || ''
-        };
-        console.log(`📌 Hino ${idx} normalizado:`, hino);
-        return hino;
-      });
-      
-      console.log('✅ hinosNormalizados final:', hinosNormalizados);
-      setHinosNoRepertorio(hinosNormalizados);
-    } else {
-      // Reset ao criar novo repertório
-      setFormData({
-        nome: '',
-        data: new Date().toISOString().split('T')[0],
-        horario: '',
-        observacoes: ''
-      });
-      setHinosNoRepertorio([]);
-    }
+    };
+    
+    processarRepertorio();
   }, [repertorioAtual]);
 
   const loadHinos = async () => {
