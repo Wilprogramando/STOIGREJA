@@ -36,41 +36,9 @@ export const MontarRepertorio: React.FC<MontarRepertorioProps> = ({
         horario: repertorioAtual.horario || '',
         observacoes: repertorioAtual.observacoes || ''
       });
-      
-      // ✅ Converter IDs (strings) em objetos HinoNoRepertorio
-      const hinosProcessados = repertorioAtual.hinos
-        .filter((h: any) => h !== null && h !== undefined)
-        .map((h: any, idx: number) => {
-          // Se já é objeto completo (edição de repertório antigo)
-          if (typeof h === 'object' && h.hinoId) {
-            return h;
-          }
-          
-          // Se é ID (string), procura no banco
-          if (typeof h === 'string') {
-            const hinoCompleto = hinos.find(hn => hn.id === h);
-            if (hinoCompleto) {
-              return {
-                id: Date.now().toString() + '_' + idx,
-                hinoId: hinoCompleto.id,
-                ordem: idx + 1,
-                nome: hinoCompleto.nome,
-                tom: hinoCompleto.tom,
-                cantor: hinoCompleto.cantor,
-                letra: hinoCompleto.letra,
-                numeroHarpa: hinoCompleto.numeroHarpa,
-                observacoes: hinoCompleto.observacoes
-              };
-            }
-          }
-          
-          return null;
-        })
-        .filter(Boolean);
-      
-      setHinosNoRepertorio(hinosProcessados);
+      setHinosNoRepertorio(repertorioAtual.hinos);
     }
-  }, [repertorioAtual, hinos]);
+  }, [repertorioAtual]);
 
   const loadHinos = async () => {
     const todos = await getAllHinos();
