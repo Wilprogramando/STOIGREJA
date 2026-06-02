@@ -21,6 +21,9 @@ const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || '';
 const supabaseKey = import.meta.env.VITE_SUPABASE_KEY || '';
 const supabase = createClient(supabaseUrl, supabaseKey);
 
+// ID padrão para usuários não autenticados
+const USUARIO_ANONIMO_ID = 'anonimo-user';
+
 interface HarpaProps {
   configuracoes: Configuracoes | null;
 }
@@ -38,7 +41,7 @@ export const Harpa: React.FC<HarpaProps> = ({ configuracoes }) => {
   const [showCSVModal, setShowCSVModal] = useState(false);
   const [deletePasswordModal, setDeletePasswordModal] = useState<Hino | null>(null);
   const [favoritos, setFavoritos] = useState<Set<string>>(new Set());
-  const [usuarioId, setUsuarioId] = useState<string | null>(null);
+  const [usuarioId, setUsuarioId] = useState<string>(USUARIO_ANONIMO_ID);
 
   const [formData, setFormData] = useState({
     numeroHarpa: '',
@@ -66,32 +69,26 @@ export const Harpa: React.FC<HarpaProps> = ({ configuracoes }) => {
 
   const carregarFavoritos = async () => {
     try {
+      // Tenta carregar usuário autenticado
       const { data: { user }, error } = await supabase.auth.getUser();
       
-      if (error || !user) {
-        console.log('ℹ️ Usuário não autenticado, carregando favoritos locais');
-        // Carrega favoritos do localStorage se não houver usuário
-        const favs = localStorage.getItem('hinosFavoritos');
-        if (favs) {
-          setFavoritos(new Set(JSON.parse(favs)));
-        }
-        setUsuarioId(null);
-        return;
+      let idParaCarregar = USUARIO_ANONIMO_ID;
+      
+      if (user && !error) {
+        idParaCarregar = user.id;
+        setUsuarioId(user.id);
+        console.log('✅ Usuário autenticado:', user.id);
+      } else {
+        setUsuarioId(USUARIO_ANONIMO_ID);
+        console.log('ℹ️ Usando usuário anônimo');
       }
 
-      setUsuarioId(user.id);
-      console.log('✅ Usuário autenticado:', user.id);
-      
-      // Carrega favoritos do Supabase se houver usuário
-      const favoritosIds = await carregarFavoritosSupabase(user.id);
+      // Carrega favoritos do Supabase com o ID (autenticado ou anônimo)
+      const favoritosIds = await carregarFavoritosSupabase(idParaCarregar);
       setFavoritos(new Set(favoritosIds));
+      console.log('✅ Favoritos carregados:', favoritosIds.length);
     } catch (error) {
       console.error('❌ Erro ao carregar favoritos:', error);
-      // Fallback para localStorage
-      const favs = localStorage.getItem('hinosFavoritos');
-      if (favs) {
-        setFavoritos(new Set(JSON.parse(favs)));
-      }
     }
   };
 
@@ -102,24 +99,30 @@ export const Harpa: React.FC<HarpaProps> = ({ configuracoes }) => {
 
       if (isFavoritado) {
         novosFavoritos.delete(hinoId);
+        console.log('❌ Removendo favorito:', hinoId);
       } else {
         novosFavoritos.add(hinoId);
+        console.log('⭐ Adicionando favorito:', hinoId);
       }
       
       setFavoritos(novosFavoritos);
       
-      // Se houver usuário autenticado, salva no Supabase
-      if (usuarioId) {
-        console.log('📤 Salvando no Supabase...');
-        if (isFavoritado) {
-          await removerFavoritoSupabase(usuarioId, hinoId);
-        } else {
-          await adicionarFavoritoSupabase(usuarioId, hinoId);
+      // Salva no Supabase com o usuarioId (autenticado ou anônimo)
+      console.log('📤 Salvando no Supabase com usuário:', usuarioId);
+      if (isFavoritado) {
+        const sucesso = await removerFavoritoSupabase(usuarioId, hinoId);
+        if (!sucesso) {
+          console.error('❌ Erro ao remover do Supabase');
+          novosFavoritos.add(hinoId);
+          setFavoritos(novosFavoritos);
         }
       } else {
-        // Senão, salva localmente
-        console.log('💾 Salvando localmente...');
-        localStorage.setItem('hinosFavoritos', JSON.stringify(Array.from(novosFavoritos)));
+        const sucesso = await adicionarFavoritoSupabase(usuarioId, hinoId);
+        if (!sucesso) {
+          console.error('❌ Erro ao adicionar ao Supabase');
+          novosFavoritos.delete(hinoId);
+          setFavoritos(novosFavoritos);
+        }
       }
     } catch (error) {
       console.error('❌ Erro ao processar favorito:', error);
