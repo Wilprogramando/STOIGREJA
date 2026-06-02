@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Plus, Edit, Trash2, Eye, Download, Share2, Upload } from 'lucide-react';
+import { Plus, Edit, Trash2, Eye, Download, Share2, Upload, Star } from 'lucide-react';
 import {
   getHinosByType,
   addHino,
@@ -31,6 +31,7 @@ export const Harpa: React.FC<HarpaProps> = ({ configuracoes }) => {
   const [searchResult, setSearchResult] = useState<HarpaItem | null>(null);
   const [showCSVModal, setShowCSVModal] = useState(false);
   const [deletePasswordModal, setDeletePasswordModal] = useState<Hino | null>(null);
+  const [favoritos, setFavoritos] = useState<Set<string>>(new Set());
 
   const [formData, setFormData] = useState({
     numeroHarpa: '',
@@ -43,6 +44,7 @@ export const Harpa: React.FC<HarpaProps> = ({ configuracoes }) => {
 
   useEffect(() => {
     loadHinos();
+    carregarFavoritos();
   }, []);
 
   const loadHinos = async () => {
@@ -54,6 +56,24 @@ export const Harpa: React.FC<HarpaProps> = ({ configuracoes }) => {
     // Ordenar por número da Harpa (numérico)
     todos.sort((a, b) => (a.numeroHarpa || 0) - (b.numeroHarpa || 0));
     setHinos(todos);
+  };
+
+  const carregarFavoritos = () => {
+    const favs = localStorage.getItem('hinosFavoritos');
+    if (favs) {
+      setFavoritos(new Set(JSON.parse(favs)));
+    }
+  };
+
+  const toggleFavorito = (hinoId: string) => {
+    const novosFavoritos = new Set(favoritos);
+    if (novosFavoritos.has(hinoId)) {
+      novosFavoritos.delete(hinoId);
+    } else {
+      novosFavoritos.add(hinoId);
+    }
+    setFavoritos(novosFavoritos);
+    localStorage.setItem('hinosFavoritos', JSON.stringify(Array.from(novosFavoritos)));
   };
 
   const handleBuscarPorNumero = async (numero: string) => {
@@ -193,6 +213,11 @@ export const Harpa: React.FC<HarpaProps> = ({ configuracoes }) => {
     if (filtros.nome && !h.nome.toLowerCase().includes(filtros.nome.toLowerCase())) return false;
     return true;
   });
+
+  // Separar favoritos e não favoritos, e ordenar
+  const hinosFavoritos = hinosFiltrados.filter(h => favoritos.has(h.id));
+  const hinosNaoFavoritos = hinosFiltrados.filter(h => !favoritos.has(h.id));
+  const hinosOrdenados = [...hinosFavoritos, ...hinosNaoFavoritos];
 
   return (
     <div className="max-w-6xl mx-auto">
@@ -374,142 +399,177 @@ export const Harpa: React.FC<HarpaProps> = ({ configuracoes }) => {
 
       {/* Lista de Hinos */}
       <div className="space-y-2">
-        {hinosFiltrados.length === 0 ? (
+        {hinosOrdenados.length === 0 ? (
           <div className="text-center py-12 bg-white rounded-lg">
             <p className="text-gray-500 text-lg">Nenhum hino da Harpa cadastrado</p>
           </div>
         ) : (
-          hinosFiltrados.map(hino => (
-            <div key={hino.id} className="bg-white p-3 rounded-lg shadow-sm border-l-4 border-indigo-600">
-              <h3 className="text-lg font-bold text-gray-900 mb-2 md:mb-0">
-                {(() => {
-                  console.log('🎵 Hino exibindo:', { 
-                    nome: hino.nome, 
-                    numeroHarpa: hino.numeroHarpa,
-                    tipo: hino.tipo,
-                    id: hino.id
-                  });
-                  return `Harpa nº ${hino.numeroHarpa !== undefined ? hino.numeroHarpa : '?'} - ${hino.nome}`;
-                })()}
-              </h3>
+          hinosOrdenados.map(hino => (
+            <div 
+              key={hino.id} 
+              className={`bg-white p-3 rounded-lg shadow-sm border-l-4 ${
+                favoritos.has(hino.id) ? 'border-yellow-400 bg-yellow-50' : 'border-indigo-600'
+              }`}
+            >
+              <div className="flex items-start justify-between gap-3">
+                <div className="flex-1">
+                  <h3 className="text-lg font-bold text-gray-900 mb-2 md:mb-0">
+                    {(() => {
+                      console.log('🎵 Hino exibindo:', { 
+                        nome: hino.nome, 
+                        numeroHarpa: hino.numeroHarpa,
+                        tipo: hino.tipo,
+                        id: hino.id
+                      });
+                      return `Harpa nº ${hino.numeroHarpa !== undefined ? hino.numeroHarpa : '?'} - ${hino.nome}`;
+                    })()}
+                  </h3>
+                  
+                  {/* Linha com informações - Desktop em 1 linha, Mobile em 2 */}
+                  <div className="md:flex md:items-center md:gap-4">
+                    <div className="text-sm text-gray-600 mt-2 md:mt-0">
+                      <p>🎵 <span className="font-medium">{hino.tom}</span> • 👤 <span className="font-medium">{hino.cantor}</span></p>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Botão Favorito - Mobile */}
+                <div className="md:hidden">
+                  <button
+                    onClick={() => toggleFavorito(hino.id)}
+                    className="p-2 rounded hover:bg-gray-100 transition"
+                    title={favoritos.has(hino.id) ? "Remover de favoritos" : "Adicionar aos favoritos"}
+                  >
+                    {favoritos.has(hino.id) ? (
+                      <Star size={20} className="fill-yellow-400 text-yellow-400" />
+                    ) : (
+                      <Star size={20} className="text-gray-400" />
+                    )}
+                  </button>
+                </div>
+              </div>
               
-              {/* Linha com informações e botões - Desktop em 1 linha, Mobile em 2 */}
-              <div className="md:flex md:items-center md:justify-between md:gap-4">
-                <div className="text-sm text-gray-600 mt-2 md:mt-0">
-                  <p>🎵 <span className="font-medium">{hino.tom}</span> • 👤 <span className="font-medium">{hino.cantor}</span></p>
-                </div>
-                
-                {/* Botões Mobile */}
-                <div className="md:hidden flex gap-1 mt-3">
-                  <button
-                    onClick={() => setModalLetra(hino)}
-                    className="p-1.5 bg-blue-100 text-blue-600 rounded hover:bg-blue-200 transition flex justify-center flex-1"
-                    title="Ver letra"
-                  >
-                    👁️
-                  </button>
-                  <button
-                    onClick={() => handleEditar(hino)}
-                    className="p-1.5 bg-yellow-100 text-yellow-600 rounded hover:bg-yellow-200 transition flex justify-center flex-1"
-                    title="Editar"
-                  >
-                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                    </svg>
-                  </button>
-                  <button
-                    onClick={() => handleGerarPdf(hino)}
-                    className="p-1.5 bg-orange-100 text-orange-600 rounded hover:bg-orange-200 transition flex justify-center flex-1"
-                    title="Baixar PDF"
-                  >
-                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
-                    </svg>
-                  </button>
-                  <button
-                    onClick={() => handleCompartilharWhatsApp(hino)}
-                    className="p-1.5 bg-green-100 text-green-600 rounded hover:bg-green-200 transition flex justify-center flex-1"
-                    title="Compartilhar"
-                  >
-                    <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
-                      <path d="M17.5 2c1.933 0 3.5 1.567 3.5 3.5v4.5h-2V5.5c0-.827-.673-1.5-1.5-1.5h-11c-.827 0-1.5.673-1.5 1.5v11c0 .827.673 1.5 1.5 1.5h4.5v2h-4.5c-1.933 0-3.5-1.567-3.5-3.5v-11c0-1.933 1.567-3.5 3.5-3.5h11zm0 8l-6 6v-4h-6v-4h6v-4l6 6z" />
-                    </svg>
-                  </button>
-                  <button
-                    onClick={() => handleDuplicar(hino)}
-                    className="p-1.5 bg-purple-100 text-purple-600 rounded hover:bg-purple-200 transition flex justify-center flex-1"
-                    title="Duplicar"
-                  >
-                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
-                    </svg>
-                  </button>
-                  <button
-                    onClick={() => handleDeletar(hino)}
-                    className="p-1.5 bg-red-100 text-red-600 rounded hover:bg-red-200 transition flex justify-center flex-1"
-                    title="Deletar"
-                  >
-                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                    </svg>
-                  </button>
-                </div>
-                
-                {/* Botões Desktop - Na mesma linha com ícones SVG */}
-                <div className="hidden md:flex md:gap-2">
-                  <button
-                    onClick={() => setModalLetra(hino)}
-                    className="p-2 bg-blue-50 text-blue-600 rounded hover:bg-blue-100 transition flex justify-center items-center"
-                    title="Ver letra"
-                  >
-                    👁️
-                  </button>
-                  <button
-                    onClick={() => handleEditar(hino)}
-                    className="p-2 bg-yellow-50 text-yellow-600 rounded hover:bg-yellow-100 transition flex justify-center items-center"
-                    title="Editar"
-                  >
-                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                    </svg>
-                  </button>
-                  <button
-                    onClick={() => handleGerarPdf(hino)}
-                    className="p-2 bg-orange-50 text-orange-600 rounded hover:bg-orange-100 transition flex justify-center items-center"
-                    title="Baixar PDF"
-                  >
-                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
-                    </svg>
-                  </button>
-                  <button
-                    onClick={() => handleCompartilharWhatsApp(hino)}
-                    className="p-2 bg-green-50 text-green-600 rounded hover:bg-green-100 transition flex justify-center items-center"
-                    title="Compartilhar"
-                  >
-                    <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
-                      <path d="M17.5 2c1.933 0 3.5 1.567 3.5 3.5v4.5h-2V5.5c0-.827-.673-1.5-1.5-1.5h-11c-.827 0-1.5.673-1.5 1.5v11c0 .827.673 1.5 1.5 1.5h4.5v2h-4.5c-1.933 0-3.5-1.567-3.5-3.5v-11c0-1.933 1.567-3.5 3.5-3.5h11zm0 8l-6 6v-4h-6v-4h6v-4l6 6z" />
-                    </svg>
-                  </button>
-                  <button
-                    onClick={() => handleDuplicar(hino)}
-                    className="p-2 bg-purple-50 text-purple-600 rounded hover:bg-purple-100 transition flex justify-center items-center"
-                    title="Duplicar"
-                  >
-                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
-                    </svg>
-                  </button>
-                  <button
-                    onClick={() => handleDeletar(hino)}
-                    className="p-2 bg-red-50 text-red-600 rounded hover:bg-red-100 transition flex justify-center items-center"
-                    title="Deletar"
-                  >
-                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                    </svg>
-                  </button>
-                </div>
+              {/* Botões Mobile */}
+              <div className="md:hidden flex gap-1 mt-3">
+                <button
+                  onClick={() => setModalLetra(hino)}
+                  className="p-1.5 bg-blue-100 text-blue-600 rounded hover:bg-blue-200 transition flex justify-center flex-1"
+                  title="Ver letra"
+                >
+                  👁️
+                </button>
+                <button
+                  onClick={() => handleEditar(hino)}
+                  className="p-1.5 bg-yellow-100 text-yellow-600 rounded hover:bg-yellow-200 transition flex justify-center flex-1"
+                  title="Editar"
+                >
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                  </svg>
+                </button>
+                <button
+                  onClick={() => handleGerarPdf(hino)}
+                  className="p-1.5 bg-orange-100 text-orange-600 rounded hover:bg-orange-200 transition flex justify-center flex-1"
+                  title="Baixar PDF"
+                >
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                  </svg>
+                </button>
+                <button
+                  onClick={() => handleCompartilharWhatsApp(hino)}
+                  className="p-1.5 bg-green-100 text-green-600 rounded hover:bg-green-200 transition flex justify-center flex-1"
+                  title="Compartilhar"
+                >
+                  <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
+                    <path d="M17.5 2c1.933 0 3.5 1.567 3.5 3.5v4.5h-2V5.5c0-.827-.673-1.5-1.5-1.5h-11c-.827 0-1.5.673-1.5 1.5v11c0 .827.673 1.5 1.5 1.5h4.5v2h-4.5c-1.933 0-3.5-1.567-3.5-3.5v-11c0-1.933 1.567-3.5 3.5-3.5h11zm0 8l-6 6v-4h-6v-4h6v-4l6 6z" />
+                  </svg>
+                </button>
+                <button
+                  onClick={() => handleDuplicar(hino)}
+                  className="p-1.5 bg-purple-100 text-purple-600 rounded hover:bg-purple-200 transition flex justify-center flex-1"
+                  title="Duplicar"
+                >
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                  </svg>
+                </button>
+                <button
+                  onClick={() => handleDeletar(hino)}
+                  className="p-1.5 bg-red-100 text-red-600 rounded hover:bg-red-200 transition flex justify-center flex-1"
+                  title="Deletar"
+                >
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                  </svg>
+                </button>
+              </div>
+              
+              {/* Botões Desktop - Na mesma linha com ícones SVG */}
+              <div className="hidden md:flex md:gap-2 md:mt-3">
+                <button
+                  onClick={() => toggleFavorito(hino.id)}
+                  className="p-2 bg-gray-50 rounded hover:bg-gray-100 transition"
+                  title={favoritos.has(hino.id) ? "Remover de favoritos" : "Adicionar aos favoritos"}
+                >
+                  {favoritos.has(hino.id) ? (
+                    <Star size={20} className="fill-yellow-400 text-yellow-400" />
+                  ) : (
+                    <Star size={20} className="text-gray-400" />
+                  )}
+                </button>
+                <button
+                  onClick={() => setModalLetra(hino)}
+                  className="p-2 bg-blue-50 text-blue-600 rounded hover:bg-blue-100 transition flex justify-center items-center"
+                  title="Ver letra"
+                >
+                  👁️
+                </button>
+                <button
+                  onClick={() => handleEditar(hino)}
+                  className="p-2 bg-yellow-50 text-yellow-600 rounded hover:bg-yellow-100 transition flex justify-center items-center"
+                  title="Editar"
+                >
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                  </svg>
+                </button>
+                <button
+                  onClick={() => handleGerarPdf(hino)}
+                  className="p-2 bg-orange-50 text-orange-600 rounded hover:bg-orange-100 transition flex justify-center items-center"
+                  title="Baixar PDF"
+                >
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                  </svg>
+                </button>
+                <button
+                  onClick={() => handleCompartilharWhatsApp(hino)}
+                  className="p-2 bg-green-50 text-green-600 rounded hover:bg-green-100 transition flex justify-center items-center"
+                  title="Compartilhar"
+                >
+                  <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
+                    <path d="M17.5 2c1.933 0 3.5 1.567 3.5 3.5v4.5h-2V5.5c0-.827-.673-1.5-1.5-1.5h-11c-.827 0-1.5.673-1.5 1.5v11c0 .827.673 1.5 1.5 1.5h4.5v2h-4.5c-1.933 0-3.5-1.567-3.5-3.5v-11c0-1.933 1.567-3.5 3.5-3.5h11zm0 8l-6 6v-4h-6v-4h6v-4l6 6z" />
+                  </svg>
+                </button>
+                <button
+                  onClick={() => handleDuplicar(hino)}
+                  className="p-2 bg-purple-50 text-purple-600 rounded hover:bg-purple-100 transition flex justify-center items-center"
+                  title="Duplicar"
+                >
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                  </svg>
+                </button>
+                <button
+                  onClick={() => handleDeletar(hino)}
+                  className="p-2 bg-red-50 text-red-600 rounded hover:bg-red-100 transition flex justify-center items-center"
+                  title="Deletar"
+                >
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                  </svg>
+                </button>
               </div>
             </div>
           ))
