@@ -69,49 +69,60 @@ export const Harpa: React.FC<HarpaProps> = ({ configuracoes }) => {
       const { data: { user }, error } = await supabase.auth.getUser();
       
       if (error || !user) {
-        console.log('❌ Usuário não autenticado');
+        console.log('ℹ️ Usuário não autenticado, carregando favoritos locais');
+        // Carrega favoritos do localStorage se não houver usuário
+        const favs = localStorage.getItem('hinosFavoritos');
+        if (favs) {
+          setFavoritos(new Set(JSON.parse(favs)));
+        }
         setUsuarioId(null);
         return;
       }
 
       setUsuarioId(user.id);
-      console.log('✅ Usuário:', user.id);
+      console.log('✅ Usuário autenticado:', user.id);
       
+      // Carrega favoritos do Supabase se houver usuário
       const favoritosIds = await carregarFavoritosSupabase(user.id);
       setFavoritos(new Set(favoritosIds));
     } catch (error) {
       console.error('❌ Erro ao carregar favoritos:', error);
+      // Fallback para localStorage
+      const favs = localStorage.getItem('hinosFavoritos');
+      if (favs) {
+        setFavoritos(new Set(JSON.parse(favs)));
+      }
     }
   };
 
   const toggleFavorito = async (hinoId: string) => {
-    if (!usuarioId) {
-      alert('Você precisa estar autenticado para favoritar');
-      return;
-    }
-
     try {
       const novosFavoritos = new Set(favoritos);
       const isFavoritado = novosFavoritos.has(hinoId);
 
       if (isFavoritado) {
-        const sucesso = await removerFavoritoSupabase(usuarioId, hinoId);
-        if (sucesso) {
-          novosFavoritos.delete(hinoId);
-          setFavoritos(novosFavoritos);
-          console.log('✅ Favorito removido');
+        novosFavoritos.delete(hinoId);
+      } else {
+        novosFavoritos.add(hinoId);
+      }
+      
+      setFavoritos(novosFavoritos);
+      
+      // Se houver usuário autenticado, salva no Supabase
+      if (usuarioId) {
+        console.log('📤 Salvando no Supabase...');
+        if (isFavoritado) {
+          await removerFavoritoSupabase(usuarioId, hinoId);
+        } else {
+          await adicionarFavoritoSupabase(usuarioId, hinoId);
         }
       } else {
-        const sucesso = await adicionarFavoritoSupabase(usuarioId, hinoId);
-        if (sucesso) {
-          novosFavoritos.add(hinoId);
-          setFavoritos(novosFavoritos);
-          console.log('✅ Favorito adicionado');
-        }
+        // Senão, salva localmente
+        console.log('💾 Salvando localmente...');
+        localStorage.setItem('hinosFavoritos', JSON.stringify(Array.from(novosFavoritos)));
       }
     } catch (error) {
       console.error('❌ Erro ao processar favorito:', error);
-      alert('Erro ao processar favorito');
     }
   };
 
