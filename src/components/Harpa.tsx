@@ -10,10 +10,16 @@ import {
   addHarpaItems
 } from '../services/db';
 import { generateHinoPdf, shareViaWhatsApp } from '../services/pdf';
+import { carregarFavoritosSupabase, adicionarFavoritoSupabase, removerFavoritoSupabase } from '../services/supabase';
 import { Hino, HarpaItem, Configuracoes } from '../types';
 import { ModalVisualizaLetra } from './ModalVisualizaLetra';
 import { ImportCSVModal } from './ImportCSVModal';
 import { DeletePasswordModal } from './DeletePasswordModal';
+import { createClient } from '@supabase/supabase-js';
+
+const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || '';
+const supabaseKey = import.meta.env.VITE_SUPABASE_KEY || '';
+const supabase = createClient(supabaseUrl, supabaseKey);
 
 interface HarpaProps {
   configuracoes: Configuracoes | null;
@@ -32,6 +38,7 @@ export const Harpa: React.FC<HarpaProps> = ({ configuracoes }) => {
   const [showCSVModal, setShowCSVModal] = useState(false);
   const [deletePasswordModal, setDeletePasswordModal] = useState<Hino | null>(null);
   const [favoritos, setFavoritos] = useState<Set<string>>(new Set());
+  const [usuarioId, setUsuarioId] = useState<string | null>(null);
 
   const [formData, setFormData] = useState({
     numeroHarpa: '',
@@ -53,27 +60,59 @@ export const Harpa: React.FC<HarpaProps> = ({ configuracoes }) => {
       nome: h.nome,
       numeroHarpa: h.numeroHarpa
     })));
-    // Ordenar por número da Harpa (numérico)
     todos.sort((a, b) => (a.numeroHarpa || 0) - (b.numeroHarpa || 0));
     setHinos(todos);
   };
 
-  const carregarFavoritos = () => {
-    const favs = localStorage.getItem('hinosFavoritos');
-    if (favs) {
-      setFavoritos(new Set(JSON.parse(favs)));
+  const carregarFavoritos = async () => {
+    try {
+      const { data: { user }, error } = await supabase.auth.getUser();
+      
+      if (error || !user) {
+        console.log('❌ Usuário não autenticado');
+        setUsuarioId(null);
+        return;
+      }
+
+      setUsuarioId(user.id);
+      console.log('✅ Usuário:', user.id);
+      
+      const favoritosIds = await carregarFavoritosSupabase(user.id);
+      setFavoritos(new Set(favoritosIds));
+    } catch (error) {
+      console.error('❌ Erro ao carregar favoritos:', error);
     }
   };
 
-  const toggleFavorito = (hinoId: string) => {
-    const novosFavoritos = new Set(favoritos);
-    if (novosFavoritos.has(hinoId)) {
-      novosFavoritos.delete(hinoId);
-    } else {
-      novosFavoritos.add(hinoId);
+  const toggleFavorito = async (hinoId: string) => {
+    if (!usuarioId) {
+      alert('Você precisa estar autenticado para favoritar');
+      return;
     }
-    setFavoritos(novosFavoritos);
-    localStorage.setItem('hinosFavoritos', JSON.stringify(Array.from(novosFavoritos)));
+
+    try {
+      const novosFavoritos = new Set(favoritos);
+      const isFavoritado = novosFavoritos.has(hinoId);
+
+      if (isFavoritado) {
+        const sucesso = await removerFavoritoSupabase(usuarioId, hinoId);
+        if (sucesso) {
+          novosFavoritos.delete(hinoId);
+          setFavoritos(novosFavoritos);
+          console.log('✅ Favorito removido');
+        }
+      } else {
+        const sucesso = await adicionarFavoritoSupabase(usuarioId, hinoId);
+        if (sucesso) {
+          novosFavoritos.add(hinoId);
+          setFavoritos(novosFavoritos);
+          console.log('✅ Favorito adicionado');
+        }
+      }
+    } catch (error) {
+      console.error('❌ Erro ao processar favorito:', error);
+      alert('Erro ao processar favorito');
+    }
   };
 
   const handleBuscarPorNumero = async (numero: string) => {
@@ -214,7 +253,6 @@ export const Harpa: React.FC<HarpaProps> = ({ configuracoes }) => {
     return true;
   });
 
-  // Separar favoritos e não favoritos, e ordenar
   const hinosFavoritos = hinosFiltrados.filter(h => favoritos.has(h.id));
   const hinosNaoFavoritos = hinosFiltrados.filter(h => !favoritos.has(h.id));
   const hinosOrdenados = [...hinosFavoritos, ...hinosNaoFavoritos];
@@ -263,7 +301,6 @@ export const Harpa: React.FC<HarpaProps> = ({ configuracoes }) => {
           </h3>
 
           <form onSubmit={handleSubmit} className="space-y-4">
-            {/* Número, Nome, Tom, Cantor - Responsivo */}
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-2 lg:gap-2">
               <div className="lg:col-span-2">
                 <label className="block text-sm font-medium text-gray-700 mb-1">📖 Número da Harpa *</label>
@@ -370,7 +407,6 @@ export const Harpa: React.FC<HarpaProps> = ({ configuracoes }) => {
         </div>
       )}
 
-      {/* Filtros */}
       <div className="bg-white p-4 rounded-lg shadow-md mb-6">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
@@ -397,7 +433,6 @@ export const Harpa: React.FC<HarpaProps> = ({ configuracoes }) => {
         </div>
       </div>
 
-      {/* Lista de Hinos */}
       <div className="space-y-2">
         {hinosOrdenados.length === 0 ? (
           <div className="text-center py-12 bg-white rounded-lg">
@@ -414,18 +449,9 @@ export const Harpa: React.FC<HarpaProps> = ({ configuracoes }) => {
               <div className="flex items-start justify-between gap-3">
                 <div className="flex-1">
                   <h3 className="text-lg font-bold text-gray-900 mb-2 md:mb-0">
-                    {(() => {
-                      console.log('🎵 Hino exibindo:', { 
-                        nome: hino.nome, 
-                        numeroHarpa: hino.numeroHarpa,
-                        tipo: hino.tipo,
-                        id: hino.id
-                      });
-                      return `Harpa nº ${hino.numeroHarpa !== undefined ? hino.numeroHarpa : '?'} - ${hino.nome}`;
-                    })()}
+                    Harpa nº {hino.numeroHarpa !== undefined ? hino.numeroHarpa : '?'} - {hino.nome}
                   </h3>
                   
-                  {/* Linha com informações - Desktop em 1 linha, Mobile em 2 */}
                   <div className="md:flex md:items-center md:gap-4">
                     <div className="text-sm text-gray-600 mt-2 md:mt-0">
                       <p>🎵 <span className="font-medium">{hino.tom}</span> • 👤 <span className="font-medium">{hino.cantor}</span></p>
@@ -433,7 +459,6 @@ export const Harpa: React.FC<HarpaProps> = ({ configuracoes }) => {
                   </div>
                 </div>
 
-                {/* Botão Favorito - Mobile */}
                 <div className="md:hidden">
                   <button
                     onClick={() => toggleFavorito(hino.id)}
@@ -449,7 +474,6 @@ export const Harpa: React.FC<HarpaProps> = ({ configuracoes }) => {
                 </div>
               </div>
               
-              {/* Botões Mobile */}
               <div className="md:hidden flex gap-1 mt-3">
                 <button
                   onClick={() => setModalLetra(hino)}
@@ -505,7 +529,6 @@ export const Harpa: React.FC<HarpaProps> = ({ configuracoes }) => {
                 </button>
               </div>
               
-              {/* Botões Desktop - Na mesma linha com ícones SVG */}
               <div className="hidden md:flex md:gap-2 md:mt-3">
                 <button
                   onClick={() => toggleFavorito(hino.id)}
