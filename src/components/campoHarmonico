@@ -1,1 +1,95 @@
+import React from "react";
+import {
+  Card,
+  CardContent,
+  Typography,
+  Grid,
+  Table,
+  TableBody,
+  TableCell,
+  TableContainer,
+  TableHead,
+  TableRow,
+  Paper,
+} from "@mui/material";
 
+const campoHarmonico = [
+  {
+    tom: "C",
+    graus: ["C", "Dm", "Em", "F", "G", "Am"],
+  },
+  {
+    tom: "G",
+    graus: ["G", "Am", "Bm", "C", "D", "Em"],
+  },
+  {
+    tom: "D",
+    graus: ["D", "Em", "F#m", "G", "A", "Bm"],
+  },
+  {
+    tom: "A",
+    graus: ["A", "Bm", "C#m", "D", "E", "F#m"],
+  },
+  {
+    tom: "E",
+    graus: ["E", "F#m", "G#m", "A", "B", "C#m"],
+  },
+  {
+    tom: "F",
+    graus: ["F", "Gm", "Am", "Bb", "C", "Dm"],
+  },
+];
+
+export default function CampoHarmonico() {
+  return (
+    <Grid container spacing={3}>
+      <Grid item xs={12}>
+        <Typography variant="h4" fontWeight={700}>
+          Campo Harmônico
+        </Typography>
+
+        <Typography color="text.secondary">
+          Consulte rapidamente os acordes de cada tonalidade.
+        </Typography>
+      </Grid>
+
+      <Grid item xs={12}>
+        <Card>
+          <CardContent>
+            <TableContainer component={Paper}>
+              <Table>
+                <TableHead>
+                  <TableRow>
+                    <TableCell><strong>Tom</strong></TableCell>
+                    <TableCell><strong>I</strong></TableCell>
+                    <TableCell><strong>II</strong></TableCell>
+                    <TableCell><strong>III</strong></TableCell>
+                    <TableCell><strong>IV</strong></TableCell>
+                    <TableCell><strong>V</strong></TableCell>
+                    <TableCell><strong>VI</strong></TableCell>
+                  </TableRow>
+                </TableHead>
+
+                <TableBody>
+                  {campoHarmonico.map((linha) => (
+                    <TableRow key={linha.tom}>
+                      <TableCell>
+                        <strong>{linha.tom}</strong>
+                      </TableCell>
+
+                      {linha.graus.map((acorde) => (
+                        <TableCell key={acorde}>
+                          {acorde}
+                        </TableCell>
+                      ))}
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </TableContainer>
+          </CardContent>
+        </Card>
+      </Grid>
+    </Grid>
+  );
+}
