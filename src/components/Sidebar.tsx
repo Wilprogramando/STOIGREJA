@@ -1,5 +1,14 @@
 import React from 'react';
-import { Home, Plus, BookOpen, Music, List, Settings, BarChart3 } from 'lucide-react';
+import {
+  Home,
+  Plus,
+  BookOpen,
+  Music,
+  Music2,
+  List,
+  Settings,
+  BarChart3
+} from 'lucide-react';
 
 interface SidebarProps {
   currentPage: string;
@@ -8,12 +17,22 @@ interface SidebarProps {
   onClose: () => void;
 }
 
-export const Sidebar: React.FC<SidebarProps> = ({ currentPage, onPageChange, isOpen, onClose }) => {
+export const Sidebar: React.FC<SidebarProps> = ({
+  currentPage,
+  onPageChange,
+  isOpen,
+  onClose
+}) => {
+
   const menuItems = [
     { id: 'dashboard', label: 'Dashboard', icon: Home },
     { id: 'cadastrar-hino', label: 'Cadastrar Hino', icon: Plus },
     { id: 'harpa', label: 'Hinos da Harpa', icon: BookOpen },
     { id: 'montar-repertorio', label: 'Montar Repertório', icon: Music },
+
+    // NOVO MENU
+    { id: 'campo-harmonico', label: 'Campo Harmônico', icon: Music2 },
+
     { id: 'repertorios', label: 'Repertórios Salvos', icon: List },
     { id: 'relatorios', label: 'Relatórios', icon: BarChart3 },
     { id: 'configuracoes', label: 'Configurações', icon: Settings },
@@ -32,27 +51,30 @@ export const Sidebar: React.FC<SidebarProps> = ({ currentPage, onPageChange, isO
           onClick={onClose}
         />
       )}
-      
-      <aside className={`
-        fixed md:relative w-64 h-screen bg-white border-r border-gray-200 shadow-lg
-        transform transition-transform duration-300 z-50
-        ${isOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'}
-        overflow-y-auto
-      `}>
+
+      <aside
+        className={`
+          fixed md:relative w-64 h-screen bg-white border-r border-gray-200 shadow-lg
+          transform transition-transform duration-300 z-50
+          ${isOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'}
+          overflow-y-auto
+        `}
+      >
         <nav className="p-4">
           {menuItems.map((item) => {
             const Icon = item.icon;
             const isActive = currentPage === item.id;
-            
+
             return (
               <button
                 key={item.id}
                 onClick={() => handleItemClick(item.id)}
                 className={`
                   w-full flex items-center gap-3 px-4 py-3 rounded-lg mb-2 transition
-                  ${isActive
-                    ? 'bg-indigo-600 text-white shadow-md'
-                    : 'text-gray-700 hover:bg-gray-100'
+                  ${
+                    isActive
+                      ? 'bg-indigo-600 text-white shadow-md'
+                      : 'text-gray-700 hover:bg-gray-100'
                   }
                 `}
               >
