@@ -8,6 +8,8 @@ import { MontarRepertorio } from './components/MontarRepertorio';
 import { RepertoriosSalvos } from './components/RepertoriosSalvos';
 import { ConfiguracoesView } from './components/Configuracoes';
 import { Relatorios } from './components/Relatorios';
+import { CampoHarmonico } from './components/CampoHarmonico';
+
 import { initializeHarpaBase, getConfiguracoes } from './services/db';
 import { Configuracoes, Repertorio } from './types';
 
@@ -24,12 +26,16 @@ export default function App() {
   const initializeApp = async () => {
     try {
       await initializeHarpaBase();
+
       const cfg = await getConfiguracoes();
-      setConfiguracoes(cfg || {
-        nomeIgreja: '',
-        responsavel: '',
-        rodapePdf: ''
-      });
+
+      setConfiguracoes(
+        cfg || {
+          nomeIgreja: '',
+          responsavel: '',
+          rodapePdf: '',
+        }
+      );
     } catch (error) {
       console.error('Erro ao inicializar app:', error);
     }
@@ -37,14 +43,17 @@ export default function App() {
 
   const handlePageChange = (page: string) => {
     setCurrentPage(page);
+
     if (page !== 'montar-repertorio') {
       setRepertorioEditar(null);
     }
+
     setSidebarOpen(false);
   };
 
   const handleEditRepertorio = (repertorio: Repertorio) => {
     console.log('🔄 Editando repertório:', repertorio.nome);
+
     setRepertorioEditar(repertorio);
     setCurrentPage('montar-repertorio');
   };
@@ -56,21 +65,27 @@ export default function App() {
 
   const handleConfigChange = async () => {
     const cfg = await getConfiguracoes();
-    setConfiguracoes(cfg || {
-      nomeIgreja: '',
-      responsavel: '',
-      rodapePdf: ''
-    });
+
+    setConfiguracoes(
+      cfg || {
+        nomeIgreja: '',
+        responsavel: '',
+        rodapePdf: '',
+      }
+    );
   };
 
   const renderPage = () => {
     switch (currentPage) {
       case 'dashboard':
         return <Dashboard onPageChange={handlePageChange} />;
+
       case 'cadastrar-hino':
         return <CadastrarHino configuracoes={configuracoes} />;
+
       case 'harpa':
         return <Harpa configuracoes={configuracoes} />;
+
       case 'montar-repertorio':
         return (
           <MontarRepertorio
@@ -80,6 +95,7 @@ export default function App() {
             onSave={handleSaveRepertorio}
           />
         );
+
       case 'repertorios':
         return (
           <RepertoriosSalvos
@@ -87,10 +103,20 @@ export default function App() {
             onEdit={handleEditRepertorio}
           />
         );
-      case 'configuracoes':
-        return <ConfiguracoesView onConfigChange={handleConfigChange} />;
+
       case 'relatorios':
         return <Relatorios />;
+
+      case 'campo-harmonico':
+        return <CampoHarmonico />;
+
+      case 'configuracoes':
+        return (
+          <ConfiguracoesView
+            onConfigChange={handleConfigChange}
+          />
+        );
+
       default:
         return <Dashboard onPageChange={handlePageChange} />;
     }
@@ -104,6 +130,7 @@ export default function App() {
         isOpen={sidebarOpen}
         onClose={() => setSidebarOpen(false)}
       />
+
       <div className="flex-1 flex flex-col overflow-hidden">
         <Header
           currentPage={currentPage}
@@ -113,6 +140,7 @@ export default function App() {
           logoSistema={configuracoes?.logoSistema}
           subtitulo={configuracoes?.subtitulo}
         />
+
         <main className="flex-1 overflow-auto p-4 md:p-8">
           {renderPage()}
         </main>
