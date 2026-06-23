@@ -30,10 +30,10 @@ export const Sidebar: React.FC<SidebarProps> = ({
     { id: 'harpa', label: 'Hinos da Harpa', icon: BookOpen },
     { id: 'montar-repertorio', label: 'Montar Repertório', icon: Music },
 
-    // NOVO MENU
+    { id: 'repertorios', label: 'Repertórios Salvos', icon: List },
+
     { id: 'campo-harmonico', label: 'Campo Harmônico', icon: Music2 },
 
-    { id: 'repertorios', label: 'Repertórios Salvos', icon: List },
     { id: 'relatorios', label: 'Relatórios', icon: BarChart3 },
     { id: 'configuracoes', label: 'Configurações', icon: Settings },
   ];
