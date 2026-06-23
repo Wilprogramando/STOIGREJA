@@ -1,15 +1,19 @@
-import React from 'react';
+import React, { useState } from 'react';
 
 export const CampoHarmonico = () => {
-  const campos = [
-    { tom: 'C', acordes: ['C', 'Dm', 'Em', 'F', 'G', 'Am', 'B°'] },
-    { tom: 'D', acordes: ['D', 'Em', 'F#m', 'G', 'A', 'Bm', 'C#°'] },
-    { tom: 'E', acordes: ['E', 'F#m', 'G#m', 'A', 'B', 'C#m', 'D#°'] },
-    { tom: 'F', acordes: ['F', 'Gm', 'Am', 'Bb', 'C', 'Dm', 'E°'] },
-    { tom: 'G', acordes: ['G', 'Am', 'Bm', 'C', 'D', 'Em', 'F#°'] },
-    { tom: 'A', acordes: ['A', 'Bm', 'C#m', 'D', 'E', 'F#m', 'G#°'] },
-    { tom: 'B', acordes: ['B', 'C#m', 'D#m', 'E', 'F#', 'G#m', 'A#°'] }
-  ];
+  const campos = {
+    C: ['C', 'Dm', 'Em', 'F', 'G', 'Am', 'B°'],
+    D: ['D', 'Em', 'F#m', 'G', 'A', 'Bm', 'C#°'],
+    E: ['E', 'F#m', 'G#m', 'A', 'B', 'C#m', 'D#°'],
+    F: ['F', 'Gm', 'Am', 'Bb', 'C', 'Dm', 'E°'],
+    G: ['G', 'Am', 'Bm', 'C', 'D', 'Em', 'F#°'],
+    A: ['A', 'Bm', 'C#m', 'D', 'E', 'F#m', 'G#°'],
+    B: ['B', 'C#m', 'D#m', 'E', 'F#', 'G#m', 'A#°'],
+  };
+
+  const [tomSelecionado, setTomSelecionado] = useState('C');
+
+  const graus = ['I', 'II', 'III', 'IV', 'V', 'VI', 'VII'];
 
   return (
     <div className="max-w-7xl mx-auto">
@@ -17,7 +21,54 @@ export const CampoHarmonico = () => {
         🎹 Campo Harmônico
       </h2>
 
-      <div className="bg-white rounded-lg shadow-md overflow-hidden">
+      {/* MOBILE */}
+      <div className="block lg:hidden">
+        <div className="bg-white rounded-xl shadow-md p-4 mb-4">
+          <label className="block text-sm font-semibold text-gray-600 mb-2">
+            Selecione o Tom
+          </label>
+
+          <select
+            value={tomSelecionado}
+            onChange={(e) => setTomSelecionado(e.target.value)}
+            className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500"
+          >
+            {Object.keys(campos).map((tom) => (
+              <option key={tom} value={tom}>
+                Tom de {tom}
+              </option>
+            ))}
+          </select>
+        </div>
+
+        <div className="bg-white rounded-xl shadow-md overflow-hidden">
+          <div className="bg-indigo-600 text-white p-4">
+            <h3 className="text-xl font-bold">
+              Tom de {tomSelecionado}
+            </h3>
+          </div>
+
+          <div className="p-4">
+            {graus.map((grau, index) => (
+              <div
+                key={grau}
+                className="flex justify-between items-center py-3 border-b last:border-b-0"
+              >
+                <span className="font-semibold text-gray-700">
+                  {grau}
+                </span>
+
+                <span className="text-lg font-bold text-indigo-600">
+                  {campos[tomSelecionado as keyof typeof campos][index]}
+                </span>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      {/* DESKTOP */}
+      <div className="hidden lg:block bg-white rounded-lg shadow-md overflow-hidden">
         <table className="w-full">
           <thead className="bg-indigo-600 text-white">
             <tr>
@@ -33,16 +84,16 @@ export const CampoHarmonico = () => {
           </thead>
 
           <tbody>
-            {campos.map((campo) => (
+            {Object.entries(campos).map(([tom, acordes]) => (
               <tr
-                key={campo.tom}
+                key={tom}
                 className="border-b hover:bg-gray-50"
               >
                 <td className="p-3 font-bold text-indigo-600">
-                  {campo.tom}
+                  {tom}
                 </td>
 
-                {campo.acordes.map((acorde, index) => (
+                {acordes.map((acorde, index) => (
                   <td key={index} className="p-3 text-center">
                     {acorde}
                   </td>
@@ -53,17 +104,29 @@ export const CampoHarmonico = () => {
         </table>
       </div>
 
-      <div className="mt-6 bg-indigo-50 rounded-lg p-5">
-        <h3 className="font-bold text-lg mb-3">
-          Progressões mais usadas
+      {/* Progressões */}
+      <div className="mt-6 bg-indigo-50 rounded-xl p-5">
+        <h3 className="font-bold text-lg mb-4">
+          🎵 Progressões mais usadas
         </h3>
 
-        <ul className="space-y-2">
-          <li>🎵 I - V - vi - IV</li>
-          <li>🎵 I - IV - V</li>
-          <li>🎵 vi - IV - I - V</li>
-          <li>🎵 I - vi - IV - V</li>
-        </ul>
+        <div className="grid gap-3">
+          <div className="bg-white rounded-lg p-3 shadow-sm font-medium">
+            I - V - vi - IV
+          </div>
+
+          <div className="bg-white rounded-lg p-3 shadow-sm font-medium">
+            I - IV - V
+          </div>
+
+          <div className="bg-white rounded-lg p-3 shadow-sm font-medium">
+            vi - IV - I - V
+          </div>
+
+          <div className="bg-white rounded-lg p-3 shadow-sm font-medium">
+            I - vi - IV - V
+          </div>
+        </div>
       </div>
     </div>
   );
