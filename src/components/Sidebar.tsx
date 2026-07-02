@@ -87,7 +87,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
 
         <div className="absolute bottom-4 left-4 right-4 p-3 bg-indigo-50 rounded-lg">
           <p className="text-xs text-gray-600">
-            💡 <strong>Dica:</strong> Todos os dados são salvos automaticamente no seu navegador.
+            💡 <strong>Dica:</strong> Todos os dados são salvos automaticamente.
           </p>
         </div>
       </aside>
