@@ -93,6 +93,9 @@ export const Sidebar: React.FC<SidebarProps> = ({
           <p className="text-xs text-gray-600">
             💡 <strong>Dica:</strong> Todos os dados são salvos automaticamente.
           </p>
+          <p className="text-xs text-gray-500 mt-2 pt-2 border-t border-indigo-100">
+            Desenvolvido por <strong>Willian Ritter</strong>
+          </p>
         </div>
       </aside>
     </>
