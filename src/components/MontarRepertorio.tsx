@@ -172,18 +172,6 @@ export const MontarRepertorio: React.FC<MontarRepertorioProps> = ({
     }
   };
 
-  const handleAlterarTom = (id: string, novoTom: string) => {
-    setHinosNoRepertorio(
-      hinosNoRepertorio.map(h => h.id === id ? { ...h, tom: novoTom } : h)
-    );
-  };
-
-  const handleAlterarCantor = (id: string, novoCantor: string) => {
-    setHinosNoRepertorio(
-      hinosNoRepertorio.map(h => h.id === id ? { ...h, cantor: novoCantor } : h)
-    );
-  };
-
   /** Abre a edição do cadastro do hino a partir da linha do repertório. */
   const abrirEdicaoDoHino = (hinoRep: HinoNoRepertorio) => {
     const idReal = hinoRep.hinoId && !hinoRep.hinoId.startsWith('hino-') ? hinoRep.hinoId : hinoRep.id;
@@ -325,7 +313,6 @@ export const MontarRepertorio: React.FC<MontarRepertorioProps> = ({
     shareViaWhatsApp(message);
   };
 
-  const TONS = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'];
 
   return (
     <div className="max-w-6xl mx-auto">
@@ -496,31 +483,6 @@ export const MontarRepertorio: React.FC<MontarRepertorioProps> = ({
                               {hinoRep.numeroHarpa && (
                                 <p className="text-sm text-gray-500">Harpa nº {hinoRep.numeroHarpa}</p>
                               )}
-                            </div>
-                          </div>
-
-                          <div className="mt-2 grid grid-cols-1 md:grid-cols-2 gap-2">
-                            <div>
-                              <label className="text-sm font-medium text-gray-700">Tom</label>
-                              <select
-                                value={hinoRep.tom}
-                                onChange={(e) => handleAlterarTom(hinoRep.id, e.target.value)}
-                                className="w-full px-3 py-1 border border-gray-300 rounded text-sm focus:outline-none focus:border-indigo-600"
-                              >
-                                {TONS.map(t => (
-                                  <option key={t} value={t}>{t}</option>
-                                ))}
-                              </select>
-                            </div>
-
-                            <div>
-                              <label className="text-sm font-medium text-gray-700">Cantor</label>
-                              <input
-                                type="text"
-                                value={hinoRep.cantor}
-                                onChange={(e) => handleAlterarCantor(hinoRep.id, e.target.value)}
-                                className="w-full px-3 py-1 border border-gray-300 rounded text-sm focus:outline-none focus:border-indigo-600"
-                              />
                             </div>
                           </div>
                         </div>
