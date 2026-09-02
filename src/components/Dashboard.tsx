@@ -13,7 +13,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ onPageChange }) => {
     totalHinos: 0,
     totalHarpa: 0,
     totalRepertorios: 0,
-    proximoRepertorio: null as Repertorio | null,
+    proximosRepertorios: [] as Repertorio[],
   });
   const [loading, setLoading] = useState(true);
 
@@ -41,20 +41,21 @@ export const Dashboard: React.FC<DashboardProps> = ({ onPageChange }) => {
       const repertorios = await getAllRepertorios();
 
       const agora = new Date();
-      const proximoRep = repertorios
+      // Todos os repertórios ativos: os que ainda não completaram 24h.
+      const ativos = repertorios
         .filter(r => {
           const fim = fimDaExibicao(r);
           return fim !== null && fim.getTime() > agora.getTime();
         })
         .sort((a, b) =>
           a.data.localeCompare(b.data) || (a.horario || '').localeCompare(b.horario || '')
-        )[0];
+        );
 
       setStats({
         totalHinos: hinos.filter(h => h.tipo === 'comum').length,
         totalHarpa: harpaHinos.length,
         totalRepertorios: repertorios.length,
-        proximoRepertorio: proximoRep || null,
+        proximosRepertorios: ativos,
       });
     } catch (error) {
       console.error('Erro ao carregar stats:', error);
@@ -116,28 +117,45 @@ export const Dashboard: React.FC<DashboardProps> = ({ onPageChange }) => {
           />
         </div>
 
-        {/* Próximo Repertório */}
+        {/* Próximos Repertórios */}
         <div className="bg-white p-6 rounded-lg shadow-md">
           <h3 className="text-xl font-bold text-gray-900 mb-4 flex items-center gap-2">
             <Calendar size={24} className="text-indigo-600" />
-            Próximo Repertório
+            Próximos Repertórios
+            {stats.proximosRepertorios.length > 0 && (
+              <span className="text-sm font-medium text-gray-500">
+                ({stats.proximosRepertorios.length})
+              </span>
+            )}
           </h3>
-          {stats.proximoRepertorio ? (
-            <div className="p-4 bg-indigo-50 rounded-lg">
-              <h4 className="font-bold text-lg text-indigo-900">{stats.proximoRepertorio.nome}</h4>
-              <p className="text-indigo-700 mt-2">
-                📅 {stats.proximoRepertorio.data ? stats.proximoRepertorio.data.split('-').reverse().join('/') : 'Data não definida'}
-                {stats.proximoRepertorio.horario && ` às ${stats.proximoRepertorio.horario}`}
-              </p>
-              <p className="text-indigo-600 text-sm mt-1">
-                🎵 {stats.proximoRepertorio.hinos.length} hino(s)
-              </p>
-              <button
-                onClick={() => onPageChange('repertorios')}
-                className="mt-4 px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition text-sm font-medium"
-              >
-                Ver Detalhes
-              </button>
+          {stats.proximosRepertorios.length > 0 ? (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+              {stats.proximosRepertorios.map((rep, index) => (
+                <div
+                  key={rep.id}
+                  className={`p-4 rounded-lg ${
+                    index === 0 ? 'bg-indigo-50 border-2 border-indigo-300' : 'bg-gray-50 border border-gray-200'
+                  }`}
+                >
+                  {index === 0 && (
+                    <span className="inline-block mb-1 text-xs font-bold text-indigo-600 uppercase">
+                      Próximo
+                    </span>
+                  )}
+                  <h4 className="font-bold text-lg text-indigo-900">{rep.nome}</h4>
+                  <p className="text-indigo-700 mt-2">
+                    📅 {rep.data ? rep.data.split('-').reverse().join('/') : 'Data não definida'}
+                    {rep.horario && ` às ${rep.horario}`}
+                  </p>
+                  <p className="text-indigo-600 text-sm mt-1">🎵 {rep.hinos.length} hino(s)</p>
+                  <button
+                    onClick={() => onPageChange('repertorios')}
+                    className="mt-4 px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition text-sm font-medium"
+                  >
+                    Ver Detalhes
+                  </button>
+                </div>
+              ))}
             </div>
           ) : (
             <div className="p-4 bg-gray-50 rounded-lg text-gray-600 text-center">
