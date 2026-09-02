@@ -77,21 +77,28 @@ export const RepertoriosSalvos: React.FC<RepertoriosSalvosProps> = ({ configurac
     }
   };
 
+  // Data/hora do repertório + 24h. Sem horário, considera 00:00.
+  // O repertório só sai de "Próximos" depois de completar 24h.
+  const fimDaExibicao = (rep: Repertorio) => {
+    const [ano, mes, dia] = (rep.data || '').split('-').map(Number);
+    if (!ano || !mes || !dia) return null;
+    const [hora, minuto] = (rep.horario || '00:00').split(':').map(Number);
+    const inicio = new Date(ano, mes - 1, dia, hora || 0, minuto || 0, 0, 0);
+    return new Date(inicio.getTime() + 24 * 60 * 60 * 1000);
+  };
+
   // ✅ FUNÇÃO: Separar repertórios por data
   const separarPorData = () => {
-    const hoje = new Date();
-    hoje.setHours(0, 0, 0, 0);
+    const agora = Date.now();
 
     const futuros = repertorios.filter(rep => {
-      const dataRep = new Date(rep.data);
-      dataRep.setHours(0, 0, 0, 0);
-      return dataRep >= hoje;
+      const fim = fimDaExibicao(rep);
+      return fim !== null && fim.getTime() > agora;
     });
 
     const passados = repertorios.filter(rep => {
-      const dataRep = new Date(rep.data);
-      dataRep.setHours(0, 0, 0, 0);
-      return dataRep < hoje;
+      const fim = fimDaExibicao(rep);
+      return fim === null || fim.getTime() <= agora;
     });
 
     return { futuros, passados };
