@@ -12,6 +12,7 @@ import { CampoHarmonico } from './components/CampoHarmonico';
 import { Afinador } from './components/Afinador';
 import { Anotacoes } from './components/Anotacoes';
 import { StatusConexao } from './components/StatusConexao';
+import { BarraInferior } from './components/BarraInferior';
 
 import { initializeHarpaBase, getConfiguracoes } from './services/db';
 import { Configuracoes, Repertorio } from './types';
@@ -182,6 +183,8 @@ export default function App() {
         <main className="flex-1 overflow-auto p-4 md:p-8">
           {renderPage()}
         </main>
+
+        <BarraInferior currentPage={currentPage} onPageChange={handlePageChange} />
       </div>
     </div>
   );
