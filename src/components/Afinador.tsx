@@ -188,6 +188,95 @@ function detectarFrequencia(buffer: Float32Array, sampleRate: number): number {
   return sampleRate / (melhorLag + ajuste);
 }
 
+// ==================== SOM DE REFERÊNCIA DAS CORDAS ====================
+
+/**
+ * Gera a nota como um arquivo WAV (16 bits) direto na memória.
+ *
+ * Por que não usar oscilador da Web Audio: no iPhone a Web Audio fica muda
+ * quando a chavinha de silencioso está ligada, enquanto o áudio de mídia toca.
+ *
+ * Cordas graves (Mi de 82 Hz, e pior ainda no baixo) quase não saem no
+ * alto-falante do celular, então reforçamos os harmônicos: o ouvido reconhece
+ * a nota mesmo quando o grave em si não é reproduzido.
+ */
+function gerarWavDaNota(frequencia: number, duracao: number, sampleRate = 44100): Blob {
+  const total = Math.floor(duracao * sampleRate);
+  const amostras = new Float32Array(total);
+
+  // Quanto mais grave, mais peso nos harmônicos (para o alto-falante pequeno).
+  const grave = frequencia < 200;
+  const harmonicos = grave
+    ? [
+        { multiplo: 1, volume: 0.5, decaimento: 1 },
+        { multiplo: 2, volume: 0.85, decaimento: 0.9 },
+        { multiplo: 3, volume: 0.7, decaimento: 0.75 },
+        { multiplo: 4, volume: 0.5, decaimento: 0.6 },
+        { multiplo: 5, volume: 0.32, decaimento: 0.5 },
+        { multiplo: 6, volume: 0.2, decaimento: 0.42 }
+      ]
+    : [
+        { multiplo: 1, volume: 1, decaimento: 1 },
+        { multiplo: 2, volume: 0.4, decaimento: 0.7 },
+        { multiplo: 3, volume: 0.2, decaimento: 0.5 },
+        { multiplo: 4, volume: 0.1, decaimento: 0.4 }
+      ];
+
+  const ataque = Math.floor(0.008 * sampleRate); // palhetada
+
+  for (let i = 0; i < total; i++) {
+    const t = i / sampleRate;
+    let valor = 0;
+
+    for (const h of harmonicos) {
+      const freq = frequencia * h.multiplo;
+      if (freq > sampleRate / 2) continue; // acima do que o áudio consegue representar
+      const decaimento = Math.exp((-t / (duracao * h.decaimento)) * 3.5);
+      valor += h.volume * decaimento * Math.sin(2 * Math.PI * freq * t);
+    }
+
+    // Ataque rápido no começo e um fade curtinho no fim (evita "clique").
+    if (i < ataque) valor *= i / ataque;
+    const restante = total - i;
+    if (restante < ataque) valor *= restante / ataque;
+
+    amostras[i] = valor;
+  }
+
+  // Normaliza para usar bem o volume sem estourar.
+  let pico = 0;
+  for (let i = 0; i < total; i++) pico = Math.max(pico, Math.abs(amostras[i]));
+  const ganho = pico > 0 ? 0.92 / pico : 0;
+
+  // Monta o arquivo WAV (cabeçalho de 44 bytes + amostras de 16 bits).
+  const buffer = new ArrayBuffer(44 + total * 2);
+  const view = new DataView(buffer);
+  const texto = (pos: number, txt: string) => {
+    for (let i = 0; i < txt.length; i++) view.setUint8(pos + i, txt.charCodeAt(i));
+  };
+
+  texto(0, 'RIFF');
+  view.setUint32(4, 36 + total * 2, true);
+  texto(8, 'WAVE');
+  texto(12, 'fmt ');
+  view.setUint32(16, 16, true);
+  view.setUint16(20, 1, true); // PCM
+  view.setUint16(22, 1, true); // mono
+  view.setUint32(24, sampleRate, true);
+  view.setUint32(28, sampleRate * 2, true);
+  view.setUint16(32, 2, true);
+  view.setUint16(34, 16, true);
+  texto(36, 'data');
+  view.setUint32(40, total * 2, true);
+
+  for (let i = 0; i < total; i++) {
+    const v = Math.max(-1, Math.min(1, amostras[i] * ganho));
+    view.setInt16(44 + i * 2, v * 32767, true);
+  }
+
+  return new Blob([buffer], { type: 'audio/wav' });
+}
+
 export const Afinador: React.FC = () => {
   const [instrumentoId, setInstrumentoId] = useState('violao');
   const [a4, setA4] = useState(440);
@@ -197,6 +286,12 @@ export const Afinador: React.FC = () => {
   const [cordaFixa, setCordaFixa] = useState<string | null>(null);
 
   const [cordaTocando, setCordaTocando] = useState<string | null>(null);
+  const [erroSom, setErroSom] = useState<string | null>(null);
+  // Alto-falante de celular quase não reproduz as cordas graves;
+  // uma oitava acima a nota fica audível e serve igual como referência.
+  const [oitavaAcima, setOitavaAcima] = useState(
+    typeof window !== 'undefined' && window.matchMedia('(pointer: coarse)').matches
+  );
 
   const audioCtxRef = useRef<AudioContext | null>(null);
   const streamRef = useRef<MediaStream | null>(null);
@@ -205,10 +300,21 @@ export const Afinador: React.FC = () => {
   const ultimasRef = useRef<number[]>([]);
 
   // Reprodução das cordas (som de referência)
-  const somCtxRef = useRef<AudioContext | null>(null);
-  const somAtivosRef = useRef<{ oscilador: OscillatorNode; ganho: GainNode }[]>([]);
+  const audioElRef = useRef<HTMLAudioElement | null>(null);
   const somTimersRef = useRef<number[]>([]);
   const ignorarMicAteRef = useRef(0);
+  const urlsRef = useRef<Map<string, string>>(new Map());
+
+  /** URL do arquivo da nota, gerado uma vez e reaproveitado. */
+  const urlDaNota = (frequenciaHz: number, duracao: number) => {
+    const chave = `${frequenciaHz.toFixed(2)}_${duracao}`;
+    const existente = urlsRef.current.get(chave);
+    if (existente) return existente;
+
+    const url = URL.createObjectURL(gerarWavDaNota(frequenciaHz, duracao));
+    urlsRef.current.set(chave, url);
+    return url;
+  };
 
   const instrumento = INSTRUMENTOS.find(i => i.id === instrumentoId) || INSTRUMENTOS[0];
 
@@ -236,96 +342,72 @@ export const Afinador: React.FC = () => {
     somTimersRef.current.forEach(t => clearTimeout(t));
     somTimersRef.current = [];
 
-    const ctx = somCtxRef.current;
-    somAtivosRef.current.forEach(({ oscilador, ganho }) => {
-      try {
-        if (ctx) {
-          ganho.gain.cancelScheduledValues(ctx.currentTime);
-          ganho.gain.setTargetAtTime(0, ctx.currentTime, 0.02);
-        }
-        oscilador.stop(ctx ? ctx.currentTime + 0.15 : 0);
-      } catch {
-        /* já parou */
-      }
-    });
-    somAtivosRef.current = [];
+    const audio = audioElRef.current;
+    if (audio) {
+      audio.pause();
+      audio.currentTime = 0;
+    }
     setCordaTocando(null);
   };
 
   /**
-   * Toca a nota da corda afinada. Somamos alguns harmônicos com decaimento
-   * diferente para o som lembrar uma corda tocada, e não um apito de teste.
+   * Toca a nota da corda usando um arquivo de áudio gerado na hora.
+   *
+   * No celular isso é mais confiável do que osciladores da Web Audio:
+   * o iPhone silencia a Web Audio quando a chavinha de silencioso está ligada,
+   * mas toca normalmente o áudio de mídia.
    */
-  const tocarNota = (frequenciaHz: number, duracao = 2.2, atraso = 0) => {
-    let ctx = somCtxRef.current;
-    if (!ctx || ctx.state === 'closed') {
-      ctx = new (window.AudioContext || (window as any).webkitAudioContext)();
-      somCtxRef.current = ctx;
-    }
-    if (ctx.state === 'suspended') ctx.resume();
+  const tocarNota = async (frequenciaHz: number, duracao = 2.2) => {
+    const audio = audioElRef.current;
+    if (!audio) return;
 
-    const inicio = ctx.currentTime + atraso;
-    const harmonicos = [
-      { multiplo: 1, volume: 0.55, decaimento: 1 },
-      { multiplo: 2, volume: 0.22, decaimento: 0.65 },
-      { multiplo: 3, volume: 0.11, decaimento: 0.45 },
-      { multiplo: 4, volume: 0.06, decaimento: 0.35 }
-    ];
-
-    harmonicos.forEach(h => {
-      const oscilador = ctx!.createOscillator();
-      const ganho = ctx!.createGain();
-
-      oscilador.type = 'sine';
-      oscilador.frequency.setValueAtTime(frequenciaHz * h.multiplo, inicio);
-
-      const fim = inicio + duracao * h.decaimento;
-      ganho.gain.setValueAtTime(0, inicio);
-      ganho.gain.linearRampToValueAtTime(h.volume, inicio + 0.015); // ataque da palhetada
-      ganho.gain.exponentialRampToValueAtTime(0.0001, fim);
-
-      oscilador.connect(ganho);
-      ganho.connect(ctx!.destination);
-      oscilador.start(inicio);
-      oscilador.stop(fim + 0.05);
-
-      somAtivosRef.current.push({ oscilador, ganho });
-    });
+    const hz = oitavaAcima ? frequenciaHz * 2 : frequenciaHz;
+    audio.src = urlDaNota(hz, duracao);
+    audio.currentTime = 0;
+    audio.volume = 1;
 
     // Enquanto o alto-falante toca, o microfone ouviria o próprio som.
-    ignorarMicAteRef.current = performance.now() + (atraso + duracao) * 1000 + 250;
+    ignorarMicAteRef.current = performance.now() + duracao * 1000 + 300;
+
+    try {
+      await audio.play();
+      setErroSom(null);
+    } catch (e) {
+      console.warn('Não foi possível tocar o som:', e);
+      setErroSom('O navegador bloqueou o som. Toque na tela e tente de novo.');
+    }
   };
 
   const tocarCorda = (corda: Corda) => {
     pararSom();
     setCordaTocando(corda.nota);
     tocarNota(corda.frequencia);
-    somTimersRef.current.push(
-      window.setTimeout(() => setCordaTocando(null), 2300)
-    );
+    somTimersRef.current.push(window.setTimeout(() => setCordaTocando(null), 2300));
   };
 
   /** Toca as cordas em sequência, da mais grave para a mais aguda. */
   const tocarTodasAsCordas = () => {
     pararSom();
 
-    const duracao = 1.6;
-    const intervalo = 1.4;
+    const duracao = 1.5;
+    const intervalo = 1700; // ms entre uma corda e outra
 
-    cordas.forEach((corda, i) => {
-      tocarNota(corda.frequencia, duracao, i * intervalo);
+    // A primeira toca já no clique: é o gesto do usuário que libera o áudio no celular.
+    setCordaTocando(cordas[0].nota);
+    tocarNota(cordas[0].frequencia, duracao);
+
+    cordas.slice(1).forEach((corda, i) => {
       somTimersRef.current.push(
-        window.setTimeout(() => setCordaTocando(corda.nota), i * intervalo * 1000)
+        window.setTimeout(() => {
+          setCordaTocando(corda.nota);
+          tocarNota(corda.frequencia, duracao);
+        }, (i + 1) * intervalo)
       );
     });
 
     somTimersRef.current.push(
-      window.setTimeout(
-        () => setCordaTocando(null),
-        ((cordas.length - 1) * intervalo + duracao) * 1000
-      )
+      window.setTimeout(() => setCordaTocando(null), cordas.length * intervalo)
     );
-    setCordaTocando(cordas[0].nota);
   };
 
   // Trocar de instrumento no meio do som pararia notas de outro instrumento.
@@ -334,10 +416,18 @@ export const Afinador: React.FC = () => {
   }, [instrumentoId]);
 
   useEffect(() => {
+    const audio = new Audio();
+    audio.preload = 'auto';
+    audio.setAttribute('playsinline', 'true');
+    audioElRef.current = audio;
+
     return () => {
       parar();
       pararSom();
-      somCtxRef.current?.close().catch(() => undefined);
+      audio.pause();
+      audioElRef.current = null;
+      urlsRef.current.forEach(url => URL.revokeObjectURL(url));
+      urlsRef.current.clear();
     };
   }, []);
 
@@ -646,7 +736,24 @@ export const Afinador: React.FC = () => {
               <VolumeX size={16} /> Parar som
             </button>
           )}
+
+          <label className="inline-flex items-center gap-2 px-3 py-2 text-sm text-gray-700 cursor-pointer">
+            <input
+              type="checkbox"
+              checked={oitavaAcima}
+              onChange={e => {
+                pararSom();
+                setOitavaAcima(e.target.checked);
+              }}
+              className="accent-indigo-600 w-4 h-4"
+            />
+            Uma oitava acima (melhor no celular)
+          </label>
         </div>
+
+        {erroSom && (
+          <p className="mt-2 text-sm text-red-600">{erroSom}</p>
+        )}
 
         <p className="text-xs text-gray-500 mt-3">
           Toque em <strong>Ouvir</strong> para escutar a corda afinada e comparar de ouvido.
