@@ -1,0 +1,19 @@
+{
+  "name": "Conjunto Manancial - Repertório",
+  "short_name": "Repertório",
+  "description": "Gerenciador de hinos e repertórios de cultos",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#4f46e5",
+  "lang": "pt-BR",
+  "icons": [
+    {
+      "src": "/icone.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}

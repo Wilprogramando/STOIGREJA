@@ -9,6 +9,7 @@ import { RepertoriosSalvos } from './components/RepertoriosSalvos';
 import { ConfiguracoesView } from './components/Configuracoes';
 import { Relatorios } from './components/Relatorios';
 import { CampoHarmonico } from './components/CampoHarmonico';
+import { StatusConexao } from './components/StatusConexao';
 
 import { initializeHarpaBase, getConfiguracoes } from './services/db';
 import { Configuracoes, Repertorio } from './types';
@@ -140,6 +141,8 @@ export default function App() {
           logoSistema={configuracoes?.logoSistema}
           subtitulo={configuracoes?.subtitulo}
         />
+
+        <StatusConexao />
 
         <main className="flex-1 overflow-auto p-4 md:p-8">
           {renderPage()}

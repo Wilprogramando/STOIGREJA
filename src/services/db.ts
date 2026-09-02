@@ -1,5 +1,19 @@
 import { createClient } from '@supabase/supabase-js';
 import { Hino, Repertorio, Configuracoes, HarpaItem } from '../types';
+import {
+  CACHE_HINOS,
+  CACHE_REPERTORIOS,
+  CACHE_CONFIG,
+  CACHE_HARPA,
+  OperacaoPendente,
+  cacheSalvar,
+  cacheLer,
+  cacheLimpar,
+  estaOnline,
+  filaAdicionar,
+  filaProcessar,
+  filaTamanho
+} from './offline';
 
 // ==================== CONFIGURAÇÃO SUPABASE ====================
 
@@ -17,42 +31,196 @@ if (supabaseUrl && supabaseKey) {
 
 const DB_PREFIX = 'repertorio_igreja_';
 
+// ==================== SUPORTE OFFLINE ====================
+
+/** Monta o payload do hino no formato das colunas do Supabase. */
+function payloadHino(hino: Hino, comId: boolean) {
+  const dados: any = {
+    nome: hino.nome,
+    tom: hino.tom,
+    cantor: hino.cantor,
+    letra: hino.letra || '',
+    categoria: hino.categoria,
+    observacoes: hino.observacoes || '',
+    tipo: hino.tipo || 'comum',
+    numero_harpa: hino.numeroHarpa || null,
+    atualizado_em: new Date().toISOString()
+  };
+  if (comId) {
+    dados.id = hino.id;
+    dados.criado_em = hino.criadoEm || new Date().toISOString();
+  }
+  return dados;
+}
+
+/** Extrai apenas os IDs dos hinos - compatível com strings e objetos. */
+function idsDosHinos(repertorio: Repertorio): string[] {
+  return (
+    repertorio.hinos
+      ?.map((h: any) => {
+        if (typeof h === 'string') return h;
+        if (typeof h === 'object' && h.hinoId) return h.hinoId;
+        if (typeof h === 'object' && h.id) return h.id;
+        return null;
+      })
+      .filter(Boolean) || []
+  );
+}
+
+function payloadRepertorio(repertorio: Repertorio, comId: boolean) {
+  const dados: any = {
+    nome: repertorio.nome,
+    data_culto: repertorio.data,
+    horario_culto: repertorio.horario || '',
+    observacoes: repertorio.observacoes || '',
+    lista_hinos: idsDosHinos(repertorio),
+    atualizado_em: new Date().toISOString()
+  };
+  if (comId) {
+    dados.id = repertorio.id;
+    dados.criado_em = repertorio.criadoEm || new Date().toISOString();
+  }
+  return dados;
+}
+
+function payloadConfig(config: Configuracoes) {
+  return {
+    id: config.id || 'config',
+    nome_igreja: config.nomeIgreja || '',
+    nome_responsavel: config.responsavel || '',
+    rodape_pdf: config.rodapePdf || '',
+    logo_igreja: config.logo || null,
+    titulo_sistema: config.tituloSistema || 'Repertório da Igreja',
+    logo_sistema: config.logoSistema || null,
+    subtitulo_sistema: config.subtitulo || 'Gerenciador de hinos e cultos',
+    created_at: new Date().toISOString()
+  };
+}
+
+/** Executa no Supabase uma operação da fila (ou uma recém-criada). */
+async function executarNoSupabase(op: OperacaoPendente): Promise<void> {
+  if (!supabase) throw new Error('Supabase não configurado');
+
+  const falhar = (error: any) => {
+    if (error) throw error;
+  };
+
+  switch (op.tipo) {
+    case 'hino.add':
+      falhar((await supabase.from('hinos_cadastro').insert([payloadHino(op.dados, true)])).error);
+      return;
+    case 'hino.update':
+      falhar(
+        (
+          await supabase
+            .from('hinos_cadastro')
+            .update(payloadHino(op.dados, false))
+            .eq('id', op.dados.id)
+        ).error
+      );
+      return;
+    case 'hino.delete':
+      falhar((await supabase.from('hinos_cadastro').delete().eq('id', op.dados)).error);
+      return;
+    case 'repertorio.add':
+      falhar(
+        (await supabase.from('repertorios_cultos').insert([payloadRepertorio(op.dados, true)])).error
+      );
+      return;
+    case 'repertorio.update':
+      falhar(
+        (
+          await supabase
+            .from('repertorios_cultos')
+            .update(payloadRepertorio(op.dados, false))
+            .eq('id', op.dados.id)
+        ).error
+      );
+      return;
+    case 'repertorio.delete':
+      falhar((await supabase.from('repertorios_cultos').delete().eq('id', op.dados)).error);
+      return;
+    case 'config.save':
+      falhar(
+        (
+          await supabase
+            .from('configuracoes_sistema')
+            .upsert([payloadConfig(op.dados)], { onConflict: 'id' })
+        ).error
+      );
+      return;
+    case 'harpa.add':
+      falhar(
+        (
+          await supabase.from('harpa_cristaa').insert(
+            (op.dados as HarpaItem[]).map(item => ({
+              numero_harpa: item.numero,
+              nome_hino: item.nome
+            }))
+          )
+        ).error
+      );
+      return;
+    default:
+      console.warn('⚠️ Operação desconhecida na fila:', op.tipo);
+  }
+}
+
+/**
+ * Tenta gravar no Supabase. Se estiver sem internet (ou a chamada falhar),
+ * guarda a operação na fila para enviar quando a conexão voltar - sem quebrar a tela.
+ */
+async function gravar(tipo: string, dados: any): Promise<void> {
+  if (!supabase) return;
+
+  if (!estaOnline()) {
+    filaAdicionar(tipo, dados);
+    return;
+  }
+
+  try {
+    await executarNoSupabase({ id: 'agora', tipo, dados, criadoEm: new Date().toISOString() });
+  } catch (error) {
+    console.warn(`⚠️ Falha ao enviar "${tipo}", guardando para sincronizar depois:`, error);
+    filaAdicionar(tipo, dados);
+  }
+}
+
+/** Envia para o Supabase tudo que foi feito offline. */
+export async function sincronizarPendentes(): Promise<number> {
+  if (!supabase) return 0;
+  return filaProcessar(executarNoSupabase);
+}
+
+/** Quantas alterações ainda não subiram para a nuvem. */
+export function alteracoesPendentes(): number {
+  return filaTamanho();
+}
+
+// Sincroniza sozinho assim que a internet voltar.
+if (typeof window !== 'undefined') {
+  window.addEventListener('online', () => {
+    sincronizarPendentes();
+  });
+}
+
 // ==================== HINOS ====================
 
 export async function addHino(hino: Hino): Promise<string> {
   try {
+    // Grava sempre na cópia local primeiro - assim funciona com ou sem internet.
+    const hinos = cacheLer<Hino[]>(CACHE_HINOS) || [];
+    cacheSalvar(CACHE_HINOS, [...hinos.filter(h => h.id !== hino.id), hino]);
+
     if (supabase) {
-      const dadosSupabase = {
-        id: hino.id,
-        nome: hino.nome,
-        tom: hino.tom,
-        cantor: hino.cantor,
-        letra: hino.letra || '',
-        categoria: hino.categoria,
-        observacoes: hino.observacoes || '',
-        tipo: hino.tipo || 'comum',
-        numero_harpa: hino.numeroHarpa || null,
-        criado_em: hino.criadoEm || new Date().toISOString(),
-        atualizado_em: hino.atualizadoEm || new Date().toISOString()
-      };
-
-      const { data, error } = await supabase
-        .from('hinos_cadastro')
-        .insert([dadosSupabase]);
-      
-      if (error) {
-        console.error('❌ Erro Supabase:', error);
-        throw error;
-      }
-
-      console.log('✅ Hino salvo no Supabase:', hino.nome);
-      return hino.id;
+      await gravar('hino.add', hino);
     } else {
       const chave = `${DB_PREFIX}hino_${hino.id}`;
       localStorage.setItem(chave, JSON.stringify(hino));
-      console.log('✅ Hino salvo localmente');
-      return hino.id;
     }
+
+    console.log('✅ Hino salvo:', hino.nome);
+    return hino.id;
   } catch (error) {
     console.error('❌ Erro ao salvar hino:', error);
     throw error;
@@ -85,19 +253,26 @@ function mapearHinoSupabase(dados: any): Hino {
 export async function getAllHinos(): Promise<Hino[]> {
   try {
     if (supabase) {
+      if (!estaOnline()) {
+        const local = cacheLer<Hino[]>(CACHE_HINOS);
+        console.log('📴 Offline: usando hinos salvos no aparelho:', local?.length || 0);
+        return local || [];
+      }
+
+      // Aproveita a conexão para subir o que ficou pendente.
+      await sincronizarPendentes();
+
       const { data, error } = await supabase
         .from('hinos_cadastro')
         .select('*')
         .order('nome', { ascending: true });
-      
+
       if (error) throw error;
-      
+
       const hinos = (data || []).map(mapearHinoSupabase);
-      
+
+      cacheSalvar(CACHE_HINOS, hinos);
       console.log('✅ Hinos carregados:', hinos.length);
-      if (hinos.length > 0) {
-        console.log('🔍 Primeiro hino:', hinos[0]);
-      }
       return hinos;
     } else {
       const hinos: Hino[] = [];
@@ -113,14 +288,18 @@ export async function getAllHinos(): Promise<Hino[]> {
       return hinos;
     }
   } catch (error) {
-    console.error('❌ Erro ao carregar hinos:', error);
-    return [];
+    console.error('❌ Erro ao carregar hinos, usando cópia local:', error);
+    return cacheLer<Hino[]>(CACHE_HINOS) || [];
   }
 }
 
 export async function getHino(id: string): Promise<Hino | undefined> {
   try {
     if (supabase) {
+      if (!estaOnline()) {
+        return (cacheLer<Hino[]>(CACHE_HINOS) || []).find(h => h.id === id);
+      }
+
       const { data, error } = await supabase
         .from('hinos_cadastro')
         .select('*')
@@ -135,32 +314,18 @@ export async function getHino(id: string): Promise<Hino | undefined> {
       return dados ? JSON.parse(dados) : undefined;
     }
   } catch (error) {
-    console.error('❌ Erro ao buscar hino:', error);
-    return undefined;
+    console.error('❌ Erro ao buscar hino, usando cópia local:', error);
+    return (cacheLer<Hino[]>(CACHE_HINOS) || []).find(h => h.id === id);
   }
 }
 
 export async function updateHino(hino: Hino): Promise<void> {
   try {
-    if (supabase) {
-      const dadosSupabase = {
-        nome: hino.nome,
-        tom: hino.tom,
-        cantor: hino.cantor,
-        letra: hino.letra || '',
-        categoria: hino.categoria,
-        observacoes: hino.observacoes || '',
-        tipo: hino.tipo || 'comum',
-        numero_harpa: hino.numeroHarpa || null,
-        atualizado_em: new Date().toISOString()
-      };
+    const hinos = cacheLer<Hino[]>(CACHE_HINOS) || [];
+    cacheSalvar(CACHE_HINOS, hinos.map(h => (h.id === hino.id ? hino : h)));
 
-      const { error } = await supabase
-        .from('hinos_cadastro')
-        .update(dadosSupabase)
-        .eq('id', hino.id);
-      
-      if (error) throw error;
+    if (supabase) {
+      await gravar('hino.update', hino);
       console.log('✅ Hino atualizado');
     } else {
       const chave = `${DB_PREFIX}hino_${hino.id}`;
@@ -174,13 +339,11 @@ export async function updateHino(hino: Hino): Promise<void> {
 
 export async function deleteHino(id: string): Promise<void> {
   try {
+    const hinos = cacheLer<Hino[]>(CACHE_HINOS) || [];
+    cacheSalvar(CACHE_HINOS, hinos.filter(h => h.id !== id));
+
     if (supabase) {
-      const { error } = await supabase
-        .from('hinos_cadastro')
-        .delete()
-        .eq('id', id);
-      
-      if (error) throw error;
+      await gravar('hino.delete', id);
       console.log('✅ Hino deletado');
     } else {
       const chave = `${DB_PREFIX}hino_${id}`;
@@ -196,6 +359,10 @@ export async function deleteHino(id: string): Promise<void> {
 export async function getHinosByType(tipo: string): Promise<Hino[]> {
   try {
     if (supabase) {
+      if (!estaOnline()) {
+        return (cacheLer<Hino[]>(CACHE_HINOS) || []).filter(h => h.tipo === tipo);
+      }
+
       const { data, error } = await supabase
         .from('hinos_cadastro')
         .select('*')
@@ -220,8 +387,8 @@ export async function getHinosByType(tipo: string): Promise<Hino[]> {
       return todos.filter(h => h.tipo === tipo);
     }
   } catch (error) {
-    console.error('❌ Erro ao buscar hinos por tipo:', error);
-    return [];
+    console.error('❌ Erro ao buscar hinos por tipo, usando cópia local:', error);
+    return (cacheLer<Hino[]>(CACHE_HINOS) || []).filter(h => h.tipo === tipo);
   }
 }
 
@@ -229,40 +396,22 @@ export async function getHinosByType(tipo: string): Promise<Hino[]> {
 
 export async function addRepertorio(repertorio: Repertorio): Promise<string> {
   try {
+    const listaLocal: Repertorio = { ...repertorio, hinos: idsDosHinos(repertorio) as any };
+    const repertoriosCache = cacheLer<Repertorio[]>(CACHE_REPERTORIOS) || [];
+    cacheSalvar(CACHE_REPERTORIOS, [
+      ...repertoriosCache.filter(r => r.id !== listaLocal.id),
+      listaLocal
+    ]);
+
     if (supabase) {
-      // ✅ Extrair apenas IDs - compatível com strings e objetos
-      const idsHinos = repertorio.hinos?.map((h: any) => {
-        if (typeof h === 'string') return h;           // Já é ID
-        if (typeof h === 'object' && h.hinoId) return h.hinoId;
-        if (typeof h === 'object' && h.id) return h.id;
-        return null;
-      }).filter(Boolean) || [];
-      
-      const dadosSupabase = {
-        id: repertorio.id,
-        nome: repertorio.nome,
-        data_culto: repertorio.data,
-        horario_culto: repertorio.horario || '',
-        observacoes: repertorio.observacoes || '',
-        lista_hinos: idsHinos,
-        criado_em: repertorio.criadoEm || new Date().toISOString(),
-        atualizado_em: repertorio.atualizadoEm || new Date().toISOString()
-      };
-
-      console.log('📝 Salvando no Supabase com IDs:', idsHinos);
-
-      const { data, error } = await supabase
-        .from('repertorios_cultos')
-        .insert([dadosSupabase]);
-      
-      if (error) throw error;
-      console.log('✅ Repertório salvo com', idsHinos.length, 'hinos');
-      return repertorio.id;
-    } else {
-      const chave = `${DB_PREFIX}repertorio_${repertorio.id}`;
-      localStorage.setItem(chave, JSON.stringify(repertorio));
+      await gravar('repertorio.add', repertorio);
+      console.log('✅ Repertório salvo com', listaLocal.hinos.length, 'hinos');
       return repertorio.id;
     }
+
+    const chave = `${DB_PREFIX}repertorio_${repertorio.id}`;
+    localStorage.setItem(chave, JSON.stringify(repertorio));
+    return repertorio.id;
   } catch (error) {
     console.error('❌ Erro ao salvar repertório:', error);
     throw error;
@@ -272,14 +421,22 @@ export async function addRepertorio(repertorio: Repertorio): Promise<string> {
 export async function getAllRepertorios(): Promise<Repertorio[]> {
   try {
     if (supabase) {
+      if (!estaOnline()) {
+        const local = cacheLer<Repertorio[]>(CACHE_REPERTORIOS);
+        console.log('📴 Offline: usando repertórios salvos no aparelho:', local?.length || 0);
+        return local || [];
+      }
+
+      await sincronizarPendentes();
+
       const { data, error } = await supabase
         .from('repertorios_cultos')
         .select('*')
         .order('data_culto', { ascending: false });
-      
+
       if (error) throw error;
 
-      return (data || []).map((rep: any) => ({
+      const repertorios = (data || []).map((rep: any) => ({
         id: rep.id,
         nome: rep.nome,
         data: rep.data_culto,
@@ -289,6 +446,9 @@ export async function getAllRepertorios(): Promise<Repertorio[]> {
         criadoEm: rep.criado_em,
         atualizadoEm: rep.atualizado_em
       }));
+
+      cacheSalvar(CACHE_REPERTORIOS, repertorios);
+      return repertorios;
     } else {
       const repertorios: Repertorio[] = [];
       for (let i = 0; i < localStorage.length; i++) {
@@ -303,40 +463,23 @@ export async function getAllRepertorios(): Promise<Repertorio[]> {
       return repertorios;
     }
   } catch (error) {
-    console.error('❌ Erro ao carregar repertórios:', error);
-    return [];
+    console.error('❌ Erro ao carregar repertórios, usando cópia local:', error);
+    return cacheLer<Repertorio[]>(CACHE_REPERTORIOS) || [];
   }
 }
 
 export async function updateRepertorio(repertorio: Repertorio): Promise<void> {
   try {
+    const atualizado: Repertorio = { ...repertorio, hinos: idsDosHinos(repertorio) as any };
+    const repertoriosCache = cacheLer<Repertorio[]>(CACHE_REPERTORIOS) || [];
+    cacheSalvar(
+      CACHE_REPERTORIOS,
+      repertoriosCache.map(r => (r.id === atualizado.id ? atualizado : r))
+    );
+
     if (supabase) {
-      // ✅ Extrair apenas IDs - compatível com strings e objetos
-      const idsHinos = repertorio.hinos?.map((h: any) => {
-        if (typeof h === 'string') return h;
-        if (typeof h === 'object' && h.hinoId) return h.hinoId;
-        if (typeof h === 'object' && h.id) return h.id;
-        return null;
-      }).filter(Boolean) || [];
-      
-      const dadosSupabase = {
-        nome: repertorio.nome,
-        data_culto: repertorio.data,
-        horario_culto: repertorio.horario || '',
-        observacoes: repertorio.observacoes || '',
-        lista_hinos: idsHinos,
-        atualizado_em: new Date().toISOString()
-      };
-
-      console.log('📝 Atualizando no Supabase com IDs:', idsHinos);
-
-      const { error } = await supabase
-        .from('repertorios_cultos')
-        .update(dadosSupabase)
-        .eq('id', repertorio.id);
-      
-      if (error) throw error;
-      console.log('✅ Repertório atualizado com', idsHinos.length, 'hinos');
+      await gravar('repertorio.update', repertorio);
+      console.log('✅ Repertório atualizado com', atualizado.hinos.length, 'hinos');
     } else {
       const chave = `${DB_PREFIX}repertorio_${repertorio.id}`;
       localStorage.setItem(chave, JSON.stringify(repertorio));
@@ -349,13 +492,11 @@ export async function updateRepertorio(repertorio: Repertorio): Promise<void> {
 
 export async function deleteRepertorio(id: string): Promise<void> {
   try {
+    const repertoriosCache = cacheLer<Repertorio[]>(CACHE_REPERTORIOS) || [];
+    cacheSalvar(CACHE_REPERTORIOS, repertoriosCache.filter(r => r.id !== id));
+
     if (supabase) {
-      const { error } = await supabase
-        .from('repertorios_cultos')
-        .delete()
-        .eq('id', id);
-      
-      if (error) throw error;
+      await gravar('repertorio.delete', id);
       console.log('✅ Repertório deletado');
     } else {
       const chave = `${DB_PREFIX}repertorio_${id}`;
@@ -372,6 +513,11 @@ export async function deleteRepertorio(id: string): Promise<void> {
 export async function getConfiguracoes(): Promise<Configuracoes | null> {
   try {
     if (supabase) {
+      if (!estaOnline()) {
+        console.log('📴 Offline: usando configurações salvas no aparelho');
+        return cacheLer<Configuracoes>(CACHE_CONFIG);
+      }
+
       const { data, error } = await supabase
         .from('configuracoes_sistema')
         .select('*')
@@ -394,6 +540,7 @@ export async function getConfiguracoes(): Promise<Configuracoes | null> {
         subtitulo: data.subtitulo_sistema || 'Gerenciador de hinos e cultos'
       };
 
+      cacheSalvar(CACHE_CONFIG, config);
       console.log('✅ Configurações carregadas');
       return config;
     } else {
@@ -402,42 +549,19 @@ export async function getConfiguracoes(): Promise<Configuracoes | null> {
       return dados ? JSON.parse(dados) : null;
     }
   } catch (error) {
-    console.error('❌ Erro ao carregar configurações:', error);
-    return null;
+    console.error('❌ Erro ao carregar configurações, usando cópia local:', error);
+    return cacheLer<Configuracoes>(CACHE_CONFIG);
   }
 }
 
 export async function saveConfiguracoes(config: Configuracoes): Promise<void> {
   try {
+    // Garantir que tem um id
+    const configComId: Configuracoes = { ...config, id: config.id || 'config' };
+    cacheSalvar(CACHE_CONFIG, configComId);
+
     if (supabase) {
-      // Garantir que tem um id
-      const configComId = {
-        ...config,
-        id: config.id || 'config'
-      };
-
-      const dadosSupabase = {
-        id: configComId.id,
-        nome_igreja: configComId.nomeIgreja || '',
-        nome_responsavel: configComId.responsavel || '',
-        rodape_pdf: configComId.rodapePdf || '',
-        logo_igreja: configComId.logo || null,
-        titulo_sistema: configComId.tituloSistema || 'Repertório da Igreja',
-        logo_sistema: configComId.logoSistema || null,
-        subtitulo_sistema: configComId.subtitulo || 'Gerenciador de hinos e cultos',
-        created_at: new Date().toISOString()
-      };
-
-      console.log('📤 Salvando configurações:', dadosSupabase);
-
-      const { error } = await supabase
-        .from('configuracoes_sistema')
-        .upsert([dadosSupabase], { onConflict: 'id' });
-      
-      if (error) {
-        console.error('❌ Erro Supabase:', error);
-        throw error;
-      }
+      await gravar('config.save', configComId);
       console.log('✅ Configurações salvas com sucesso');
     } else {
       const chave = `${DB_PREFIX}config`;
@@ -456,25 +580,34 @@ export async function saveConfiguracoes(config: Configuracoes): Promise<void> {
 export async function getAllHarpa(): Promise<HarpaItem[]> {
   try {
     if (supabase) {
+      if (!estaOnline()) {
+        return cacheLer<HarpaItem[]>(CACHE_HARPA) || [];
+      }
+
       const { data, error } = await supabase
         .from('harpa_cristaa')
         .select('*')
         .order('numero_harpa', { ascending: true });
-      
+
       if (error) throw error;
-      console.log('✅ Harpa carregada:', data?.length || 0);
-      return data?.map((item: any) => ({
-        numero: item.numero_harpa,
-        nome: item.nome_hino
-      })) || [];
+
+      const harpa: HarpaItem[] =
+        data?.map((item: any) => ({
+          numero: item.numero_harpa,
+          nome: item.nome_hino
+        })) || [];
+
+      cacheSalvar(CACHE_HARPA, harpa);
+      console.log('✅ Harpa carregada:', harpa.length);
+      return harpa;
     } else {
       const chave = `${DB_PREFIX}harpa_list`;
       const dados = localStorage.getItem(chave);
       return dados ? JSON.parse(dados) : [];
     }
   } catch (error) {
-    console.error('❌ Erro ao carregar Harpa:', error);
-    return [];
+    console.error('❌ Erro ao carregar Harpa, usando cópia local:', error);
+    return cacheLer<HarpaItem[]>(CACHE_HARPA) || [];
   }
 }
 
@@ -490,17 +623,12 @@ export async function getHarpaByNumber(numero: number): Promise<HarpaItem | unde
 
 export async function addHarpaItems(items: HarpaItem[]): Promise<void> {
   try {
+    const harpaCache = cacheLer<HarpaItem[]>(CACHE_HARPA) || [];
+    const numerosNovos = new Set(items.map(i => i.numero));
+    cacheSalvar(CACHE_HARPA, [...harpaCache.filter(h => !numerosNovos.has(h.numero)), ...items]);
+
     if (supabase) {
-      const itemsFormatted = items.map(item => ({
-        numero_harpa: item.numero,
-        nome_hino: item.nome
-      }));
-      
-      const { error } = await supabase
-        .from('harpa_cristaa')
-        .insert(itemsFormatted);
-      
-      if (error) throw error;
+      await gravar('harpa.add', items);
       console.log('✅ Harpa salva');
     } else {
       const chave = `${DB_PREFIX}harpa_list`;
@@ -611,6 +739,8 @@ export async function importHinosFromCSV(csvText: string, tipoImportacao: 'harpa
 
 export async function clearAllData(): Promise<void> {
   try {
+    cacheLimpar();
+
     if (supabase) {
       await supabase.from('hinos_cadastro').delete().neq('id', '');
       await supabase.from('repertorios_cultos').delete().neq('id', '');
