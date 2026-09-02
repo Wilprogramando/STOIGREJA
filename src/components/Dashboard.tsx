@@ -14,12 +14,11 @@ import { Repertorio } from '../types';
 
 interface DashboardProps {
   onPageChange: (page: string) => void;
-  responsavel?: string;
 }
 
 const MESES = ['JAN', 'FEV', 'MAR', 'ABR', 'MAI', 'JUN', 'JUL', 'AGO', 'SET', 'OUT', 'NOV', 'DEZ'];
 
-export const Dashboard: React.FC<DashboardProps> = ({ onPageChange, responsavel }) => {
+export const Dashboard: React.FC<DashboardProps> = ({ onPageChange }) => {
   const [stats, setStats] = useState({
     totalHinos: 0,
     totalHarpa: 0,
@@ -126,17 +125,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ onPageChange, responsavel 
     <div className="max-w-5xl mx-auto space-y-8">
       {/* Saudação */}
       <div>
-        <h2 className="text-2xl md:text-3xl font-bold text-gray-900">
-          {saudacao()}
-          {responsavel ? (
-            <>
-              , <span className="text-indigo-600">{responsavel}!</span>
-            </>
-          ) : (
-            '!'
-          )}{' '}
-          🙌
-        </h2>
+        <h2 className="text-2xl md:text-3xl font-bold text-gray-900">{saudacao()}! 🙌</h2>
         <p className="text-gray-500 mt-1">Que Deus abençoe o seu ministério.</p>
       </div>
 

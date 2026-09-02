@@ -108,7 +108,7 @@ export default function App() {
   const renderPage = () => {
     switch (currentPage) {
       case 'dashboard':
-        return <Dashboard onPageChange={handlePageChange} responsavel={configuracoes?.responsavel} />;
+        return <Dashboard onPageChange={handlePageChange} />;
 
       case 'cadastrar-hino':
         return <CadastrarHino configuracoes={configuracoes} />;
@@ -154,7 +154,7 @@ export default function App() {
         );
 
       default:
-        return <Dashboard onPageChange={handlePageChange} responsavel={configuracoes?.responsavel} />;
+        return <Dashboard onPageChange={handlePageChange} />;
     }
   };
 
