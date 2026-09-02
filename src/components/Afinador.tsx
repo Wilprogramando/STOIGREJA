@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { Mic, MicOff, Check, AlertCircle } from 'lucide-react';
+import { Mic, MicOff, Check, AlertCircle, Volume2, VolumeX } from 'lucide-react';
 
 /**
  * AFINADOR CROMÁTICO
@@ -196,11 +196,19 @@ export const Afinador: React.FC = () => {
   const [frequencia, setFrequencia] = useState(0);
   const [cordaFixa, setCordaFixa] = useState<string | null>(null);
 
+  const [cordaTocando, setCordaTocando] = useState<string | null>(null);
+
   const audioCtxRef = useRef<AudioContext | null>(null);
   const streamRef = useRef<MediaStream | null>(null);
   const analyserRef = useRef<AnalyserNode | null>(null);
   const rafRef = useRef<number>(0);
   const ultimasRef = useRef<number[]>([]);
+
+  // Reprodução das cordas (som de referência)
+  const somCtxRef = useRef<AudioContext | null>(null);
+  const somAtivosRef = useRef<{ oscilador: OscillatorNode; ganho: GainNode }[]>([]);
+  const somTimersRef = useRef<number[]>([]);
+  const ignorarMicAteRef = useRef(0);
 
   const instrumento = INSTRUMENTOS.find(i => i.id === instrumentoId) || INSTRUMENTOS[0];
 
@@ -222,7 +230,116 @@ export const Afinador: React.FC = () => {
     setFrequencia(0);
   };
 
-  useEffect(() => parar, []);
+  // ==================== SOM DAS CORDAS ====================
+
+  const pararSom = () => {
+    somTimersRef.current.forEach(t => clearTimeout(t));
+    somTimersRef.current = [];
+
+    const ctx = somCtxRef.current;
+    somAtivosRef.current.forEach(({ oscilador, ganho }) => {
+      try {
+        if (ctx) {
+          ganho.gain.cancelScheduledValues(ctx.currentTime);
+          ganho.gain.setTargetAtTime(0, ctx.currentTime, 0.02);
+        }
+        oscilador.stop(ctx ? ctx.currentTime + 0.15 : 0);
+      } catch {
+        /* já parou */
+      }
+    });
+    somAtivosRef.current = [];
+    setCordaTocando(null);
+  };
+
+  /**
+   * Toca a nota da corda afinada. Somamos alguns harmônicos com decaimento
+   * diferente para o som lembrar uma corda tocada, e não um apito de teste.
+   */
+  const tocarNota = (frequenciaHz: number, duracao = 2.2, atraso = 0) => {
+    let ctx = somCtxRef.current;
+    if (!ctx || ctx.state === 'closed') {
+      ctx = new (window.AudioContext || (window as any).webkitAudioContext)();
+      somCtxRef.current = ctx;
+    }
+    if (ctx.state === 'suspended') ctx.resume();
+
+    const inicio = ctx.currentTime + atraso;
+    const harmonicos = [
+      { multiplo: 1, volume: 0.55, decaimento: 1 },
+      { multiplo: 2, volume: 0.22, decaimento: 0.65 },
+      { multiplo: 3, volume: 0.11, decaimento: 0.45 },
+      { multiplo: 4, volume: 0.06, decaimento: 0.35 }
+    ];
+
+    harmonicos.forEach(h => {
+      const oscilador = ctx!.createOscillator();
+      const ganho = ctx!.createGain();
+
+      oscilador.type = 'sine';
+      oscilador.frequency.setValueAtTime(frequenciaHz * h.multiplo, inicio);
+
+      const fim = inicio + duracao * h.decaimento;
+      ganho.gain.setValueAtTime(0, inicio);
+      ganho.gain.linearRampToValueAtTime(h.volume, inicio + 0.015); // ataque da palhetada
+      ganho.gain.exponentialRampToValueAtTime(0.0001, fim);
+
+      oscilador.connect(ganho);
+      ganho.connect(ctx!.destination);
+      oscilador.start(inicio);
+      oscilador.stop(fim + 0.05);
+
+      somAtivosRef.current.push({ oscilador, ganho });
+    });
+
+    // Enquanto o alto-falante toca, o microfone ouviria o próprio som.
+    ignorarMicAteRef.current = performance.now() + (atraso + duracao) * 1000 + 250;
+  };
+
+  const tocarCorda = (corda: Corda) => {
+    pararSom();
+    setCordaTocando(corda.nota);
+    tocarNota(corda.frequencia);
+    somTimersRef.current.push(
+      window.setTimeout(() => setCordaTocando(null), 2300)
+    );
+  };
+
+  /** Toca as cordas em sequência, da mais grave para a mais aguda. */
+  const tocarTodasAsCordas = () => {
+    pararSom();
+
+    const duracao = 1.6;
+    const intervalo = 1.4;
+
+    cordas.forEach((corda, i) => {
+      tocarNota(corda.frequencia, duracao, i * intervalo);
+      somTimersRef.current.push(
+        window.setTimeout(() => setCordaTocando(corda.nota), i * intervalo * 1000)
+      );
+    });
+
+    somTimersRef.current.push(
+      window.setTimeout(
+        () => setCordaTocando(null),
+        ((cordas.length - 1) * intervalo + duracao) * 1000
+      )
+    );
+    setCordaTocando(cordas[0].nota);
+  };
+
+  // Trocar de instrumento no meio do som pararia notas de outro instrumento.
+  useEffect(() => {
+    pararSom();
+  }, [instrumentoId]);
+
+  useEffect(() => {
+    return () => {
+      parar();
+      pararSom();
+      somCtxRef.current?.close().catch(() => undefined);
+    };
+  }, []);
 
   const começar = async () => {
     setErro(null);
@@ -255,6 +372,13 @@ export const Afinador: React.FC = () => {
         // ~14 leituras por segundo: preciso o bastante e leve para o aparelho.
         if (agora - ultimaLeitura < 70) return;
         ultimaLeitura = agora;
+
+        // Não medir o som de referência que o próprio sistema está tocando.
+        if (performance.now() < ignorarMicAteRef.current) {
+          ultimasRef.current = [];
+          setFrequencia(0);
+          return;
+        }
 
         analyser.getFloatTimeDomainData(buffer);
         const hz = detectarFrequencia(buffer, ctx.sampleRate);
@@ -465,33 +589,70 @@ export const Afinador: React.FC = () => {
           {cordas.map(corda => {
             const ativa = cordaAlvo?.nota === corda.nota;
             const okAgora = ativa && afinado;
+            const soando = cordaTocando === corda.nota;
 
             return (
-              <button
+              <div
                 key={corda.nota}
-                onClick={() => setCordaFixa(cordaFixa === corda.nota ? null : corda.nota)}
-                className={`p-3 rounded-lg border-2 text-center transition ${
+                className={`rounded-lg border-2 text-center transition ${
                   okAgora
                     ? 'border-green-500 bg-green-50'
-                    : ativa
-                      ? 'border-indigo-500 bg-indigo-50'
-                      : 'border-gray-200 hover:border-gray-300'
+                    : soando
+                      ? 'border-amber-500 bg-amber-50'
+                      : ativa
+                        ? 'border-indigo-500 bg-indigo-50'
+                        : 'border-gray-200'
                 }`}
               >
-                <div className="text-lg font-bold text-gray-800">
-                  {NOTAS_PT[corda.nota.replace(/\d/g, '')]}
-                </div>
-                <div className="text-xs text-gray-500">
-                  {corda.nome} · {corda.nota}
-                </div>
-              </button>
+                <button
+                  onClick={() => setCordaFixa(cordaFixa === corda.nota ? null : corda.nota)}
+                  className="w-full px-3 pt-3 pb-1 hover:bg-black/5 rounded-t-md"
+                  title="Travar o afinador nesta corda"
+                >
+                  <div className="text-lg font-bold text-gray-800">
+                    {NOTAS_PT[corda.nota.replace(/\d/g, '')]}
+                  </div>
+                  <div className="text-xs text-gray-500">
+                    {corda.nome} · {corda.nota}
+                  </div>
+                </button>
+
+                <button
+                  onClick={() => tocarCorda(corda)}
+                  className="w-full flex items-center justify-center gap-1 py-2 text-xs font-medium text-indigo-700 hover:bg-indigo-100 rounded-b-md border-t border-gray-100"
+                  title={`Ouvir ${corda.nota} afinado (${corda.frequencia.toFixed(1)} Hz)`}
+                >
+                  <Volume2 size={14} className={soando ? 'animate-pulse' : ''} />
+                  {soando ? 'Tocando' : 'Ouvir'}
+                </button>
+              </div>
             );
           })}
         </div>
 
+        <div className="flex flex-wrap gap-2 mt-3">
+          <button
+            onClick={tocarTodasAsCordas}
+            disabled={cordaTocando !== null}
+            className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-indigo-600 text-white text-sm font-medium hover:bg-indigo-700 disabled:opacity-50"
+          >
+            <Volume2 size={16} /> Ouvir todas as cordas
+          </button>
+          {cordaTocando && (
+            <button
+              onClick={pararSom}
+              className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-gray-200 text-gray-700 text-sm font-medium hover:bg-gray-300"
+            >
+              <VolumeX size={16} /> Parar som
+            </button>
+          )}
+        </div>
+
         <p className="text-xs text-gray-500 mt-3">
-          Por padrão o afinador descobre sozinho qual corda você tocou. Toque numa corda acima
-          para travar nela — útil quando a corda está muito desafinada.
+          Toque em <strong>Ouvir</strong> para escutar a corda afinada e comparar de ouvido.
+          Clicando no nome da nota, o afinador trava naquela corda — útil quando ela está muito
+          desafinada.
+          {ouvindo && ' Enquanto o som toca, o microfone é ignorado para não se confundir.'}
         </p>
       </div>
 
