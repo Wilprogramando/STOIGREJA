@@ -9,6 +9,7 @@ import { RepertoriosSalvos } from './components/RepertoriosSalvos';
 import { ConfiguracoesView } from './components/Configuracoes';
 import { Relatorios } from './components/Relatorios';
 import { CampoHarmonico } from './components/CampoHarmonico';
+import { Afinador } from './components/Afinador';
 import { StatusConexao } from './components/StatusConexao';
 
 import { initializeHarpaBase, getConfiguracoes } from './services/db';
@@ -110,6 +111,9 @@ export default function App() {
 
       case 'campo-harmonico':
         return <CampoHarmonico />;
+
+      case 'afinador':
+        return <Afinador />;
 
       case 'configuracoes':
         return (

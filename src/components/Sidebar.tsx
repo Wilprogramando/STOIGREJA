@@ -7,7 +7,8 @@ import {
   Music2,
   List,
   Settings,
-  BarChart3
+  BarChart3,
+  Guitar
 } from 'lucide-react';
 
 interface SidebarProps {
@@ -35,6 +36,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
     { id: 'campo-harmonico', label: 'Campo Harmônico', icon: Music2 },
 
     { id: 'relatorios', label: 'Relatórios', icon: BarChart3 },
+    { id: 'afinador', label: 'Afinador', icon: Guitar },
     { id: 'configuracoes', label: 'Configurações', icon: Settings },
   ];
 
