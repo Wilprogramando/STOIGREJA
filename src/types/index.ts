@@ -50,3 +50,12 @@ export interface HarpaItem {
   numero: number;
   nome: string;
 }
+
+export interface Anotacao {
+  id: string;
+  hino: string;
+  cantor: string;
+  tom: string;
+  observacoes: string;
+  criadoEm: string;
+}

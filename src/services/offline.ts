@@ -14,6 +14,7 @@ export const CACHE_HINOS = 'hinos';
 export const CACHE_REPERTORIOS = 'repertorios';
 export const CACHE_CONFIG = 'configuracoes';
 export const CACHE_HARPA = 'harpa';
+export const CACHE_ANOTACOES = 'anotacoes';
 
 export interface OperacaoPendente {
   id: string;

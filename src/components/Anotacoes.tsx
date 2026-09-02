@@ -15,34 +15,55 @@ export const Anotacoes: React.FC = () => {
   const [form, setForm] = useState(VAZIO);
   const [busca, setBusca] = useState('');
   const [aviso, setAviso] = useState<string | null>(null);
+  const [carregando, setCarregando] = useState(true);
+  const [salvando, setSalvando] = useState(false);
+
+  const recarregar = async () => {
+    try {
+      setAnotacoes(await listarAnotacoes());
+    } catch (error) {
+      console.error('Erro ao carregar anotações:', error);
+      setAviso('Não foi possível carregar as anotações.');
+    } finally {
+      setCarregando(false);
+    }
+  };
 
   useEffect(() => {
-    setAnotacoes(listarAnotacoes());
+    recarregar();
   }, []);
 
   const editando = form.id !== '';
 
-  const salvar = () => {
+  const salvar = async () => {
     if (!form.hino.trim()) {
       setAviso('Escreva pelo menos o nome do hino.');
       return;
     }
 
-    salvarAnotacao({
-      ...form,
-      id: form.id || undefined,
-      hino: form.hino.trim(),
-      cantor: form.cantor.trim(),
-      tom: form.tom.trim(),
-      observacoes: form.observacoes.trim(),
-      criadoEm: editando
-        ? anotacoes.find(a => a.id === form.id)?.criadoEm || new Date().toISOString()
-        : new Date().toISOString()
-    });
+    setSalvando(true);
+    try {
+      await salvarAnotacao({
+        ...form,
+        id: form.id || undefined,
+        hino: form.hino.trim(),
+        cantor: form.cantor.trim(),
+        tom: form.tom.trim(),
+        observacoes: form.observacoes.trim(),
+        criadoEm: editando
+          ? anotacoes.find(a => a.id === form.id)?.criadoEm || new Date().toISOString()
+          : new Date().toISOString()
+      });
 
-    setAnotacoes(listarAnotacoes());
-    setForm(VAZIO);
-    setAviso(null);
+      await recarregar();
+      setForm(VAZIO);
+      setAviso(null);
+    } catch (error) {
+      console.error('Erro ao salvar anotação:', error);
+      setAviso('Não foi possível salvar a anotação.');
+    } finally {
+      setSalvando(false);
+    }
   };
 
   const editar = (anotacao: Anotacao) => {
@@ -57,11 +78,17 @@ export const Anotacoes: React.FC = () => {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
-  const excluir = (anotacao: Anotacao) => {
+  const excluir = async (anotacao: Anotacao) => {
     if (!confirm(`Apagar a anotação "${anotacao.hino}"?`)) return;
-    excluirAnotacao(anotacao.id);
-    setAnotacoes(listarAnotacoes());
-    if (form.id === anotacao.id) setForm(VAZIO);
+
+    try {
+      await excluirAnotacao(anotacao.id);
+      await recarregar();
+      if (form.id === anotacao.id) setForm(VAZIO);
+    } catch (error) {
+      console.error('Erro ao excluir anotação:', error);
+      setAviso('Não foi possível apagar a anotação.');
+    }
   };
 
   const termo = busca.trim().toLowerCase();
@@ -150,10 +177,11 @@ export const Anotacoes: React.FC = () => {
         <div className="flex gap-2 mt-4">
           <button
             onClick={salvar}
-            className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-indigo-600 text-white font-medium hover:bg-indigo-700"
+            disabled={salvando}
+            className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-indigo-600 text-white font-medium hover:bg-indigo-700 disabled:opacity-50"
           >
             <Plus size={18} />
-            {editando ? 'Salvar alteração' : 'Adicionar anotação'}
+            {salvando ? 'Salvando...' : editando ? 'Salvar alteração' : 'Adicionar anotação'}
           </button>
 
           {editando && (
@@ -184,7 +212,11 @@ export const Anotacoes: React.FC = () => {
       )}
 
       {/* Lista */}
-      {filtradas.length === 0 ? (
+      {carregando ? (
+        <div className="bg-white rounded-lg shadow-md p-8 text-center text-gray-500">
+          Carregando anotações...
+        </div>
+      ) : filtradas.length === 0 ? (
         <div className="bg-white rounded-lg shadow-md p-8 text-center text-gray-500">
           {anotacoes.length === 0
             ? 'Nenhuma anotação ainda. Anote a primeira sugestão de hino acima.'
@@ -238,7 +270,8 @@ export const Anotacoes: React.FC = () => {
       )}
 
       <p className="text-xs text-gray-500 mt-4">
-        As anotações ficam salvas neste aparelho, e continuam disponíveis sem internet.
+        As anotações ficam salvas na nuvem e aparecem em todos os aparelhos. Sem internet,
+        você continua anotando: o sistema envia assim que a conexão voltar.
       </p>
     </div>
   );

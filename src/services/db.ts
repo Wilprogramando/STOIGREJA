@@ -1,10 +1,11 @@
 import { createClient } from '@supabase/supabase-js';
-import { Hino, Repertorio, Configuracoes, HarpaItem } from '../types';
+import { Hino, Repertorio, Configuracoes, HarpaItem, Anotacao } from '../types';
 import {
   CACHE_HINOS,
   CACHE_REPERTORIOS,
   CACHE_CONFIG,
   CACHE_HARPA,
+  CACHE_ANOTACOES,
   OperacaoPendente,
   cacheSalvar,
   cacheLer,
@@ -97,6 +98,17 @@ function payloadConfig(config: Configuracoes) {
   };
 }
 
+function payloadAnotacao(anotacao: Anotacao) {
+  return {
+    id: anotacao.id,
+    hino: anotacao.hino,
+    cantor: anotacao.cantor || '',
+    tom: anotacao.tom || '',
+    observacoes: anotacao.observacoes || '',
+    criado_em: anotacao.criadoEm || new Date().toISOString()
+  };
+}
+
 /** Executa no Supabase uma operação da fila (ou uma recém-criada). */
 async function executarNoSupabase(op: OperacaoPendente): Promise<void> {
   if (!supabase) throw new Error('Supabase não configurado');
@@ -148,6 +160,18 @@ async function executarNoSupabase(op: OperacaoPendente): Promise<void> {
             .upsert([payloadConfig(op.dados)], { onConflict: 'id' })
         ).error
       );
+      return;
+    case 'anotacao.upsert':
+      falhar(
+        (
+          await supabase
+            .from('anotacoes_hinos')
+            .upsert([payloadAnotacao(op.dados)], { onConflict: 'id' })
+        ).error
+      );
+      return;
+    case 'anotacao.delete':
+      falhar((await supabase.from('anotacoes_hinos').delete().eq('id', op.dados)).error);
       return;
     case 'harpa.add':
       falhar(
@@ -647,6 +671,104 @@ export async function getHarpaItem(numero: number): Promise<HarpaItem | undefine
 export async function initializeHarpaBase(): Promise<void> {
   const harpaData = await getAllHarpa();
   console.log('✅ Harpa inicializada com', harpaData.length, 'hinos');
+}
+
+// ==================== ANOTAÇÕES ====================
+
+const CHAVE_ANOTACOES_ANTIGA = 'repertorio_igreja_anotacoes';
+
+function mapearAnotacaoSupabase(dados: any): Anotacao {
+  return {
+    id: dados.id,
+    hino: dados.hino || '',
+    cantor: dados.cantor || '',
+    tom: dados.tom || '',
+    observacoes: dados.observacoes || '',
+    criadoEm: dados.criado_em || new Date().toISOString()
+  };
+}
+
+const ordenarAnotacoes = (lista: Anotacao[]) =>
+  [...lista].sort((a, b) => (b.criadoEm || '').localeCompare(a.criadoEm || ''));
+
+export async function getAllAnotacoes(): Promise<Anotacao[]> {
+  try {
+    if (supabase) {
+      if (!estaOnline()) {
+        return ordenarAnotacoes(cacheLer<Anotacao[]>(CACHE_ANOTACOES) || []);
+      }
+
+      await migrarAnotacoesAntigas();
+      await sincronizarPendentes();
+
+      const { data, error } = await supabase
+        .from('anotacoes_hinos')
+        .select('*')
+        .order('criado_em', { ascending: false });
+
+      if (error) throw error;
+
+      const anotacoes = (data || []).map(mapearAnotacaoSupabase);
+      cacheSalvar(CACHE_ANOTACOES, anotacoes);
+      console.log('✅ Anotações carregadas:', anotacoes.length);
+      return anotacoes;
+    }
+
+    return ordenarAnotacoes(cacheLer<Anotacao[]>(CACHE_ANOTACOES) || []);
+  } catch (error) {
+    console.error('❌ Erro ao carregar anotações, usando cópia local:', error);
+    return ordenarAnotacoes(cacheLer<Anotacao[]>(CACHE_ANOTACOES) || []);
+  }
+}
+
+export async function saveAnotacao(anotacao: Anotacao): Promise<Anotacao> {
+  const anotacoes = cacheLer<Anotacao[]>(CACHE_ANOTACOES) || [];
+  cacheSalvar(
+    CACHE_ANOTACOES,
+    ordenarAnotacoes([...anotacoes.filter(a => a.id !== anotacao.id), anotacao])
+  );
+
+  await gravar('anotacao.upsert', anotacao);
+  console.log('✅ Anotação salva:', anotacao.hino);
+  return anotacao;
+}
+
+export async function deleteAnotacao(id: string): Promise<void> {
+  const anotacoes = cacheLer<Anotacao[]>(CACHE_ANOTACOES) || [];
+  cacheSalvar(CACHE_ANOTACOES, anotacoes.filter(a => a.id !== id));
+
+  await gravar('anotacao.delete', id);
+  console.log('✅ Anotação excluída');
+}
+
+/** Sobe para o Supabase as anotações que ficaram só no aparelho (versão anterior). */
+async function migrarAnotacoesAntigas(): Promise<void> {
+  try {
+    const dados = localStorage.getItem(CHAVE_ANOTACOES_ANTIGA);
+    if (!dados) return;
+
+    const antigas: Anotacao[] = JSON.parse(dados);
+    if (!Array.isArray(antigas) || antigas.length === 0) {
+      localStorage.removeItem(CHAVE_ANOTACOES_ANTIGA);
+      return;
+    }
+
+    console.log('📤 Enviando', antigas.length, 'anotação(ões) do aparelho para o Supabase...');
+    for (const anotacao of antigas) {
+      await executarNoSupabase({
+        id: 'migracao',
+        tipo: 'anotacao.upsert',
+        dados: anotacao,
+        criadoEm: new Date().toISOString()
+      });
+    }
+
+    localStorage.removeItem(CHAVE_ANOTACOES_ANTIGA);
+    console.log('✅ Anotações antigas migradas');
+  } catch (error) {
+    // Se falhar, mantemos o dado local para tentar de novo depois.
+    console.warn('⚠️ Não foi possível migrar as anotações antigas agora:', error);
+  }
 }
 
 // ==================== IMPORT/EXPORT ====================
