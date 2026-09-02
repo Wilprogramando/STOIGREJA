@@ -19,7 +19,20 @@ export const Dashboard: React.FC<DashboardProps> = ({ onPageChange }) => {
 
   useEffect(() => {
     loadStats();
+    // Reavalia periodicamente para que o repertório saia do "Próximo Repertório"
+    // assim que completar 24h da data/horário informado.
+    const timer = setInterval(loadStats, 60 * 1000);
+    return () => clearInterval(timer);
   }, []);
+
+  // Data/hora do repertório + 24h. Sem horário, considera 00:00.
+  const fimDaExibicao = (rep: Repertorio) => {
+    const [ano, mes, dia] = (rep.data || '').split('-').map(Number);
+    if (!ano || !mes || !dia) return null;
+    const [hora, minuto] = (rep.horario || '00:00').split(':').map(Number);
+    const inicio = new Date(ano, mes - 1, dia, hora || 0, minuto || 0, 0, 0);
+    return new Date(inicio.getTime() + 24 * 60 * 60 * 1000);
+  };
 
   const loadStats = async () => {
     try {
@@ -27,10 +40,15 @@ export const Dashboard: React.FC<DashboardProps> = ({ onPageChange }) => {
       const harpaHinos = await getHinosByType('harpa');
       const repertorios = await getAllRepertorios();
 
-      const hoje = new Date().toISOString().split('T')[0];
+      const agora = new Date();
       const proximoRep = repertorios
-        .filter(r => r.data >= hoje)
-        .sort((a, b) => a.data.localeCompare(b.data))[0];
+        .filter(r => {
+          const fim = fimDaExibicao(r);
+          return fim !== null && fim.getTime() > agora.getTime();
+        })
+        .sort((a, b) =>
+          a.data.localeCompare(b.data) || (a.horario || '').localeCompare(b.horario || '')
+        )[0];
 
       setStats({
         totalHinos: hinos.filter(h => h.tipo === 'comum').length,
