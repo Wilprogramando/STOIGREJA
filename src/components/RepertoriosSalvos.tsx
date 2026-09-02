@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Eye, Edit, Trash2, Download, Share2, Copy, Calendar, Music } from 'lucide-react';
 import { getAllRepertorios, deleteRepertorio, addRepertorio, getAllHinos } from '../services/db';
 import { generateRepertorioPdf, shareViaWhatsApp } from '../services/pdf';
+import { EditarHinoModal } from './EditarHinoModal';
 import { Repertorio, Configuracoes, Hino } from '../types';
 
 interface RepertoriosSalvosProps {
@@ -16,6 +17,7 @@ export const RepertoriosSalvos: React.FC<RepertoriosSalvosProps> = ({ configurac
   const [loading, setLoading] = useState(true);
   const [modalAberto, setModalAberto] = useState<Repertorio | null>(null);
   const [hinoSelecionado, setHinoSelecionado] = useState<any>(null);
+  const [hinoEditando, setHinoEditando] = useState<Hino | null>(null);
   const [mostrarPassados, setMostrarPassados] = useState(false);
 
   useEffect(() => {
@@ -35,7 +37,11 @@ export const RepertoriosSalvos: React.FC<RepertoriosSalvosProps> = ({ configurac
       try {
         // Se já é um objeto completo (repertórios antigos)
         if (typeof item === 'object' && item !== null && item.nome) {
-          resultado.push(item);
+          // Se esse hino ainda existe no cadastro, usa a versão atual dele:
+          // assim uma edição de tom/cantor aparece também nos repertórios antigos.
+          const idDoItem = item.hinoId || item.id;
+          const atual = idDoItem ? todosHinos.find(h => h.id === idDoItem) : undefined;
+          resultado.push(atual || item);
           return;
         }
         
@@ -398,16 +404,25 @@ export const RepertoriosSalvos: React.FC<RepertoriosSalvosProps> = ({ configurac
                             </td>
                             <td className="px-4 py-2">{hino?.tom || '?'}</td>
                             <td className="px-4 py-2">{hino?.cantor || '?'}</td>
-                            <td className="px-4 py-2 text-center">
-                              {hino?.letra && (
+                            <td className="px-4 py-2">
+                              <div className="flex items-center justify-center gap-2">
+                                {hino?.letra && (
+                                  <button
+                                    onClick={() => setHinoSelecionado(hino)}
+                                    title="Ver letra"
+                                    className="px-3 py-1 bg-blue-100 text-blue-600 rounded hover:bg-blue-200 transition text-sm font-medium"
+                                  >
+                                    Ver Letra
+                                  </button>
+                                )}
                                 <button
-                                  onClick={() => setHinoSelecionado(hino)}
-                                  title="Ver letra"
-                                  className="px-3 py-1 bg-blue-100 text-blue-600 rounded hover:bg-blue-200 transition text-sm font-medium"
+                                  onClick={() => setHinoEditando(hino)}
+                                  title="Editar hino (tom, cantor, letra...)"
+                                  className="inline-flex items-center gap-1 px-3 py-1 bg-indigo-100 text-indigo-700 rounded hover:bg-indigo-200 transition text-sm font-medium"
                                 >
-                                  Ver Letra
+                                  <Edit size={14} /> Editar
                                 </button>
-                              )}
+                              </div>
                             </td>
                           </tr>
                         );
@@ -443,14 +458,22 @@ export const RepertoriosSalvos: React.FC<RepertoriosSalvosProps> = ({ configurac
                               <p className="text-gray-600 text-xs font-medium">Cantor:</p>
                               <p className="font-bold text-gray-900 truncate">{hino?.cantor || '?'}</p>
                             </div>
-                            {hino?.letra && (
+                            <div className="ml-auto flex items-center gap-2">
+                              {hino?.letra && (
+                                <button
+                                  onClick={() => setHinoSelecionado(hino)}
+                                  className="px-3 py-1 bg-blue-600 text-white rounded hover:bg-blue-700 transition text-xs font-medium whitespace-nowrap"
+                                >
+                                  Letra
+                                </button>
+                              )}
                               <button
-                                onClick={() => setHinoSelecionado(hino)}
-                                className="ml-auto px-3 py-1 bg-blue-600 text-white rounded hover:bg-blue-700 transition text-xs font-medium whitespace-nowrap"
+                                onClick={() => setHinoEditando(hino)}
+                                className="inline-flex items-center gap-1 px-3 py-1 bg-indigo-600 text-white rounded hover:bg-indigo-700 transition text-xs font-medium whitespace-nowrap"
                               >
-                                Letra
+                                <Edit size={12} /> Editar
                               </button>
-                            )}
+                            </div>
                           </div>
                         </div>
                       );
@@ -497,6 +520,7 @@ export const RepertoriosSalvos: React.FC<RepertoriosSalvosProps> = ({ configurac
                       <th className="px-4 py-2 text-left font-medium text-gray-700">Hino</th>
                       <th className="px-4 py-2 text-left font-medium text-gray-700">Tom</th>
                       <th className="px-4 py-2 text-left font-medium text-gray-700">Cantor</th>
+                      <th className="px-4 py-2 text-center font-medium text-gray-700">Ação</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -515,6 +539,15 @@ export const RepertoriosSalvos: React.FC<RepertoriosSalvosProps> = ({ configurac
                           </td>
                           <td className="px-4 py-2">{hino?.tom || '?'}</td>
                           <td className="px-4 py-2">{hino?.cantor || '?'}</td>
+                          <td className="px-4 py-2 text-center">
+                            <button
+                              onClick={() => setHinoEditando(hino)}
+                              title="Editar hino (tom, cantor, letra...)"
+                              className="inline-flex items-center gap-1 px-3 py-1 bg-indigo-100 text-indigo-700 rounded hover:bg-indigo-200 transition text-sm font-medium"
+                            >
+                              <Edit size={14} /> Editar
+                            </button>
+                          </td>
                         </tr>
                       );
                       })}
@@ -551,6 +584,23 @@ export const RepertoriosSalvos: React.FC<RepertoriosSalvosProps> = ({ configurac
             </div>
           </div>
         </div>
+      )}
+
+      {/* Modal de Edição do Hino */}
+      {hinoEditando && (
+        <EditarHinoModal
+          hino={hinoEditando}
+          onClose={() => setHinoEditando(null)}
+          onSaved={hinoAtualizado => {
+            // Atualiza na tela sem precisar recarregar tudo do servidor.
+            setTodosHinos(anteriores =>
+              anteriores.map(h => (h.id === hinoAtualizado.id ? hinoAtualizado : h))
+            );
+            setHinoSelecionado((atual: any) =>
+              atual && atual.id === hinoAtualizado.id ? hinoAtualizado : atual
+            );
+          }}
+        />
       )}
 
       {/* Modal de Visualização da Letra do Hino */}
