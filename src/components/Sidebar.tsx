@@ -8,7 +8,8 @@ import {
   List,
   Settings,
   BarChart3,
-  Guitar
+  Guitar,
+  StickyNote
 } from 'lucide-react';
 
 interface SidebarProps {
@@ -37,6 +38,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
 
     { id: 'relatorios', label: 'Relatórios', icon: BarChart3 },
     { id: 'afinador', label: 'Afinador', icon: Guitar },
+    { id: 'anotacoes', label: 'Anotações', icon: StickyNote },
     { id: 'configuracoes', label: 'Configurações', icon: Settings },
   ];
 

@@ -10,6 +10,7 @@ import { ConfiguracoesView } from './components/Configuracoes';
 import { Relatorios } from './components/Relatorios';
 import { CampoHarmonico } from './components/CampoHarmonico';
 import { Afinador } from './components/Afinador';
+import { Anotacoes } from './components/Anotacoes';
 import { StatusConexao } from './components/StatusConexao';
 
 import { initializeHarpaBase, getConfiguracoes } from './services/db';
@@ -24,6 +25,33 @@ export default function App() {
   useEffect(() => {
     initializeApp();
   }, []);
+
+  // Botão "voltar" do celular/navegador: volta para a tela anterior do sistema
+  // em vez de fechar o app.
+  useEffect(() => {
+    // Marca a tela inicial no histórico do navegador.
+    window.history.replaceState({ page: 'dashboard' }, '');
+
+    const aoVoltar = (evento: PopStateEvent) => {
+      const pagina = evento.state?.page;
+      setCurrentPage(pagina || 'dashboard');
+      setSidebarOpen(false);
+      if (pagina !== 'montar-repertorio') {
+        setRepertorioEditar(null);
+      }
+    };
+
+    window.addEventListener('popstate', aoVoltar);
+    return () => window.removeEventListener('popstate', aoVoltar);
+  }, []);
+
+  /** Troca de tela guardando o passo no histórico, para o "voltar" funcionar. */
+  const irPara = (page: string) => {
+    if (page !== currentPage) {
+      window.history.pushState({ page }, '');
+    }
+    setCurrentPage(page);
+  };
 
   const initializeApp = async () => {
     try {
@@ -44,7 +72,7 @@ export default function App() {
   };
 
   const handlePageChange = (page: string) => {
-    setCurrentPage(page);
+    irPara(page);
 
     if (page !== 'montar-repertorio') {
       setRepertorioEditar(null);
@@ -57,12 +85,12 @@ export default function App() {
     console.log('🔄 Editando repertório:', repertorio.nome);
 
     setRepertorioEditar(repertorio);
-    setCurrentPage('montar-repertorio');
+    irPara('montar-repertorio');
   };
 
   const handleSaveRepertorio = () => {
     setRepertorioEditar(null);
-    setCurrentPage('repertorios');
+    irPara('repertorios');
   };
 
   const handleConfigChange = async () => {
@@ -114,6 +142,9 @@ export default function App() {
 
       case 'afinador':
         return <Afinador />;
+
+      case 'anotacoes':
+        return <Anotacoes />;
 
       case 'configuracoes':
         return (
