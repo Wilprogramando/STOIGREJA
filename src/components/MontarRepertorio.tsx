@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { Plus, Trash2, ArrowUp, ArrowDown, Download, Share2, Save, X } from 'lucide-react';
+import { Plus, Trash2, ArrowUp, ArrowDown, Download, Share2, Save, X, Pencil } from 'lucide-react';
 import { getAllHinos, addRepertorio, updateRepertorio } from '../services/db';
 import { generateRepertorioPdf, shareViaWhatsApp } from '../services/pdf';
+import { EditarHinoModal } from './EditarHinoModal';
 import { Hino, HinoNoRepertorio, Repertorio, Configuracoes } from '../types';
 
 interface MontarRepertorioProps {
@@ -28,6 +29,7 @@ export const MontarRepertorio: React.FC<MontarRepertorioProps> = ({
   const [showSelectHino, setShowSelectHino] = useState(false);
   const [tipoSelecionado, setTipoSelecionado] = useState<'comum' | 'harpa' | null>(null);
   const [repertorioCarregado, setRepertorioCarregado] = useState(false);
+  const [hinoEditando, setHinoEditando] = useState<Hino | null>(null);
 
   useEffect(() => {
     loadHinos();
@@ -179,6 +181,41 @@ export const MontarRepertorio: React.FC<MontarRepertorioProps> = ({
   const handleAlterarCantor = (id: string, novoCantor: string) => {
     setHinosNoRepertorio(
       hinosNoRepertorio.map(h => h.id === id ? { ...h, cantor: novoCantor } : h)
+    );
+  };
+
+  /** Abre a edição do cadastro do hino a partir da linha do repertório. */
+  const abrirEdicaoDoHino = (hinoRep: HinoNoRepertorio) => {
+    const idReal = hinoRep.hinoId && !hinoRep.hinoId.startsWith('hino-') ? hinoRep.hinoId : hinoRep.id;
+    const cadastro = hinos.find(h => h.id === idReal);
+
+    if (!cadastro) {
+      alert('Este hino não foi encontrado no cadastro, então não dá para editar por aqui.');
+      return;
+    }
+
+    setHinoEditando(cadastro);
+  };
+
+  /** Depois de salvar o hino, atualiza o que está na tela. */
+  const aplicarHinoEditado = (hinoAtualizado: Hino) => {
+    setHinos(anteriores =>
+      anteriores.map(h => (h.id === hinoAtualizado.id ? hinoAtualizado : h))
+    );
+
+    setHinosNoRepertorio(anteriores =>
+      anteriores.map(h => {
+        const idReal = h.hinoId && !h.hinoId.startsWith('hino-') ? h.hinoId : h.id;
+        if (idReal !== hinoAtualizado.id) return h;
+        return {
+          ...h,
+          nome: hinoAtualizado.nome,
+          tom: hinoAtualizado.tom,
+          cantor: hinoAtualizado.cantor,
+          letra: hinoAtualizado.letra,
+          observacoes: hinoAtualizado.observacoes
+        };
+      })
     );
   };
 
@@ -490,6 +527,13 @@ export const MontarRepertorio: React.FC<MontarRepertorioProps> = ({
 
                         <div className="flex gap-1 ml-4">
                           <button
+                            onClick={() => abrirEdicaoDoHino(hinoRep)}
+                            className="p-2 hover:bg-indigo-100 text-indigo-600 rounded"
+                            title="Editar o cadastro do hino (nome, tom, cantor, letra...)"
+                          >
+                            <Pencil size={18} />
+                          </button>
+                          <button
                             onClick={() => handleMoverCima(hinoRep.id)}
                             disabled={index === 0}
                             className="p-2 hover:bg-white rounded disabled:opacity-50"
@@ -576,6 +620,14 @@ export const MontarRepertorio: React.FC<MontarRepertorioProps> = ({
           </div>
         </div>
       </div>
+
+      {hinoEditando && (
+        <EditarHinoModal
+          hino={hinoEditando}
+          onClose={() => setHinoEditando(null)}
+          onSaved={aplicarHinoEditado}
+        />
+      )}
     </div>
   );
 };
