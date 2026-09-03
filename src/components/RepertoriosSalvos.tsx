@@ -328,12 +328,19 @@ export const RepertoriosSalvos: React.FC<RepertoriosSalvosProps> = ({ configurac
   return (
     <div className="max-w-6xl mx-auto pb-20">
       {/* Cabeçalho */}
-      <div className="relative flex items-start gap-3 mb-5">
-        <div className="bg-indigo-50 text-indigo-600 p-2.5 rounded-xl shrink-0">
-          <FolderOpen size={22} />
+      <div className="relative flex items-center gap-3 mb-5">
+        {/* O ícone acompanha a aba escolhida: próximos ou passados */}
+        <div
+          className={`p-2.5 rounded-xl shrink-0 transition ${
+            mostrarPassados ? 'bg-purple-50 text-purple-600' : 'bg-indigo-50 text-indigo-600'
+          }`}
+        >
+          {mostrarPassados ? <FolderOpen size={22} /> : <Calendar size={22} />}
         </div>
         <div className="min-w-0 flex-1">
-          <h2 className="text-2xl font-bold text-gray-900">Repertórios Salvos</h2>
+          <h2 className="text-xl sm:text-2xl font-bold text-gray-900 whitespace-nowrap">
+            Repertórios Salvos
+          </h2>
         </div>
 
         {/* Ilustração decorativa */}
