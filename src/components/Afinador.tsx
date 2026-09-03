@@ -160,7 +160,7 @@ function detectarFrequencia(buffer: Float32Array, sampleRate: number): number {
     if (correlacao > melhorValor) melhorValor = correlacao;
   }
 
-  if (melhorValor < 0.5) return -1; // som sem altura definida (ruído, batida)
+  if (melhorValor < 0.7) return -1; // som sem altura definida (ruído, batida)
 
   // Usa o PRIMEIRO pico que chega perto do máximo, e não o máximo em si:
   // assim o afinador não confunde a nota com a oitava abaixo.
@@ -276,6 +276,121 @@ function gerarWavDaNota(frequencia: number, duracao: number, sampleRate = 44100)
 
   return new Blob([buffer], { type: 'audio/wav' });
 }
+
+/**
+ * Mostrador de ponteiro: -50 a +50 cents viram um arco de -80° a +80°.
+ * A leitura fica óbvia — ponteiro à esquerda é grave, à direita é agudo.
+ */
+const Ponteiro: React.FC<{
+  cents: number;
+  ativo: boolean;
+  afinado: boolean;
+  nota: string;
+}> = ({ cents, ativo, afinado, nota }) => {
+  const ANGULO_MAXIMO = 80;
+  const angulo = (cents / 50) * ANGULO_MAXIMO;
+
+  // Ponto sobre o arco, com 0° apontando para cima.
+  const ponto = (graus: number, raio: number) => {
+    const rad = (graus * Math.PI) / 180;
+    return [100 + raio * Math.sin(rad), 100 - raio * Math.cos(rad)];
+  };
+
+  const arco = (inicio: number, fim: number, raio: number) => {
+    const [x1, y1] = ponto(inicio, raio);
+    const [x2, y2] = ponto(fim, raio);
+    return `M ${x1} ${y1} A ${raio} ${raio} 0 0 1 ${x2} ${y2}`;
+  };
+
+  const limiteAfinado = (TOLERANCIA_CENTS / 50) * ANGULO_MAXIMO;
+  const cor = !ativo ? '#4b5563' : afinado ? '#22c55e' : '#f59e0b';
+
+  return (
+    <div className="relative mx-auto w-full max-w-sm">
+      <svg
+        viewBox="0 0 200 132"
+        className="w-full"
+        role="img"
+        aria-label={`${nota}, ${cents} cents`}
+      >
+        {/* Arco de fundo */}
+        <path
+          d={arco(-ANGULO_MAXIMO, ANGULO_MAXIMO, 72)}
+          fill="none"
+          stroke="#374151"
+          strokeWidth="7"
+          strokeLinecap="round"
+        />
+
+        {/* Faixa central: dentro dela a corda conta como afinada */}
+        <path
+          d={arco(-limiteAfinado, limiteAfinado, 72)}
+          fill="none"
+          stroke={afinado ? '#22c55e' : '#6b7280'}
+          strokeWidth="7"
+          strokeLinecap="round"
+        />
+
+        {/* Marcações de -50, -25, 0, +25 e +50 cents */}
+        {[-50, -25, 0, 25, 50].map(marca => {
+          const graus = (marca / 50) * ANGULO_MAXIMO;
+          const [xa, ya] = ponto(graus, 60);
+          const [xb, yb] = ponto(graus, marca === 0 ? 47 : 53);
+
+          return (
+            <line
+              key={marca}
+              x1={xa}
+              y1={ya}
+              x2={xb}
+              y2={yb}
+              stroke={marca === 0 ? '#9ca3af' : '#4b5563'}
+              strokeWidth={marca === 0 ? 2.5 : 1.5}
+              strokeLinecap="round"
+            />
+          );
+        })}
+
+        {/* Ponteiro */}
+        <g
+          style={{
+            transform: `rotate(${ativo ? angulo : 0}deg)`,
+            transformOrigin: '100px 100px',
+            transition: 'transform 120ms linear'
+          }}
+        >
+          <line
+            x1="100"
+            y1="100"
+            x2="100"
+            y2="30"
+            stroke={cor}
+            strokeWidth="3.5"
+            strokeLinecap="round"
+          />
+        </g>
+        <circle cx="100" cy="100" r="6" fill={cor} />
+
+        {/* Nome da nota, embaixo do eixo */}
+        <text
+          x="100"
+          y="127"
+          textAnchor="middle"
+          fill={ativo ? '#f9fafb' : '#6b7280'}
+          fontSize="22"
+          fontWeight="700"
+        >
+          {nota}
+        </text>
+      </svg>
+
+      <div className="flex justify-between text-xs text-gray-500 px-2 -mt-1">
+        <span>♭ grave</span>
+        <span>♯ agudo</span>
+      </div>
+    </div>
+  );
+};
 
 export const Afinador: React.FC = () => {
   const [instrumentoId, setInstrumentoId] = useState('violao');
@@ -445,7 +560,9 @@ export const Afinador: React.FC = () => {
       const ctx = new (window.AudioContext || (window as any).webkitAudioContext)();
       const fonte = ctx.createMediaStreamSource(stream);
       const analyser = ctx.createAnalyser();
-      analyser.fftSize = 4096;
+      // Janela longa: as cordas graves (82 Hz e menos) precisam de vários
+      // ciclos dentro do buffer para a autocorrelação acertar a frequência.
+      analyser.fftSize = 8192;
       fonte.connect(analyser);
 
       streamRef.current = stream;
@@ -459,8 +576,9 @@ export const Afinador: React.FC = () => {
       const medir = (agora: number) => {
         rafRef.current = requestAnimationFrame(medir);
 
-        // ~14 leituras por segundo: preciso o bastante e leve para o aparelho.
-        if (agora - ultimaLeitura < 70) return;
+        // ~10 leituras por segundo: a janela de análise é longa, então medir mais
+        // vezes só gastaria bateria sem melhorar a leitura.
+        if (agora - ultimaLeitura < 100) return;
         ultimaLeitura = agora;
 
         // Não medir o som de referência que o próprio sistema está tocando.
@@ -479,11 +597,30 @@ export const Afinador: React.FC = () => {
           return;
         }
 
-        // Média das últimas leituras para o ponteiro não tremer.
-        const ultimas = [...ultimasRef.current, hz].slice(-5);
+        // Leitura muito diferente das anteriores (erro de oitava, ruído de fundo):
+        // recomeça o histórico em vez de contaminar a média.
+        const anteriores = ultimasRef.current;
+        if (anteriores.length >= 3) {
+          const referencia = [...anteriores].sort((a, b) => a - b)[Math.floor(anteriores.length / 2)];
+          if (Math.abs(1200 * Math.log2(hz / referencia)) > 120) {
+            ultimasRef.current = [hz];
+            return;
+          }
+        }
+
+        // Mediana das últimas leituras: segura o ponteiro sem atrasar a resposta.
+        const ultimas = [...anteriores, hz].slice(-9);
         ultimasRef.current = ultimas;
+
         const ordenadas = [...ultimas].sort((a, b) => a - b);
-        setFrequencia(ordenadas[Math.floor(ordenadas.length / 2)]);
+        const mediana = ordenadas[Math.floor(ordenadas.length / 2)];
+
+        // Média só do miolo (sem o menor e o maior), para ganhar resolução sem
+        // deixar um pico isolado puxar o valor.
+        const miolo = ordenadas.length >= 5 ? ordenadas.slice(1, -1) : ordenadas;
+        const media = miolo.reduce((soma, v) => soma + v, 0) / miolo.length;
+
+        setFrequencia(Math.abs(1200 * Math.log2(media / mediana)) < 25 ? media : mediana);
       };
 
       rafRef.current = requestAnimationFrame(medir);
@@ -526,12 +663,6 @@ export const Afinador: React.FC = () => {
     : info
       ? `${NOTAS_PT[info.nome]}${info.oitava}`
       : '--';
-
-  const corPrincipal = !frequencia
-    ? 'text-gray-300'
-    : afinado
-      ? 'text-green-500'
-      : 'text-amber-500';
 
   return (
     <div className="max-w-3xl mx-auto">
@@ -580,12 +711,15 @@ export const Afinador: React.FC = () => {
       </div>
 
       {/* Mostrador */}
-      <div className="bg-white rounded-lg shadow-md p-6 mb-4 text-center">
-        <div className={`text-6xl md:text-7xl font-bold ${corPrincipal} transition-colors`}>
-          {nomeExibido}
-        </div>
+      <div className="bg-gray-900 rounded-2xl shadow-lg p-6 mb-4 text-center">
+        <Ponteiro
+          cents={centsLimitado}
+          ativo={frequencia > 0}
+          afinado={afinado}
+          nota={nomeExibido}
+        />
 
-        <div className="h-6 mt-1 text-sm text-gray-500">
+        <div className="h-6 mt-1 text-sm text-gray-400">
           {frequencia > 0 && (
             <>
               {frequencia.toFixed(1)} Hz
@@ -596,46 +730,15 @@ export const Afinador: React.FC = () => {
           {!ouvindo && 'Toque em "Ligar microfone" para começar'}
         </div>
 
-        {/* Régua de cents */}
-        <div className="relative h-24 mt-4">
-          <div className="absolute inset-x-0 top-10 h-2 bg-gray-100 rounded-full" />
-          {/* faixa verde de tolerância */}
-          <div
-            className="absolute top-10 h-2 bg-green-200 rounded-full"
-            style={{ left: '47%', width: '6%' }}
-          />
-          {/* marca central */}
-          <div className="absolute left-1/2 top-4 -ml-px w-0.5 h-14 bg-gray-400" />
-
-          {/* ponteiro */}
-          {frequencia > 0 && (
-            <div
-              className={`absolute top-2 w-1 h-18 rounded-full transition-all duration-100 ${
-                afinado ? 'bg-green-500' : 'bg-amber-500'
-              }`}
-              style={{
-                left: `calc(${50 + centsLimitado}% - 2px)`,
-                height: '4.5rem'
-              }}
-            />
-          )}
-
-          <div className="absolute inset-x-0 bottom-0 flex justify-between text-xs text-gray-400 px-1">
-            <span>♭ -50</span>
-            <span>afinado</span>
-            <span>+50 ♯</span>
-          </div>
-        </div>
-
         {/* Instrução */}
         <div className="mt-2 h-8 flex items-center justify-center">
           {frequencia > 0 &&
             (afinado ? (
-              <span className="inline-flex items-center gap-2 text-green-600 font-bold text-lg">
+              <span className="inline-flex items-center gap-2 text-green-400 font-bold text-lg">
                 <Check size={20} /> Afinado!
               </span>
             ) : (
-              <span className="text-amber-600 font-semibold">
+              <span className="text-amber-400 font-semibold">
                 {cents < 0
                   ? `Está grave — aperte a corda (${Math.abs(cents)} cents)`
                   : `Está agudo — solte a corda (${cents} cents)`}
