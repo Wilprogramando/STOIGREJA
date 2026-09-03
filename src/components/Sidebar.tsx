@@ -34,7 +34,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
 
     { id: 'repertorios', label: 'Repertórios Salvos', icon: List },
 
-    { id: 'campo-harmonico', label: 'Campo Harmônico', icon: Music2 },
+    { id: 'campo-harmonico', label: 'Dicas', icon: Music2 },
 
     { id: 'relatorios', label: 'Relatórios', icon: BarChart3 },
     { id: 'afinador', label: 'Afinador', icon: Guitar },

@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { Braco, CORDAS_VIOLAO, CORDAS_BAIXO, notaDoAcorde } from './Braco';
 
 const CAMPOS = {
   C: ['C', 'Dm', 'Em', 'F', 'G', 'Am', 'B°'],
@@ -35,12 +36,16 @@ const PROGRESSOES = [
 
 export const CampoHarmonico = () => {
   const [tomSelecionado, setTomSelecionado] = useState<Tom>('C');
+  const [instrumento, setInstrumento] = useState<'violao' | 'baixo'>('violao');
 
   const acordes = CAMPOS[tomSelecionado];
 
+  // As 7 notas do tom, para pintar no braço do instrumento.
+  const notasDoTom = acordes.map(notaDoAcorde);
+
   return (
     <div className="max-w-5xl mx-auto pb-4">
-      <h2 className="text-2xl md:text-3xl font-bold text-gray-900 mb-4">🎹 Campo Harmônico</h2>
+      <h2 className="text-2xl md:text-3xl font-bold text-gray-900 mb-4">💡 Dicas</h2>
 
       {/* Escolha do tom: botões grandes, melhores que um select no celular. */}
       <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-4 mb-4">
@@ -123,6 +128,41 @@ export const CampoHarmonico = () => {
             </div>
           ))}
         </div>
+      </div>
+
+      {/* Braço do instrumento */}
+      <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-4 mb-4">
+        <div className="flex items-center justify-between gap-3 mb-1 flex-wrap">
+          <h3 className="font-bold text-gray-900">🎸 Notas no braço</h3>
+
+          <div className="flex gap-1 bg-gray-100 rounded-lg p-1">
+            {([
+              ['violao', 'Violão'],
+              ['baixo', 'Baixo'],
+            ] as const).map(([id, rotulo]) => (
+              <button
+                key={id}
+                onClick={() => setInstrumento(id)}
+                className={`px-3 py-1.5 rounded-md text-sm font-semibold transition ${
+                  instrumento === id ? 'bg-white text-indigo-700 shadow-sm' : 'text-gray-600'
+                }`}
+              >
+                {rotulo}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        <p className="text-xs text-gray-500 mb-3">
+          Em destaque, as notas que combinam com o tom de {tomSelecionado}. Arraste para o lado para
+          ver o braço inteiro.
+        </p>
+
+        <Braco
+          cordas={instrumento === 'violao' ? CORDAS_VIOLAO : CORDAS_BAIXO}
+          notasDoTom={notasDoTom}
+          tonica={notaDoAcorde(acordes[0])}
+        />
       </div>
 
       {/* Tabela completa: só faz sentido em tela grande. */}
