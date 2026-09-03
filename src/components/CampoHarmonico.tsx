@@ -235,12 +235,12 @@ export const CampoHarmonico = () => {
         onToggle={alternarTopico}
         className="hidden lg:block"
       >
-        <table className="w-full">
+        <table className="w-full table-fixed">
           <thead className="bg-gray-50 text-gray-600 text-sm">
             <tr>
-              <th className="p-3 text-left">Tom</th>
+              <th className="p-3 text-left w-24">Tom</th>
               {GRAUS.map(grau => (
-                <th key={grau} className="p-3">
+                <th key={grau} className="p-3 text-center font-semibold">
                   {grau}
                 </th>
               ))}
@@ -256,7 +256,7 @@ export const CampoHarmonico = () => {
                   tom === tomSelecionado ? 'bg-indigo-50' : 'hover:bg-gray-50'
                 }`}
               >
-                <td className="p-3 font-bold text-indigo-600">{tom}</td>
+                <td className="p-3 font-bold text-indigo-600 text-left w-24">{tom}</td>
 
                 {lista.map((acorde, index) => (
                   <td key={index} className="p-3 text-center text-gray-800">
