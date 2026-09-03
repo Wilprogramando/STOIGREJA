@@ -52,6 +52,105 @@ function ehDaHarpa(hino: Hino) {
 /** Medalha dos três primeiros; do quarto em diante, só o número. */
 const MEDALHAS = ['🥇', '🥈', '🥉'];
 
+const formatarData = (data: string) => {
+  if (!data) return 'N/A';
+  try {
+    return new Date(data).toLocaleDateString('pt-BR');
+  } catch {
+    return 'N/A';
+  }
+};
+
+/** Card branco padrão da tela. */
+const Painel: React.FC<{ children: React.ReactNode; className?: string }> = ({
+  children,
+  className = ''
+}) => (
+  <div className={`bg-white rounded-2xl border border-gray-100 shadow-lg ${className}`}>
+    {children}
+  </div>
+);
+
+/** Número em destaque, no mesmo estilo dos cards do Dashboard. */
+const Resumo = ({ icon: Icon, label, valor, className = '' }: any) => (
+  <Painel className={`relative overflow-hidden p-4 ${className}`}>
+    <Icon
+      size={52}
+      strokeWidth={1.5}
+      className="text-indigo-600 opacity-10 absolute -right-2 -bottom-2 pointer-events-none"
+    />
+    <div className="relative">
+      <p className="text-xs sm:text-sm font-semibold text-gray-700">{label}</p>
+      <p className="text-2xl sm:text-3xl font-extrabold text-gray-900 leading-tight">{valor}</p>
+    </div>
+  </Painel>
+);
+
+/** Uma linha do ranking: posição, nome, barra e total de usos. */
+const LinhaRanking = ({
+  hino,
+  index,
+  maior
+}: {
+  hino: HinoUsage;
+  index: number;
+  maior: number;
+}) => {
+  const largura = Math.max(8, Math.round((hino.usageCount / (maior || 1)) * 100));
+
+  return (
+    <div className="bg-indigo-50/60 rounded-2xl p-3 flex items-center gap-3">
+      <span className="shrink-0 w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-indigo-100 text-indigo-700 font-extrabold flex items-center justify-center tabular-nums text-base">
+        {MEDALHAS[index] || index + 1}
+      </span>
+
+      <div className="flex-1 min-w-0">
+        <p className="text-sm sm:text-base font-bold text-gray-900 break-words">
+          {hino.numeroHarpa ? `${hino.numeroHarpa} - ` : ''}
+          {hino.nome}
+        </p>
+
+        <div className="flex items-center gap-2 mt-1">
+          <span
+            className={`shrink-0 text-[10px] font-bold px-2 py-0.5 rounded-full ${
+              hino.usos30dias > 0
+                ? 'bg-green-100 text-green-700'
+                : 'bg-gray-100 text-gray-500'
+            }`}
+            title="Vezes cantado nos últimos 30 dias"
+          >
+            {hino.usos30dias}x em 30 dias
+          </span>
+          <p className="text-xs text-gray-500 truncate">
+            {hino.tom} • {hino.cantor} • último uso {formatarData(hino.ultimoUso)}
+          </p>
+        </div>
+
+        <div className="mt-1.5 h-1.5 w-full bg-indigo-100 rounded-full overflow-hidden">
+          <div
+            className="h-full rounded-full bg-gradient-to-r from-indigo-500 to-violet-600 transition-all duration-500"
+            style={{ width: `${largura}%` }}
+          />
+        </div>
+      </div>
+
+      <div className="shrink-0 text-right">
+        <p className="text-lg sm:text-xl font-extrabold text-gray-900 tabular-nums leading-none">
+          {hino.usageCount}
+        </p>
+        <p className="text-[11px] text-gray-500">usos</p>
+      </div>
+    </div>
+  );
+};
+
+const Vazio = ({ texto }: { texto: string }) => (
+  <div className="text-center py-12">
+    <Music2 className="mx-auto text-gray-300 mb-3" size={40} />
+    <p className="text-gray-500">{texto}</p>
+  </div>
+);
+
 export const Relatorios: React.FC = () => {
   const [hinosUsage, setHinosUsage] = useState<HinoUsage[]>([]);
   const [loading, setLoading] = useState(true);
@@ -157,105 +256,6 @@ export const Relatorios: React.FC = () => {
       setLoading(false);
     }
   };
-
-  const formatarData = (data: string) => {
-    if (!data) return 'N/A';
-    try {
-      return new Date(data).toLocaleDateString('pt-BR');
-    } catch {
-      return 'N/A';
-    }
-  };
-
-  /** Card branco padrão da tela. */
-  const Painel: React.FC<{ children: React.ReactNode; className?: string }> = ({
-    children,
-    className = ''
-  }) => (
-    <div className={`bg-white rounded-2xl border border-gray-100 shadow-lg ${className}`}>
-      {children}
-    </div>
-  );
-
-  /** Número em destaque, no mesmo estilo dos cards do Dashboard. */
-  const Resumo = ({ icon: Icon, label, valor, className = '' }: any) => (
-    <Painel className={`relative overflow-hidden p-4 ${className}`}>
-      <Icon
-        size={52}
-        strokeWidth={1.5}
-        className="text-indigo-600 opacity-10 absolute -right-2 -bottom-2 pointer-events-none"
-      />
-      <div className="relative">
-        <p className="text-xs sm:text-sm font-semibold text-gray-700">{label}</p>
-        <p className="text-2xl sm:text-3xl font-extrabold text-gray-900 leading-tight">{valor}</p>
-      </div>
-    </Painel>
-  );
-
-  /** Uma linha do ranking: posição, nome, barra e total de usos. */
-  const LinhaRanking = ({
-    hino,
-    index,
-    maior
-  }: {
-    hino: HinoUsage;
-    index: number;
-    maior: number;
-  }) => {
-    const largura = Math.max(8, Math.round((hino.usageCount / (maior || 1)) * 100));
-
-    return (
-      <div className="bg-indigo-50/60 rounded-2xl p-3 flex items-center gap-3">
-        <span className="shrink-0 w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-indigo-100 text-indigo-700 font-extrabold flex items-center justify-center tabular-nums text-base">
-          {MEDALHAS[index] || index + 1}
-        </span>
-
-        <div className="flex-1 min-w-0">
-          <p className="text-sm sm:text-base font-bold text-gray-900 break-words">
-            {hino.numeroHarpa ? `${hino.numeroHarpa} - ` : ''}
-            {hino.nome}
-          </p>
-
-          <div className="flex items-center gap-2 mt-1">
-            <span
-              className={`shrink-0 text-[10px] font-bold px-2 py-0.5 rounded-full ${
-                hino.usos30dias > 0
-                  ? 'bg-green-100 text-green-700'
-                  : 'bg-gray-100 text-gray-500'
-              }`}
-              title="Vezes cantado nos últimos 30 dias"
-            >
-              {hino.usos30dias}x em 30 dias
-            </span>
-            <p className="text-xs text-gray-500 truncate">
-              {hino.tom} • {hino.cantor} • último uso {formatarData(hino.ultimoUso)}
-            </p>
-          </div>
-
-          <div className="mt-1.5 h-1.5 w-full bg-indigo-100 rounded-full overflow-hidden">
-            <div
-              className="h-full rounded-full bg-gradient-to-r from-indigo-500 to-violet-600 transition-all duration-500"
-              style={{ width: `${largura}%` }}
-            />
-          </div>
-        </div>
-
-        <div className="shrink-0 text-right">
-          <p className="text-lg sm:text-xl font-extrabold text-gray-900 tabular-nums leading-none">
-            {hino.usageCount}
-          </p>
-          <p className="text-[11px] text-gray-500">usos</p>
-        </div>
-      </div>
-    );
-  };
-
-  const Vazio = ({ texto }: { texto: string }) => (
-    <div className="text-center py-12">
-      <Music2 className="mx-auto text-gray-300 mb-3" size={40} />
-      <p className="text-gray-500">{texto}</p>
-    </div>
-  );
 
   if (loading) {
     return (

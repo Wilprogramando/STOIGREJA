@@ -120,6 +120,50 @@ function contarMaisCantados(repertorios: Repertorio[], hinos: Hino[]): HinoConta
     .slice(0, TOP_MAIS_CANTADOS);
 }
 
+/** Cartão de número, com faixa colorida na lateral e ícone em destaque. */
+const StatCard = ({ icon: Icon, label, value, rodape, cor, onClick }: any) => (
+  <button
+    onClick={onClick}
+    className={`relative overflow-hidden text-left bg-white rounded-2xl border border-gray-100 border-l-4 ${cor.borda} shadow-lg hover:shadow-xl transition p-3 sm:p-4 w-full`}
+  >
+    {/* Marca d'água: o próprio ícone do card, grande e bem apagado */}
+    <Icon
+      size={52}
+      className={`${cor.icone} opacity-10 absolute -right-2 -bottom-2 pointer-events-none`}
+      strokeWidth={1.5}
+    />
+
+    <div className="relative flex items-start gap-2 sm:gap-3">
+      <div className={`${cor.fundo} ${cor.icone} p-2 sm:p-3 rounded-xl shrink-0`}>
+        <Icon size={20} />
+      </div>
+      <div className="min-w-0">
+        <p className="text-xs sm:text-sm font-semibold text-gray-700 truncate">{label}</p>
+        <p className="text-2xl sm:text-3xl font-extrabold text-gray-900 leading-tight">{value}</p>
+        {rodape && <p className="text-xs text-gray-500 truncate">{rodape}</p>}
+      </div>
+    </div>
+  </button>
+);
+
+/** Botão colorido das ações rápidas. */
+const AcaoRapida = ({ icon: Icon, label, cor, onClick }: any) => (
+  <button
+    onClick={onClick}
+    className={`relative overflow-hidden ${cor.fundo} ${cor.texto} rounded-2xl py-5 px-4 font-semibold flex flex-col items-center justify-center gap-2 shadow-lg hover:shadow-xl hover:brightness-95 transition`}
+  >
+    {/* Marca d'água: o próprio ícone do botão, bem apagado */}
+    <Icon
+      size={46}
+      className="opacity-10 absolute -right-2 -bottom-2 pointer-events-none"
+      strokeWidth={1.5}
+    />
+
+    <Icon size={24} className="relative" />
+    <span className="text-sm relative">{label}</span>
+  </button>
+);
+
 export const Dashboard: React.FC<DashboardProps> = ({ onPageChange }) => {
   const [stats, setStats] = useState({
     totalHinos: 0,
@@ -200,50 +244,6 @@ export const Dashboard: React.FC<DashboardProps> = ({ onPageChange }) => {
     if (hora < 18) return 'Boa tarde';
     return 'Boa noite';
   };
-
-  /** Cartão de número, com faixa colorida na lateral e ícone em destaque. */
-  const StatCard = ({ icon: Icon, label, value, rodape, cor, onClick }: any) => (
-    <button
-      onClick={onClick}
-      className={`relative overflow-hidden text-left bg-white rounded-2xl border border-gray-100 border-l-4 ${cor.borda} shadow-lg hover:shadow-xl transition p-3 sm:p-4 w-full`}
-    >
-      {/* Marca d'água: o próprio ícone do card, grande e bem apagado */}
-      <Icon
-        size={52}
-        className={`${cor.icone} opacity-10 absolute -right-2 -bottom-2 pointer-events-none`}
-        strokeWidth={1.5}
-      />
-
-      <div className="relative flex items-start gap-2 sm:gap-3">
-        <div className={`${cor.fundo} ${cor.icone} p-2 sm:p-3 rounded-xl shrink-0`}>
-          <Icon size={20} />
-        </div>
-        <div className="min-w-0">
-          <p className="text-xs sm:text-sm font-semibold text-gray-700 truncate">{label}</p>
-          <p className="text-2xl sm:text-3xl font-extrabold text-gray-900 leading-tight">{value}</p>
-          {rodape && <p className="text-xs text-gray-500 truncate">{rodape}</p>}
-        </div>
-      </div>
-    </button>
-  );
-
-  /** Botão colorido das ações rápidas. */
-  const AcaoRapida = ({ icon: Icon, label, cor, onClick }: any) => (
-    <button
-      onClick={onClick}
-      className={`relative overflow-hidden ${cor.fundo} ${cor.texto} rounded-2xl py-5 px-4 font-semibold flex flex-col items-center justify-center gap-2 shadow-lg hover:shadow-xl hover:brightness-95 transition`}
-    >
-      {/* Marca d'água: o próprio ícone do botão, bem apagado */}
-      <Icon
-        size={46}
-        className="opacity-10 absolute -right-2 -bottom-2 pointer-events-none"
-        strokeWidth={1.5}
-      />
-
-      <Icon size={24} className="relative" />
-      <span className="text-sm relative">{label}</span>
-    </button>
-  );
 
   const proximos = stats.proximosRepertorios;
 

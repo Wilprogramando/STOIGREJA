@@ -32,6 +32,32 @@ interface RepertoriosSalvosProps {
   onEdit?: (repertorio: Repertorio) => void;
 }
 
+/** Card branco padrão da tela. */
+const Painel: React.FC<{ children: React.ReactNode; className?: string }> = ({
+  children,
+  className = ''
+}) => (
+  <div className={`bg-white rounded-2xl border border-gray-100 shadow-lg ${className}`}>
+    {children}
+  </div>
+);
+
+/** Botão de ação do card: ícone em cima, nome embaixo. */
+const BotaoAcao = ({ icon: Icon, titulo, cor, onClick }: any) => (
+  <button
+    onClick={onClick}
+    title={titulo}
+    className="flex flex-col items-center gap-1.5 min-w-0 flex-1"
+  >
+    <span className={`p-2.5 rounded-xl transition ${cor}`}>
+      <Icon size={18} />
+    </span>
+    <span className="text-[10px] sm:text-xs font-medium text-gray-500 text-center leading-tight">
+      {titulo}
+    </span>
+  </button>
+);
+
 export const RepertoriosSalvos: React.FC<RepertoriosSalvosProps> = ({ configuracoes, onEdit }) => {
   const [repertorios, setRepertorios] = useState<Repertorio[]>([]);
   const [todosHinos, setTodosHinos] = useState<Hino[]>([]);
@@ -298,32 +324,6 @@ export const RepertoriosSalvos: React.FC<RepertoriosSalvosProps> = ({ configurac
       </div>
     );
   }
-
-  /** Card branco padrão da tela. */
-  const Painel: React.FC<{ children: React.ReactNode; className?: string }> = ({
-    children,
-    className = ''
-  }) => (
-    <div className={`bg-white rounded-2xl border border-gray-100 shadow-lg ${className}`}>
-      {children}
-    </div>
-  );
-
-  /** Botão de ação do card: ícone em cima, nome embaixo. */
-  const BotaoAcao = ({ icon: Icon, titulo, cor, onClick }: any) => (
-    <button
-      onClick={onClick}
-      title={titulo}
-      className="flex flex-col items-center gap-1.5 min-w-0 flex-1"
-    >
-      <span className={`p-2.5 rounded-xl transition ${cor}`}>
-        <Icon size={18} />
-      </span>
-      <span className="text-[10px] sm:text-xs font-medium text-gray-500 text-center leading-tight">
-        {titulo}
-      </span>
-    </button>
-  );
 
   return (
     <div className="max-w-6xl mx-auto pb-20">

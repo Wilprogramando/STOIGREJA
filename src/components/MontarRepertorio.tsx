@@ -25,6 +25,16 @@ interface MontarRepertorioProps {
   onSave?: () => void;
 }
 
+/** Card branco padrão da tela. */
+const Painel: React.FC<{ children: React.ReactNode; className?: string }> = ({
+  children,
+  className = ''
+}) => (
+  <div className={`bg-white rounded-2xl border border-gray-100 shadow-lg ${className}`}>
+    {children}
+  </div>
+);
+
 export const MontarRepertorio: React.FC<MontarRepertorioProps> = ({
   repertorioAtual,
   configuracoes,
@@ -335,16 +345,6 @@ export const MontarRepertorio: React.FC<MontarRepertorioProps> = ({
     const message = `*${formData.nome || 'Repertório'}*\n\nData: ${formData.data}\n${formData.horario ? `Horário: ${formData.horario}\n` : ''}\nHinos:\n${hinosNoRepertorio.map((h, i) => `${i + 1}. ${h.nome} (Tom: ${h.tom})`).join('\n')}`;
     shareViaWhatsApp(message);
   };
-
-  /** Card branco padrão da tela. */
-  const Painel: React.FC<{ children: React.ReactNode; className?: string }> = ({
-    children,
-    className = ''
-  }) => (
-    <div className={`bg-white rounded-2xl border border-gray-100 shadow-lg ${className}`}>
-      {children}
-    </div>
-  );
 
   const campo =
     'w-full px-4 py-2.5 border border-gray-200 rounded-xl bg-gray-50 focus:bg-white focus:outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100 transition';

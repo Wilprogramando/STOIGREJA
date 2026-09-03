@@ -44,6 +44,34 @@ interface HarpaProps {
 
 const TONS = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'];
 
+/** Card branco padrão da tela. */
+const Painel: React.FC<{ children: React.ReactNode; className?: string }> = ({
+  children,
+  className = ''
+}) => (
+  <div className={`bg-white rounded-2xl border border-gray-100 shadow-lg ${className}`}>
+    {children}
+  </div>
+);
+
+/** Botão redondo de ação do hino. */
+const BotaoAcao = ({ icon: Icon, titulo, cor, onClick }: any) => (
+  <button onClick={onClick} title={titulo} className={`p-2 rounded-xl transition ${cor}`}>
+    <Icon size={17} />
+  </button>
+);
+
+/** Botão das ações extras, com nome ao lado. */
+const AcaoExtra = ({ icon: Icon, texto, cor, onClick }: any) => (
+  <button
+    onClick={onClick}
+    className={`flex-1 px-3 py-2 rounded-xl transition text-xs font-semibold flex items-center justify-center gap-1.5 ${cor}`}
+  >
+    <Icon size={15} />
+    {texto}
+  </button>
+);
+
 export const Harpa: React.FC<HarpaProps> = ({ configuracoes }) => {
   const [hinos, setHinos] = useState<Hino[]>([]);
   const [showForm, setShowForm] = useState(false);
@@ -289,36 +317,8 @@ export const Harpa: React.FC<HarpaProps> = ({ configuracoes }) => {
   const hinosNaoFavoritos = hinosFiltrados.filter(h => !favoritos.has(h.id));
   const hinosOrdenados = [...hinosFavoritos, ...hinosNaoFavoritos];
 
-  /** Card branco padrão da tela. */
-  const Painel: React.FC<{ children: React.ReactNode; className?: string }> = ({
-    children,
-    className = ''
-  }) => (
-    <div className={`bg-white rounded-2xl border border-gray-100 shadow-lg ${className}`}>
-      {children}
-    </div>
-  );
-
   const campo =
     'w-full px-3.5 py-2.5 border border-gray-200 rounded-xl bg-gray-50 focus:bg-white focus:outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100 transition text-sm';
-
-  /** Botão redondo de ação do hino. */
-  const BotaoAcao = ({ icon: Icon, titulo, cor, onClick }: any) => (
-    <button onClick={onClick} title={titulo} className={`p-2 rounded-xl transition ${cor}`}>
-      <Icon size={17} />
-    </button>
-  );
-
-  /** Botão das ações extras, com nome ao lado. */
-  const AcaoExtra = ({ icon: Icon, texto, cor, onClick }: any) => (
-    <button
-      onClick={onClick}
-      className={`flex-1 px-3 py-2 rounded-xl transition text-xs font-semibold flex items-center justify-center gap-1.5 ${cor}`}
-    >
-      <Icon size={15} />
-      {texto}
-    </button>
-  );
 
   return (
     <div className="max-w-4xl mx-auto pb-20">
@@ -537,7 +537,7 @@ export const Harpa: React.FC<HarpaProps> = ({ configuracoes }) => {
             return (
               <Painel
                 key={hino.id}
-                className={`p-3 sm:p-4 border-l-4 ${
+                className={`p-3 sm:p-4 border-l-4 [content-visibility:auto] [contain-intrinsic-size:auto_96px] ${
                   favorito ? 'border-l-amber-400' : 'border-l-indigo-500'
                 }`}
               >
