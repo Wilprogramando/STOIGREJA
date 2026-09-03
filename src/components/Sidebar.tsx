@@ -1,4 +1,5 @@
 import React from 'react';
+import { menuVisivel } from '../services/menus';
 import {
   Home,
   Plus,
@@ -17,13 +18,16 @@ interface SidebarProps {
   onPageChange: (page: string) => void;
   isOpen: boolean;
   onClose: () => void;
+  /** Telas desligadas nas configurações. */
+  menusOcultos?: string[];
 }
 
 export const Sidebar: React.FC<SidebarProps> = ({
   currentPage,
   onPageChange,
   isOpen,
-  onClose
+  onClose,
+  menusOcultos
 }) => {
 
   const menuItems = [
@@ -41,6 +45,8 @@ export const Sidebar: React.FC<SidebarProps> = ({
     { id: 'anotacoes', label: 'Anotações', icon: StickyNote },
     { id: 'configuracoes', label: 'Configurações', icon: Settings },
   ];
+
+  const itensVisiveis = menuItems.filter(item => menuVisivel(item.id, menusOcultos));
 
   const handleItemClick = (id: string) => {
     onPageChange(id);
@@ -66,7 +72,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
       >
         {/* Só a lista de itens rola; o rodapé com o crédito fica sempre visível. */}
         <nav className="flex-1 overflow-y-auto p-4">
-          {menuItems.map((item) => {
+          {itensVisiveis.map((item) => {
             const Icon = item.icon;
             const isActive = currentPage === item.id;
 

@@ -1,8 +1,10 @@
 import React, { useState, useEffect } from 'react';
-import { Save, Download, Upload, Trash2, AlertCircle } from 'lucide-react';
+import { Save, Download, Upload, Trash2, AlertCircle, Eye, EyeOff, BarChart3 } from 'lucide-react';
 import { getConfiguracoes, saveConfiguracoes, exportData, importData, clearAllData } from '../services/db';
 import { Configuracoes } from '../types';
 import { LogoUploader } from './LogoUploader';
+import { MENUS, lerMenusOcultos, salvarMenusOcultos } from '../services/menus';
+import { lerAcessos, zerarAcessos, RegistroAcessos } from '../services/acessos';
 
 interface ConfiguracoesProps {
   onConfigChange?: () => void;
@@ -19,6 +21,8 @@ export const ConfiguracoesView: React.FC<ConfiguracoesProps> = ({ onConfigChange
   const [saved, setSaved] = useState(false);
   const [autenticado, setAutenticado] = useState(false);
   const [senhaInput, setSenhaInput] = useState('');
+  const [acessos, setAcessos] = useState<RegistroAcessos>(() => lerAcessos());
+  const [menusOcultos, setMenusOcultos] = useState<string[]>(() => lerMenusOcultos());
 
   useEffect(() => {
     loadConfiguracoes();
@@ -48,6 +52,23 @@ export const ConfiguracoesView: React.FC<ConfiguracoesProps> = ({ onConfigChange
       console.error('Erro ao salvar configurações:', error);
       alert('Erro ao salvar configurações');
     }
+  };
+
+  /** Liga ou desliga uma tela do menu, salvando na hora. */
+  const alternarMenu = (id: string) => {
+    const novos = menusOcultos.includes(id)
+      ? menusOcultos.filter(m => m !== id)
+      : [...menusOcultos, id];
+
+    setMenusOcultos(novos);
+    salvarMenusOcultos(novos);
+    onConfigChange?.();
+  };
+
+  const handleZerarAcessos = () => {
+    if (!confirm('Zerar a contagem de acessos deste aparelho?')) return;
+    zerarAcessos();
+    setAcessos(lerAcessos());
   };
 
   const handleExportar = async () => {
@@ -299,6 +320,132 @@ export const ConfiguracoesView: React.FC<ConfiguracoesProps> = ({ onConfigChange
           <div className="mt-4 p-3 bg-blue-50 border border-blue-200 rounded-lg text-sm text-blue-800">
             💡 A logo será exibida no topo dos PDFs gerados (hinos e repertórios).
           </div>
+        </div>
+
+        {/* Menus liberados */}
+        <div className="bg-white p-6 rounded-lg shadow-md">
+          <h3 className="text-xl font-bold text-gray-900 mb-1">Menus do Sistema</h3>
+          <p className="text-sm text-gray-500 mb-4">
+            Desligue o que a equipe não usa. A tela some do menu e dos atalhos, e os dados
+            continuam guardados.
+          </p>
+
+          <div className="space-y-2">
+            {MENUS.map(menu => {
+              const oculto = menusOcultos.includes(menu.id);
+              const ligado = menu.fixo || !oculto;
+
+              return (
+                <div
+                  key={menu.id}
+                  className={`flex items-center justify-between gap-3 p-3 rounded-lg border ${
+                    ligado ? 'border-gray-200 bg-white' : 'border-gray-200 bg-gray-50'
+                  }`}
+                >
+                  <div className="flex items-center gap-2 min-w-0">
+                    {ligado ? (
+                      <Eye size={18} className="text-indigo-600 shrink-0" />
+                    ) : (
+                      <EyeOff size={18} className="text-gray-400 shrink-0" />
+                    )}
+                    <div className="min-w-0">
+                      <p
+                        className={`font-medium truncate ${
+                          ligado ? 'text-gray-800' : 'text-gray-400'
+                        }`}
+                      >
+                        {menu.label}
+                      </p>
+                      {menu.fixo && (
+                        <p className="text-xs text-gray-400">Sempre disponível</p>
+                      )}
+                    </div>
+                  </div>
+
+                  <button
+                    onClick={() => alternarMenu(menu.id)}
+                    disabled={menu.fixo}
+                    className={`relative w-12 h-6 rounded-full transition shrink-0 disabled:opacity-40 disabled:cursor-not-allowed ${
+                      ligado ? 'bg-indigo-600' : 'bg-gray-300'
+                    }`}
+                    aria-label={`${ligado ? 'Desligar' : 'Ligar'} ${menu.label}`}
+                  >
+                    <span
+                      className={`absolute top-0.5 w-5 h-5 bg-white rounded-full shadow transition-all ${
+                        ligado ? 'left-6' : 'left-0.5'
+                      }`}
+                    />
+                  </button>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+
+        {/* Acessos */}
+        <div className="bg-white p-6 rounded-lg shadow-md">
+          <div className="flex items-center justify-between gap-3 mb-1">
+            <h3 className="text-xl font-bold text-gray-900 flex items-center gap-2">
+              <BarChart3 size={20} className="text-indigo-600" />
+              Acessos ao Sistema
+            </h3>
+            <button
+              onClick={handleZerarAcessos}
+              className="text-sm text-gray-500 hover:text-red-600 underline"
+            >
+              Zerar
+            </button>
+          </div>
+          <p className="text-sm text-gray-500 mb-4">
+            Contagem deste aparelho, desde{' '}
+            {new Date(acessos.desde).toLocaleDateString('pt-BR')}.
+          </p>
+
+          <div className="grid grid-cols-2 gap-3 mb-4">
+            <div className="p-3 rounded-lg bg-indigo-50 border border-indigo-100">
+              <p className="text-2xl font-extrabold text-indigo-700">{acessos.total}</p>
+              <p className="text-xs text-indigo-900">Telas abertas</p>
+            </div>
+            <div className="p-3 rounded-lg bg-green-50 border border-green-100">
+              <p className="text-2xl font-extrabold text-green-700">{acessos.dias.length}</p>
+              <p className="text-xs text-green-900">Dias de uso</p>
+            </div>
+          </div>
+
+          {acessos.total === 0 ? (
+            <p className="text-sm text-gray-500">Nenhum acesso registrado ainda.</p>
+          ) : (
+            <div className="space-y-1">
+              {MENUS.map(menu => ({ menu, vezes: acessos.porPagina[menu.id] || 0 }))
+                .sort((a, b) => b.vezes - a.vezes)
+                .map(({ menu, vezes }) => {
+                  const maior = Math.max(...Object.values(acessos.porPagina), 1);
+                  const ultimo = acessos.ultimoPorPagina[menu.id];
+
+                  return (
+                    <div key={menu.id} className="py-1.5">
+                      <div className="flex items-center justify-between text-sm">
+                        <span className="text-gray-700">{menu.label}</span>
+                        <span className="font-bold text-gray-900">{vezes}</span>
+                      </div>
+
+                      <div className="h-1.5 bg-gray-100 rounded-full mt-1 overflow-hidden">
+                        <div
+                          className="h-full bg-indigo-500 rounded-full"
+                          style={{ width: `${(vezes / maior) * 100}%` }}
+                        />
+                      </div>
+
+                      {ultimo && (
+                        <p className="text-[11px] text-gray-400 mt-0.5">
+                          Último acesso: {new Date(ultimo).toLocaleString('pt-BR')}
+                        </p>
+                      )}
+                    </div>
+                  );
+                })}
+            </div>
+          )}
         </div>
 
         {/* Backup */}

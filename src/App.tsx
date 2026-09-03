@@ -15,6 +15,8 @@ import { StatusConexao } from './components/StatusConexao';
 import { BarraInferior } from './components/BarraInferior';
 
 import { initializeHarpaBase, getConfiguracoes } from './services/db';
+import { registrarAcesso } from './services/acessos';
+import { menuVisivel, lerMenusOcultos } from './services/menus';
 import { Configuracoes, Repertorio } from './types';
 
 export default function App() {
@@ -22,10 +24,16 @@ export default function App() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [configuracoes, setConfiguracoes] = useState<Configuracoes | null>(null);
   const [repertorioEditar, setRepertorioEditar] = useState<Repertorio | null>(null);
+  const [menusOcultos, setMenusOcultos] = useState<string[]>(() => lerMenusOcultos());
 
   useEffect(() => {
     initializeApp();
   }, []);
+
+  // Contagem de acessos por tela, mostrada nas configurações.
+  useEffect(() => {
+    registrarAcesso(currentPage);
+  }, [currentPage]);
 
   // Botão "voltar" do celular/navegador: volta para a tela anterior do sistema
   // em vez de fechar o app.
@@ -95,6 +103,8 @@ export default function App() {
   };
 
   const handleConfigChange = async () => {
+    setMenusOcultos(lerMenusOcultos());
+
     const cfg = await getConfiguracoes();
 
     setConfiguracoes(
@@ -107,6 +117,11 @@ export default function App() {
   };
 
   const renderPage = () => {
+    // Tela desligada nas configurações: cai no Dashboard.
+    if (!menuVisivel(currentPage, menusOcultos)) {
+      return <Dashboard onPageChange={handlePageChange} />;
+    }
+
     switch (currentPage) {
       case 'dashboard':
         return <Dashboard onPageChange={handlePageChange} />;
@@ -166,6 +181,7 @@ export default function App() {
         onPageChange={handlePageChange}
         isOpen={sidebarOpen}
         onClose={() => setSidebarOpen(false)}
+        menusOcultos={menusOcultos}
       />
 
       <div className="flex-1 flex flex-col overflow-hidden">
@@ -182,7 +198,11 @@ export default function App() {
           {renderPage()}
         </main>
 
-        <BarraInferior currentPage={currentPage} onPageChange={handlePageChange} />
+        <BarraInferior
+          currentPage={currentPage}
+          onPageChange={handlePageChange}
+          menusOcultos={menusOcultos}
+        />
       </div>
     </div>
   );
