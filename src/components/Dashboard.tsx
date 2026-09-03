@@ -205,9 +205,16 @@ export const Dashboard: React.FC<DashboardProps> = ({ onPageChange }) => {
   const StatCard = ({ icon: Icon, label, value, rodape, cor, onClick }: any) => (
     <button
       onClick={onClick}
-      className={`text-left bg-white rounded-2xl border border-gray-100 border-l-4 ${cor.borda} shadow-lg hover:shadow-xl transition p-3 sm:p-4 w-full`}
+      className={`relative overflow-hidden text-left bg-white rounded-2xl border border-gray-100 border-l-4 ${cor.borda} shadow-lg hover:shadow-xl transition p-3 sm:p-4 w-full`}
     >
-      <div className="flex items-start gap-2 sm:gap-3">
+      {/* Marca d'água: o próprio ícone do card, grande e bem apagado */}
+      <Icon
+        size={110}
+        className={`${cor.icone} opacity-10 absolute -right-4 -bottom-4 pointer-events-none`}
+        strokeWidth={1.5}
+      />
+
+      <div className="relative flex items-start gap-2 sm:gap-3">
         <div className={`${cor.fundo} ${cor.icone} p-2 sm:p-3 rounded-xl shrink-0`}>
           <Icon size={20} />
         </div>
