@@ -6,10 +6,11 @@ import {
   FileText,
   Plus,
   BarChart3,
-  ChevronRight
+  ChevronRight,
+  TrendingUp
 } from 'lucide-react';
 import { getAllHinos, getAllRepertorios, getHinosByType } from '../services/db';
-import { Repertorio } from '../types';
+import { Repertorio, Hino } from '../types';
 
 interface DashboardProps {
   onPageChange: (page: string) => void;
@@ -69,11 +70,61 @@ const useFraseAnimada = () => {
 
 const MESES = ['JAN', 'FEV', 'MAR', 'ABR', 'MAI', 'JUN', 'JUL', 'AGO', 'SET', 'OUT', 'NOV', 'DEZ'];
 
+/** Quantos hinos aparecem no gráfico dos mais cantados. */
+const TOP_MAIS_CANTADOS = 8;
+
+/** Tira acentos para comparar textos sem depender da digitação. */
+const semAcento = (texto: string) =>
+  (texto || '').normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase();
+
+/** Hinos de saudação não entram na conta: são cantados quase sempre. */
+const ehSaudacao = (nome: string) => semAcento(nome).includes('saudacao');
+
+interface HinoContado {
+  nome: string;
+  total: number;
+}
+
+/**
+ * Conta quantas vezes cada hino comum entrou nos repertórios dos últimos 30 dias.
+ * Fora da conta: hinos da Harpa e os que têm "saudação" no nome.
+ */
+function contarMaisCantados(repertorios: Repertorio[], hinos: Hino[]): HinoContado[] {
+  const limite = new Date();
+  limite.setDate(limite.getDate() - 30);
+  limite.setHours(0, 0, 0, 0);
+
+  const porId = new Map(hinos.map(h => [h.id, h]));
+  const contagem = new Map<string, number>();
+
+  repertorios.forEach(rep => {
+    const [ano, mes, dia] = (rep.data || '').split('-').map(Number);
+    if (!ano || !mes || !dia) return;
+    const data = new Date(ano, mes - 1, dia);
+    if (data < limite || data.getTime() > Date.now()) return;
+
+    (rep.hinos || []).forEach((item: any) => {
+      const id = typeof item === 'string' ? item : item?.hinoId || item?.id;
+      const hino = id ? porId.get(id) : undefined;
+      if (!hino) return;
+      if (hino.tipo === 'harpa' || hino.numeroHarpa) return;
+      if (ehSaudacao(hino.nome)) return;
+      contagem.set(hino.nome, (contagem.get(hino.nome) || 0) + 1);
+    });
+  });
+
+  return Array.from(contagem.entries())
+    .map(([nome, total]) => ({ nome, total }))
+    .sort((a, b) => b.total - a.total || a.nome.localeCompare(b.nome, 'pt-BR'))
+    .slice(0, TOP_MAIS_CANTADOS);
+}
+
 export const Dashboard: React.FC<DashboardProps> = ({ onPageChange }) => {
   const [stats, setStats] = useState({
     totalHinos: 0,
     totalHarpa: 0,
     proximosRepertorios: [] as Repertorio[],
+    maisCantados: [] as HinoContado[],
   });
   const [loading, setLoading] = useState(true);
   const frase = useFraseAnimada();
@@ -125,6 +176,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ onPageChange }) => {
         totalHinos: hinos.filter(h => h.tipo === 'comum').length,
         totalHarpa: harpaHinos.length,
         proximosRepertorios: ativos,
+        maisCantados: contarMaisCantados(repertorios, hinos),
       });
     } catch (error) {
       console.error('Erro ao carregar stats:', error);
@@ -293,6 +345,57 @@ export const Dashboard: React.FC<DashboardProps> = ({ onPageChange }) => {
           cor={{ borda: 'border-l-purple-500', fundo: 'bg-purple-50', icone: 'text-purple-600' }}
           onClick={() => onPageChange('harpa')}
         />
+      </div>
+
+      {/* Mais cantados nos últimos 30 dias */}
+      <div className="bg-white rounded-2xl border border-gray-100 shadow-lg p-4 sm:p-6">
+        <div className="flex items-start gap-3 mb-1">
+          <div className="bg-indigo-50 text-indigo-600 p-2 rounded-xl shrink-0">
+            <TrendingUp size={20} />
+          </div>
+          <div className="min-w-0">
+            <h3 className="text-lg font-bold text-gray-900">Mais cantados</h3>
+            <p className="text-xs text-gray-500">
+              Últimos 30 dias • hinos comuns, sem os de saudação
+            </p>
+          </div>
+        </div>
+
+        {stats.maisCantados.length === 0 ? (
+          <p className="text-gray-500 text-sm text-center py-8">
+            Nenhum hino cantado nos últimos 30 dias.
+          </p>
+        ) : (
+          <div className="mt-5 space-y-4">
+            {stats.maisCantados.map((item, index) => {
+              const maior = stats.maisCantados[0].total || 1;
+              const largura = Math.max(6, Math.round((item.total / maior) * 100));
+
+              return (
+                <div key={item.nome} title={`${item.nome}: ${item.total} vez(es)`}>
+                  <div className="flex items-baseline justify-between gap-3 mb-1.5">
+                    <p className="text-sm font-medium text-gray-700 truncate">
+                      <span className="text-gray-400 tabular-nums mr-2">{index + 1}</span>
+                      {item.nome}
+                    </p>
+                    <p className="text-sm font-bold text-gray-900 tabular-nums shrink-0">
+                      {item.total}
+                    </p>
+                  </div>
+
+                  <div className="h-2.5 w-full bg-gray-100 rounded-full overflow-hidden">
+                    <div
+                      className={`h-full rounded-full transition-all duration-500 ${
+                        index === 0 ? 'bg-indigo-600' : 'bg-indigo-400'
+                      }`}
+                      style={{ width: `${largura}%` }}
+                    />
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        )}
       </div>
 
       {/* Ações rápidas */}
