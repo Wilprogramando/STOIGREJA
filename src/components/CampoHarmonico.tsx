@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { ChevronDown } from 'lucide-react';
 import { Braco, CORDAS_VIOLAO, CORDAS_BAIXO, notaDoAcorde } from './Braco';
 
 const CAMPOS = {
@@ -34,20 +35,64 @@ const PROGRESSOES = [
   { rotulo: 'I - vi - IV - V', graus: [0, 5, 3, 4] },
 ];
 
+/** Tópico que abre e fecha ao clicar no título. */
+const Topico: React.FC<{
+  id: string;
+  titulo: string;
+  resumo: string;
+  icone: string;
+  aberto: boolean;
+  onToggle: (id: string) => void;
+  className?: string;
+  children: React.ReactNode;
+}> = ({ id, titulo, resumo, icone, aberto, onToggle, className = '', children }) => (
+  <div
+    className={`bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden mb-3 ${className}`}
+  >
+    <button
+      onClick={() => onToggle(id)}
+      className="w-full p-4 flex items-center gap-3 text-left hover:bg-gray-50 transition"
+    >
+      <span className="shrink-0 w-10 h-10 rounded-xl bg-indigo-50 flex items-center justify-center text-lg">
+        {icone}
+      </span>
+
+      <span className="flex-1 min-w-0">
+        <span className="block font-bold text-gray-900">{titulo}</span>
+        <span className="block text-xs text-gray-500">{resumo}</span>
+      </span>
+
+      <ChevronDown
+        size={20}
+        className={`shrink-0 text-gray-400 transition-transform ${aberto ? 'rotate-180' : ''}`}
+      />
+    </button>
+
+    {aberto && <div className="border-t border-gray-100">{children}</div>}
+  </div>
+);
+
 export const CampoHarmonico = () => {
   const [tomSelecionado, setTomSelecionado] = useState<Tom>('C');
   const [instrumento, setInstrumento] = useState<'violao' | 'baixo'>('violao');
+  /** Tópicos abertos. O campo harmônico já começa aberto. */
+  const [abertos, setAbertos] = useState<string[]>(['campo']);
 
   const acordes = CAMPOS[tomSelecionado];
 
   // As 7 notas do tom, para pintar no braço do instrumento.
   const notasDoTom = acordes.map(notaDoAcorde);
 
+  const alternarTopico = (id: string) =>
+    setAbertos(atual => (atual.includes(id) ? atual.filter(t => t !== id) : [...atual, id]));
+
+  const estaAberto = (id: string) => abertos.includes(id);
+
   return (
     <div className="max-w-5xl mx-auto pb-4">
       <h2 className="text-2xl md:text-3xl font-bold text-gray-900 mb-4">💡 Dicas</h2>
 
-      {/* Escolha do tom: botões grandes, melhores que um select no celular. */}
+      {/* Escolha do tom: vale para todos os tópicos, por isso fica sempre visível. */}
       <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-4 mb-4">
         <p className="text-sm font-semibold text-gray-600 mb-3">Escolha o tom</p>
 
@@ -73,12 +118,14 @@ export const CampoHarmonico = () => {
       </div>
 
       {/* Acordes do tom escolhido */}
-      <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden mb-4">
-        <div className="bg-gradient-to-r from-indigo-600 to-purple-600 text-white px-4 py-3">
-          <h3 className="text-lg font-bold">Tom de {tomSelecionado}</h3>
-          <p className="text-xs text-indigo-100">Os 7 acordes que combinam neste tom</p>
-        </div>
-
+      <Topico
+        id="campo"
+        icone="🎹"
+        titulo={`Campo harmônico de ${tomSelecionado}`}
+        resumo="Os 7 acordes que combinam neste tom"
+        aberto={estaAberto('campo')}
+        onToggle={alternarTopico}
+      >
         <div className="grid grid-cols-4 sm:grid-cols-7 gap-1.5 p-3">
           {acordes.map((acorde, index) => (
             <div
@@ -87,7 +134,9 @@ export const CampoHarmonico = () => {
             >
               <p className="text-[10px] font-bold opacity-70">{GRAUS[index]}</p>
               <p className="text-lg font-extrabold leading-tight text-gray-900">{acorde}</p>
-              <p className="text-[9px] font-medium opacity-80 leading-tight">{FUNCOES[index].nome}</p>
+              <p className="text-[9px] font-medium opacity-80 leading-tight">
+                {FUNCOES[index].nome}
+              </p>
             </div>
           ))}
         </div>
@@ -103,14 +152,18 @@ export const CampoHarmonico = () => {
             <span className="w-2.5 h-2.5 rounded-full bg-amber-400" /> Dominante (tensão)
           </span>
         </div>
-      </div>
+      </Topico>
 
       {/* Progressões já com os acordes do tom escolhido */}
-      <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-4 mb-4">
-        <h3 className="font-bold text-gray-900 mb-1">🎵 Progressões mais usadas</h3>
-        <p className="text-xs text-gray-500 mb-3">Já no tom de {tomSelecionado}</p>
-
-        <div className="space-y-3">
+      <Topico
+        id="progressoes"
+        icone="🎵"
+        titulo="Progressões mais usadas"
+        resumo={`Já no tom de ${tomSelecionado}`}
+        aberto={estaAberto('progressoes')}
+        onToggle={alternarTopico}
+      >
+        <div className="space-y-3 p-4">
           {PROGRESSOES.map(prog => (
             <div key={prog.rotulo} className="rounded-xl bg-gray-50 border border-gray-100 p-3">
               <p className="text-xs font-semibold text-gray-500 mb-2">{prog.rotulo}</p>
@@ -128,45 +181,60 @@ export const CampoHarmonico = () => {
             </div>
           ))}
         </div>
-      </div>
+      </Topico>
 
       {/* Braço do instrumento */}
-      <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-4 mb-4">
-        <div className="flex items-center justify-between gap-3 mb-1 flex-wrap">
-          <h3 className="font-bold text-gray-900">🎸 Notas no braço</h3>
+      <Topico
+        id="braco"
+        icone="🎸"
+        titulo="Notas no braço"
+        resumo="Violão e baixo, com as notas do tom em destaque"
+        aberto={estaAberto('braco')}
+        onToggle={alternarTopico}
+      >
+        <div className="p-4">
+          <div className="flex items-center justify-between gap-3 mb-3 flex-wrap">
+            <p className="text-xs text-gray-500 flex-1 min-w-[200px]">
+              Em destaque, as notas que combinam com o tom de {tomSelecionado}. Arraste para o lado
+              para ver o braço inteiro.
+            </p>
 
-          <div className="flex gap-1 bg-gray-100 rounded-lg p-1">
-            {([
-              ['violao', 'Violão'],
-              ['baixo', 'Baixo'],
-            ] as const).map(([id, rotulo]) => (
-              <button
-                key={id}
-                onClick={() => setInstrumento(id)}
-                className={`px-3 py-1.5 rounded-md text-sm font-semibold transition ${
-                  instrumento === id ? 'bg-white text-indigo-700 shadow-sm' : 'text-gray-600'
-                }`}
-              >
-                {rotulo}
-              </button>
-            ))}
+            <div className="flex gap-1 bg-gray-100 rounded-lg p-1">
+              {([
+                ['violao', 'Violão'],
+                ['baixo', 'Baixo'],
+              ] as const).map(([id, rotulo]) => (
+                <button
+                  key={id}
+                  onClick={() => setInstrumento(id)}
+                  className={`px-3 py-1.5 rounded-md text-sm font-semibold transition ${
+                    instrumento === id ? 'bg-white text-indigo-700 shadow-sm' : 'text-gray-600'
+                  }`}
+                >
+                  {rotulo}
+                </button>
+              ))}
+            </div>
           </div>
+
+          <Braco
+            cordas={instrumento === 'violao' ? CORDAS_VIOLAO : CORDAS_BAIXO}
+            notasDoTom={notasDoTom}
+            tonica={notaDoAcorde(acordes[0])}
+          />
         </div>
-
-        <p className="text-xs text-gray-500 mb-3">
-          Em destaque, as notas que combinam com o tom de {tomSelecionado}. Arraste para o lado para
-          ver o braço inteiro.
-        </p>
-
-        <Braco
-          cordas={instrumento === 'violao' ? CORDAS_VIOLAO : CORDAS_BAIXO}
-          notasDoTom={notasDoTom}
-          tonica={notaDoAcorde(acordes[0])}
-        />
-      </div>
+      </Topico>
 
       {/* Tabela completa: só faz sentido em tela grande. */}
-      <div className="hidden lg:block bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+      <Topico
+        id="tabela"
+        icone="📋"
+        titulo="Tabela de todos os tons"
+        resumo="Clique em uma linha para trocar o tom"
+        aberto={estaAberto('tabela')}
+        onToggle={alternarTopico}
+        className="hidden lg:block"
+      >
         <table className="w-full">
           <thead className="bg-gray-50 text-gray-600 text-sm">
             <tr>
@@ -199,7 +267,7 @@ export const CampoHarmonico = () => {
             ))}
           </tbody>
         </table>
-      </div>
+      </Topico>
     </div>
   );
 };
