@@ -15,6 +15,58 @@ interface DashboardProps {
   onPageChange: (page: string) => void;
 }
 
+const FRASES = [
+  "O Senhor é o meu pastor, nada me faltará. (Sl 23:1)",
+  "Tudo posso naquele que me fortalece. (Fp 4:13)",
+  "Cantai ao Senhor um cântico novo. (Sl 96:1)",
+  "O choro pode durar uma noite, mas a alegria vem pela manhã. (Sl 30:5)",
+  "Entrega o teu caminho ao Senhor. (Sl 37:5)",
+  "Louvai ao Senhor, porque ele é bom. (Sl 136:1)",
+  "A alegria do Senhor é a vossa força. (Ne 8:10)",
+  "Deus é o nosso refúgio e fortaleza. (Sl 46:1)",
+  "Este é o dia que o Senhor fez. (Sl 118:24)",
+  "Servi ao Senhor com alegria. (Sl 100:2)",
+  "Eu e a minha casa serviremos ao Senhor. (Js 24:15)",
+  "Tudo o que tem fôlego louve ao Senhor. (Sl 150:6)",
+  "As misericórdias do Senhor se renovam a cada manhã. (Lm 3:23)",
+  "Buscai primeiro o Reino de Deus. (Mt 6:33)",
+  "Lâmpada para os meus pés é a tua palavra. (Sl 119:105)",
+];
+
+/**
+ * Escreve e apaga as frases uma a uma, em ciclo (efeito máquina de escrever).
+ */
+const useFraseAnimada = () => {
+  const [indice, setIndice] = useState(0);
+  const [texto, setTexto] = useState("");
+  const [apagando, setApagando] = useState(false);
+
+  useEffect(() => {
+    const frase = FRASES[indice % FRASES.length];
+
+    // Pausa com a frase inteira na tela antes de começar a apagar.
+    if (!apagando && texto === frase) {
+      const espera = setTimeout(() => setApagando(true), 2500);
+      return () => clearTimeout(espera);
+    }
+
+    // Terminou de apagar: passa para a próxima frase.
+    if (apagando && texto === "") {
+      setApagando(false);
+      setIndice(i => (i + 1) % FRASES.length);
+      return;
+    }
+
+    const passo = setTimeout(
+      () => setTexto(apagando ? frase.slice(0, texto.length - 1) : frase.slice(0, texto.length + 1)),
+      apagando ? 25 : 45
+    );
+    return () => clearTimeout(passo);
+  }, [texto, apagando, indice]);
+
+  return texto;
+};
+
 const MESES = ['JAN', 'FEV', 'MAR', 'ABR', 'MAI', 'JUN', 'JUL', 'AGO', 'SET', 'OUT', 'NOV', 'DEZ'];
 
 export const Dashboard: React.FC<DashboardProps> = ({ onPageChange }) => {
@@ -24,6 +76,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ onPageChange }) => {
     proximosRepertorios: [] as Repertorio[],
   });
   const [loading, setLoading] = useState(true);
+  const frase = useFraseAnimada();
 
   useEffect(() => {
     loadStats();
@@ -123,7 +176,10 @@ export const Dashboard: React.FC<DashboardProps> = ({ onPageChange }) => {
       {/* Saudação */}
       <div>
         <h2 className="text-2xl md:text-3xl font-bold text-gray-900">{saudacao()}! 🙌</h2>
-        <p className="text-gray-500 mt-1">Que Deus abençoe o seu ministério.</p>
+        <p className="text-gray-500 mt-1 min-h-[1.5rem] text-sm md:text-base">
+          {frase}
+          <span className="inline-block w-[2px] h-4 align-middle ml-0.5 bg-indigo-500 animate-pulse" />
+        </p>
       </div>
 
       {/* Próximos Repertórios */}
