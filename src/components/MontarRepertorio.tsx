@@ -115,7 +115,17 @@ export const MontarRepertorio: React.FC<MontarRepertorioProps> = ({
       }
       // Se nenhum tipo selecionado, mostrar todos
       return h.nome.toLowerCase().includes(hinoFiltrado.toLowerCase()) || h.numeroHarpa?.toString().includes(hinoFiltrado);
+    })
+    // Harpa em ordem de numero; os comuns em ordem alfabetica.
+    .sort((a, b) => {
+      if (a.numeroHarpa && b.numeroHarpa) return a.numeroHarpa - b.numeroHarpa;
+      return a.nome.localeCompare(b.nome, 'pt-BR');
     });
+
+  /** Ids dos hinos que ja estao no repertorio, para marcar na lista. */
+  const idsJaAdicionados = new Set(
+    hinosNoRepertorio.map(h => (h.hinoId && !h.hinoId.startsWith('hino-') ? h.hinoId : h.id))
+  );
 
   const handleAddHino = (hino: Hino) => {
     const novaOrdem = Math.max(...hinosNoRepertorio.map(h => h.ordem), 0) + 1;
@@ -143,9 +153,8 @@ export const MontarRepertorio: React.FC<MontarRepertorioProps> = ({
     // Reordenar números após sort
     novaLista.forEach((h, idx) => h.ordem = idx + 1);
     setHinosNoRepertorio(novaLista);
+    // Mantem o painel aberto para adicionar varios hinos seguidos.
     setHinoFiltrado('');
-    setShowSelectHino(false);
-    setTipoSelecionado(null);
   };
 
   const handleRemoveHino = (id: string) => {
@@ -435,29 +444,47 @@ export const MontarRepertorio: React.FC<MontarRepertorioProps> = ({
                   autoFocus
                 />
 
-                {hinoFiltrado && (
-                  <div className="space-y-2 max-h-64 overflow-y-auto">
-                    {hinosFiltrados.length === 0 ? (
-                      <p className="text-gray-500 text-sm">Nenhum hino encontrado</p>
-                    ) : (
-                      hinosFiltrados.map(h => (
+                <p className="text-xs text-gray-500 mb-2">
+                  {hinosFiltrados.length} hino(s) — toque para adicionar
+                </p>
+
+                {/* A lista fica sempre visivel: da para escolher sem digitar nada. */}
+                <div className="space-y-2 max-h-80 overflow-y-auto pr-1">
+                  {hinosFiltrados.length === 0 ? (
+                    <p className="text-gray-500 text-sm py-3">Nenhum hino encontrado</p>
+                  ) : (
+                    hinosFiltrados.map(h => {
+                      const jaAdicionado = idsJaAdicionados.has(h.id);
+
+                      return (
                         <button
                           key={h.id}
                           onClick={() => handleAddHino(h)}
-                          className="w-full text-left p-3 bg-white border border-gray-200 rounded-lg hover:bg-gray-50 transition"
+                          className={`w-full text-left p-3 border rounded-lg transition ${
+                            jaAdicionado
+                              ? 'bg-indigo-50 border-indigo-200'
+                              : 'bg-white border-gray-200 hover:bg-gray-50'
+                          }`}
                         >
-                          <div className="font-medium text-gray-900">
-                            {h.numeroHarpa && `Harpa nº ${h.numeroHarpa} - `}
-                            {h.nome}
+                          <div className="flex items-center justify-between gap-2">
+                            <div className="font-medium text-gray-900">
+                              {h.numeroHarpa && `Harpa nº ${h.numeroHarpa} - `}
+                              {h.nome}
+                            </div>
+                            {jaAdicionado && (
+                              <span className="shrink-0 text-[10px] font-bold text-indigo-700 bg-indigo-100 px-2 py-0.5 rounded-full">
+                                JÁ ADICIONADO
+                              </span>
+                            )}
                           </div>
                           <div className="text-sm text-gray-600">
-                            Tom: {h.tom} | Cantor: {h.cantor}
+                            Tom: {h.tom}{h.cantor && ` | Cantor: ${h.cantor}`}
                           </div>
                         </button>
-                      ))
-                    )}
-                  </div>
-                )}
+                      );
+                    })
+                  )}
+                </div>
               </div>
             )}
 
