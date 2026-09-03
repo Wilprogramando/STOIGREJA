@@ -395,7 +395,7 @@ export const CadastrarHino: React.FC<CadastrarHinoProps> = ({ configuracoes }) =
             const aberto = acoesAbertas === hino.id;
 
             return (
-              <Painel key={hino.id} className="p-3 sm:p-4">
+              <Painel key={hino.id} className="p-3 sm:p-4 border-l-4 border-l-indigo-500">
                 <div className="flex items-center gap-3">
                   <div className="shrink-0 w-14 h-14 sm:w-16 sm:h-16 rounded-2xl bg-indigo-50 text-indigo-600 flex items-center justify-center">
                     <Music2 size={26} />
