@@ -1,5 +1,20 @@
 import React, { useState, useEffect } from 'react';
-import { Plus, Edit, Trash2, Eye, Download, Share2, Upload, Star } from 'lucide-react';
+import {
+  Plus,
+  Trash2,
+  Eye,
+  Download,
+  Share2,
+  Upload,
+  Star,
+  BookOpen,
+  Pencil,
+  Copy,
+  MoreHorizontal,
+  Search,
+  Check,
+  X
+} from 'lucide-react';
 import {
   getHinosByType,
   addHino,
@@ -43,6 +58,8 @@ export const Harpa: React.FC<HarpaProps> = ({ configuracoes }) => {
   const [deletePasswordModal, setDeletePasswordModal] = useState<Hino | null>(null);
   const [favoritos, setFavoritos] = useState<Set<string>>(new Set());
   const [usuarioId, setUsuarioId] = useState<string>(USUARIO_ANONIMO_ID);
+  /** Hino com as ações extras abertas (PDF, compartilhar, duplicar). */
+  const [acoesAbertas, setAcoesAbertas] = useState<string | null>(null);
 
   const [cantores, setCantores] = useState<string[]>(() => lerCantores());
   const [formData, setFormData] = useState({
@@ -275,93 +292,143 @@ export const Harpa: React.FC<HarpaProps> = ({ configuracoes }) => {
   const hinosNaoFavoritos = hinosFiltrados.filter(h => !favoritos.has(h.id));
   const hinosOrdenados = [...hinosFavoritos, ...hinosNaoFavoritos];
 
+  /** Card branco padrão da tela. */
+  const Painel: React.FC<{ children: React.ReactNode; className?: string }> = ({
+    children,
+    className = ''
+  }) => (
+    <div className={`bg-white rounded-2xl border border-gray-100 shadow-lg ${className}`}>
+      {children}
+    </div>
+  );
+
+  const campo =
+    'w-full px-3.5 py-2.5 border border-gray-200 rounded-xl bg-gray-50 focus:bg-white focus:outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100 transition text-sm';
+
+  /** Botão redondo de ação do hino. */
+  const BotaoAcao = ({ icon: Icon, titulo, cor, onClick }: any) => (
+    <button onClick={onClick} title={titulo} className={`p-2 rounded-xl transition ${cor}`}>
+      <Icon size={17} />
+    </button>
+  );
+
+  /** Botão das ações extras, com nome ao lado. */
+  const AcaoExtra = ({ icon: Icon, texto, cor, onClick }: any) => (
+    <button
+      onClick={onClick}
+      className={`flex-1 px-3 py-2 rounded-xl transition text-xs font-semibold flex items-center justify-center gap-1.5 ${cor}`}
+    >
+      <Icon size={15} />
+      {texto}
+    </button>
+  );
+
   return (
-    <div className="max-w-6xl mx-auto">
-      <div className="flex items-center justify-between mb-8">
-        <h2 className="text-3xl font-bold text-gray-900">Hinos da Harpa Cristã</h2>
-        <div className="flex gap-2">
-          <button
-            onClick={() => setShowCSVModal(true)}
-            className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition flex items-center gap-2"
-          >
-            <Upload size={20} />
-            Importar CSV
-          </button>
-          {!showForm && (
-            <button
-              onClick={() => {
-                setEditando(null);
-                setFormData({
-                  numeroHarpa: '',
-                  nome: '',
-                  tom: 'C',
-                  cantor: '',
-                  letra: '',
-                  observacoes: ''
-                });
-                setSearchNumber('');
-                setSearchResult(null);
-                setShowForm(true);
-              }}
-              className="px-6 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition flex items-center gap-2"
-            >
-              <Plus size={20} />
-              Novo Hino
-            </button>
-          )}
+    <div className="max-w-4xl mx-auto pb-20">
+      {/* Cabeçalho */}
+      <div className="flex items-center gap-3 mb-5">
+        <div className="bg-indigo-50 text-indigo-600 p-2.5 rounded-xl shrink-0">
+          <BookOpen size={22} />
+        </div>
+        <div className="min-w-0 flex-1">
+          <h2 className="text-xl sm:text-2xl font-bold text-gray-900 whitespace-nowrap">
+            Harpa Cristã
+          </h2>
+          <p className="text-sm text-gray-500">{hinos.length} hino(s) cadastrado(s)</p>
         </div>
       </div>
 
+      {/* Botões do topo */}
+      <div className="grid grid-cols-2 gap-3 mb-5">
+        <button
+          onClick={() => setShowCSVModal(true)}
+          className="px-4 py-3 bg-white border border-gray-200 text-gray-700 rounded-2xl hover:bg-gray-50 transition font-semibold text-sm flex items-center justify-center gap-2 shadow-sm"
+        >
+          <Upload size={18} />
+          Importar CSV
+        </button>
+
+        {!showForm && (
+          <button
+            onClick={() => {
+              setEditando(null);
+              setFormData({
+                numeroHarpa: '',
+                nome: '',
+                tom: 'C',
+                cantor: '',
+                letra: '',
+                observacoes: ''
+              });
+              setSearchNumber('');
+              setSearchResult(null);
+              setShowForm(true);
+            }}
+            className="px-4 py-3 bg-indigo-600 text-white rounded-2xl hover:bg-indigo-700 transition font-semibold text-sm flex items-center justify-center gap-2 shadow-lg"
+          >
+            <Plus size={18} />
+            Novo Hino
+          </button>
+        )}
+      </div>
+
+      {/* Formulário */}
       {showForm && (
-        <div className="bg-white p-6 rounded-lg shadow-md mb-8">
-          <h3 className="text-xl font-bold text-gray-900 mb-6">
+        <Painel className="p-4 sm:p-6 mb-5">
+          <h3 className="text-lg font-bold text-gray-900 mb-4">
             {editando ? 'Editar Hino da Harpa' : 'Cadastrar Hino da Harpa'}
           </h3>
 
-          <form onSubmit={handleSubmit} className="space-y-4">
-            <div className="grid grid-cols-1 lg:grid-cols-12 gap-2 lg:gap-2">
-              <div className="lg:col-span-2">
-                <label className="block text-sm font-medium text-gray-700 mb-1">📖 Número da Harpa *</label>
-                <div className="flex gap-1">
+          <form onSubmit={handleSubmit} className="space-y-3">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1.5">
+                  Número da Harpa *
+                </label>
+                <div className="flex gap-2">
                   <input
                     type="number"
                     value={formData.numeroHarpa}
                     onChange={(e) => setFormData({ ...formData, numeroHarpa: e.target.value })}
                     onBlur={(e) => handleBuscarPorNumero(e.target.value)}
-                    className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-indigo-600 text-sm"
+                    className={campo}
                     placeholder="Ex: 100"
                   />
                   <button
                     type="button"
                     onClick={() => handleBuscarPorNumero(formData.numeroHarpa)}
-                    className="px-3 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition text-sm font-medium"
+                    className="shrink-0 px-3 py-2 bg-indigo-50 text-indigo-700 rounded-xl hover:bg-indigo-100 transition text-sm font-semibold"
                   >
                     Buscar
                   </button>
                 </div>
                 {searchResult && (
-                  <p className="text-green-600 text-xs mt-1">✓ {searchResult.nome}</p>
+                  <p className="text-green-600 text-xs mt-1.5">✓ {searchResult.nome}</p>
                 )}
               </div>
 
-              <div className="lg:col-span-4">
-                <label className="block text-sm font-medium text-gray-700 mb-1">📝 Nome do Hino *</label>
+              <div className="sm:col-span-2">
+                <label className="block text-sm font-medium text-gray-700 mb-1.5">
+                  Nome do Hino *
+                </label>
                 <input
                   type="text"
                   value={formData.nome}
                   onChange={(e) => setFormData({ ...formData, nome: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-indigo-600 text-sm"
+                  className={campo}
                   placeholder="Nome do hino"
                   required
                 />
               </div>
+            </div>
 
-              <div className="lg:col-span-2">
-                <label className="block text-sm font-medium text-gray-700 mb-1">🎼 Tom</label>
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1.5">Tom</label>
                 <select
                   value={formData.tom}
                   onChange={(e) => setFormData({ ...formData, tom: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-indigo-600 text-sm"
+                  className={campo}
                 >
                   {TONS.map(tom => (
                     <option key={tom} value={tom}>{tom}</option>
@@ -369,13 +436,13 @@ export const Harpa: React.FC<HarpaProps> = ({ configuracoes }) => {
                 </select>
               </div>
 
-              <div className="lg:col-span-4">
-                <label className="block text-sm font-medium text-gray-700 mb-1">👤 Cantor</label>
+              <div className="sm:col-span-2">
+                <label className="block text-sm font-medium text-gray-700 mb-1.5">Cantor</label>
                 {/* Cantores vêm do gerenciador em Configurações */}
                 <select
                   value={formData.cantor}
                   onChange={(e) => setFormData({ ...formData, cantor: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-indigo-600 text-sm"
+                  className={campo}
                 >
                   <option value="">Selecione o cantor</option>
                   {formData.cantor && !cantores.includes(formData.cantor) && (
@@ -389,33 +456,34 @@ export const Harpa: React.FC<HarpaProps> = ({ configuracoes }) => {
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Letra do Hino</label>
+              <label className="block text-sm font-medium text-gray-700 mb-1.5">Letra do Hino</label>
               <textarea
                 value={formData.letra}
                 onChange={(e) => setFormData({ ...formData, letra: e.target.value })}
                 rows={8}
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-indigo-600"
+                className={campo}
                 placeholder="Letra do hino (opcional)"
               />
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Observações</label>
+              <label className="block text-sm font-medium text-gray-700 mb-1.5">Observações</label>
               <textarea
                 value={formData.observacoes}
                 onChange={(e) => setFormData({ ...formData, observacoes: e.target.value })}
                 rows={3}
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-indigo-600"
+                className={campo}
                 placeholder="Observações opcionais"
               />
             </div>
 
-            <div className="flex gap-4 pt-4">
+            <div className="grid grid-cols-2 gap-3 pt-2">
               <button
                 type="submit"
-                className="px-6 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition"
+                className="px-4 py-3 bg-indigo-600 text-white rounded-xl hover:bg-indigo-700 transition font-semibold text-sm flex items-center justify-center gap-2 shadow-md"
               >
-                {editando ? 'Atualizar Hino' : 'Salvar Hino'}
+                <Check size={18} />
+                {editando ? 'Atualizar' : 'Salvar'}
               </button>
               <button
                 type="button"
@@ -423,204 +491,170 @@ export const Harpa: React.FC<HarpaProps> = ({ configuracoes }) => {
                   setShowForm(false);
                   setEditando(null);
                 }}
-                className="px-6 py-2 bg-gray-400 text-white rounded-lg hover:bg-gray-500 transition"
+                className="px-4 py-3 bg-gray-100 text-gray-700 rounded-xl hover:bg-gray-200 transition font-semibold text-sm flex items-center justify-center gap-2"
               >
+                <X size={18} />
                 Cancelar
               </button>
             </div>
           </form>
-        </div>
+        </Painel>
       )}
 
-      <div className="bg-white p-4 rounded-lg shadow-md mb-6">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Pesquisar por número</label>
+      {/* Filtros */}
+      <Painel className="p-3 sm:p-4 mb-5">
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+          <div className="relative">
+            <span className="absolute left-2 top-1/2 -translate-y-1/2 w-8 h-8 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center pointer-events-none text-xs font-bold">
+              nº
+            </span>
             <input
               type="number"
-              placeholder="Digite o número..."
+              placeholder="Número..."
               value={filtros.numero}
               onChange={(e) => setFiltros({ ...filtros, numero: e.target.value })}
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-indigo-600"
+              className={`${campo} pl-12`}
             />
           </div>
 
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Pesquisar por nome</label>
+          <div className="relative sm:col-span-2">
+            <Search
+              size={18}
+              className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none"
+            />
             <input
               type="text"
-              placeholder="Digite o nome do hino..."
+              placeholder="Pesquisar pelo nome do hino..."
               value={filtros.nome}
               onChange={(e) => setFiltros({ ...filtros, nome: e.target.value })}
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-indigo-600"
+              className={`${campo} pl-10`}
             />
           </div>
         </div>
-      </div>
+      </Painel>
 
-      <div className="space-y-2">
+      {/* Lista de hinos */}
+      <div className="space-y-3">
         {hinosOrdenados.length === 0 ? (
-          <div className="text-center py-12 bg-white rounded-lg">
-            <p className="text-gray-500 text-lg">Nenhum hino da Harpa cadastrado</p>
-          </div>
+          <Painel className="text-center py-12">
+            <BookOpen className="mx-auto text-gray-300 mb-3" size={40} />
+            <p className="text-gray-500">Nenhum hino da Harpa encontrado</p>
+          </Painel>
         ) : (
-          hinosOrdenados.map(hino => (
-            <div 
-              key={hino.id} 
-              className={`bg-white p-3 rounded-lg shadow-sm border-l-4 ${
-                favoritos.has(hino.id) ? 'border-yellow-400 bg-yellow-50' : 'border-indigo-600'
-              }`}
-            >
-              <div className="flex items-start justify-between gap-3">
-                <div className="flex-1">
-                  <h3 className="text-lg font-bold text-gray-900 mb-2 md:mb-0">
-                    Harpa nº {hino.numeroHarpa !== undefined ? hino.numeroHarpa : '?'} - {hino.nome}
-                  </h3>
-                  
-                  <div className="md:flex md:items-center md:gap-4">
-                    <div className="text-sm text-gray-600 mt-2 md:mt-0">
-                      <p>🎵 <span className="font-medium">{hino.tom}</span> • 👤 <span className="font-medium">{hino.cantor}</span></p>
+          hinosOrdenados.map(hino => {
+            const favorito = favoritos.has(hino.id);
+            const aberto = acoesAbertas === hino.id;
+
+            return (
+              <Painel
+                key={hino.id}
+                className={`p-3 sm:p-4 border-l-4 ${
+                  favorito ? 'border-l-amber-400' : 'border-l-indigo-500'
+                }`}
+              >
+                <div className="flex items-center gap-3">
+                  {/* Número da Harpa */}
+                  <div
+                    className={`shrink-0 w-14 h-14 sm:w-16 sm:h-16 rounded-2xl flex flex-col items-center justify-center leading-none ${
+                      favorito ? 'bg-amber-50 text-amber-700' : 'bg-indigo-50 text-indigo-700'
+                    }`}
+                  >
+                    <span className="text-[10px] font-semibold opacity-70">Harpa</span>
+                    <span className="text-lg sm:text-xl font-extrabold tabular-nums">
+                      {hino.numeroHarpa !== undefined ? hino.numeroHarpa : '?'}
+                    </span>
+                  </div>
+
+                  <div className="flex-1 min-w-0">
+                    <h3 className="font-bold text-gray-900 break-words text-base sm:text-lg leading-tight">
+                      {hino.nome}
+                    </h3>
+
+                    <div className="flex items-end justify-between gap-3 mt-1.5">
+                      <div className="min-w-0">
+                        <div className="flex flex-wrap items-center gap-1.5">
+                          <span className="text-[11px] font-bold px-2.5 py-0.5 rounded-full bg-indigo-50 text-indigo-700">
+                            {hino.tom}
+                          </span>
+                          {hino.cantor && (
+                            <span className="text-[11px] font-semibold px-2.5 py-0.5 rounded-full bg-indigo-50 text-gray-700">
+                              {hino.cantor}
+                            </span>
+                          )}
+                        </div>
+                      </div>
+
+                      {/* Ações principais */}
+                      <div className="shrink-0 flex gap-1">
+                        <button
+                          onClick={() => toggleFavorito(hino.id)}
+                          title={favorito ? 'Remover dos favoritos' : 'Adicionar aos favoritos'}
+                          className="p-2 rounded-xl hover:bg-gray-100 transition"
+                        >
+                          <Star
+                            size={17}
+                            className={favorito ? 'fill-amber-400 text-amber-400' : 'text-gray-400'}
+                          />
+                        </button>
+                        <BotaoAcao
+                          icon={Eye}
+                          titulo="Ver letra"
+                          cor="bg-blue-50 text-blue-600 hover:bg-blue-100"
+                          onClick={() => setModalLetra(hino)}
+                        />
+                        <BotaoAcao
+                          icon={Pencil}
+                          titulo="Editar"
+                          cor="bg-indigo-50 text-indigo-600 hover:bg-indigo-100"
+                          onClick={() => handleEditar(hino)}
+                        />
+                        <BotaoAcao
+                          icon={Trash2}
+                          titulo="Excluir"
+                          cor="bg-red-50 text-red-600 hover:bg-red-100"
+                          onClick={() => handleDeletar(hino)}
+                        />
+                        <BotaoAcao
+                          icon={MoreHorizontal}
+                          titulo="Mais opções"
+                          cor={
+                            aberto
+                              ? 'bg-gray-700 text-white'
+                              : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                          }
+                          onClick={() => setAcoesAbertas(aberto ? null : hino.id)}
+                        />
+                      </div>
                     </div>
                   </div>
                 </div>
 
-                <div className="md:hidden">
-                  <button
-                    onClick={() => toggleFavorito(hino.id)}
-                    className="p-2 rounded hover:bg-gray-100 transition"
-                    title={favoritos.has(hino.id) ? "Remover de favoritos" : "Adicionar aos favoritos"}
-                  >
-                    {favoritos.has(hino.id) ? (
-                      <Star size={20} className="fill-yellow-400 text-yellow-400" />
-                    ) : (
-                      <Star size={20} className="text-gray-400" />
-                    )}
-                  </button>
-                </div>
-              </div>
-              
-              <div className="md:hidden flex gap-1 mt-3">
-                <button
-                  onClick={() => setModalLetra(hino)}
-                  className="p-1.5 bg-blue-100 text-blue-600 rounded hover:bg-blue-200 transition flex justify-center flex-1"
-                  title="Ver letra"
-                >
-                  👁️
-                </button>
-                <button
-                  onClick={() => handleEditar(hino)}
-                  className="p-1.5 bg-yellow-100 text-yellow-600 rounded hover:bg-yellow-200 transition flex justify-center flex-1"
-                  title="Editar"
-                >
-                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                  </svg>
-                </button>
-                <button
-                  onClick={() => handleGerarPdf(hino)}
-                  className="p-1.5 bg-orange-100 text-orange-600 rounded hover:bg-orange-200 transition flex justify-center flex-1"
-                  title="Baixar PDF"
-                >
-                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
-                  </svg>
-                </button>
-                <button
-                  onClick={() => handleCompartilharWhatsApp(hino)}
-                  className="p-1.5 bg-green-100 text-green-600 rounded hover:bg-green-200 transition flex justify-center flex-1"
-                  title="Compartilhar"
-                >
-                  <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
-                    <path d="M17.5 2c1.933 0 3.5 1.567 3.5 3.5v4.5h-2V5.5c0-.827-.673-1.5-1.5-1.5h-11c-.827 0-1.5.673-1.5 1.5v11c0 .827.673 1.5 1.5 1.5h4.5v2h-4.5c-1.933 0-3.5-1.567-3.5-3.5v-11c0-1.933 1.567-3.5 3.5-3.5h11zm0 8l-6 6v-4h-6v-4h6v-4l6 6z" />
-                  </svg>
-                </button>
-                <button
-                  onClick={() => handleDuplicar(hino)}
-                  className="p-1.5 bg-purple-100 text-purple-600 rounded hover:bg-purple-200 transition flex justify-center flex-1"
-                  title="Duplicar"
-                >
-                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
-                  </svg>
-                </button>
-                <button
-                  onClick={() => handleDeletar(hino)}
-                  className="p-1.5 bg-red-100 text-red-600 rounded hover:bg-red-200 transition flex justify-center flex-1"
-                  title="Deletar"
-                >
-                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                  </svg>
-                </button>
-              </div>
-              
-              <div className="hidden md:flex md:gap-2 md:mt-3">
-                <button
-                  onClick={() => toggleFavorito(hino.id)}
-                  className="p-2 bg-gray-50 rounded hover:bg-gray-100 transition"
-                  title={favoritos.has(hino.id) ? "Remover de favoritos" : "Adicionar aos favoritos"}
-                >
-                  {favoritos.has(hino.id) ? (
-                    <Star size={20} className="fill-yellow-400 text-yellow-400" />
-                  ) : (
-                    <Star size={20} className="text-gray-400" />
-                  )}
-                </button>
-                <button
-                  onClick={() => setModalLetra(hino)}
-                  className="p-2 bg-blue-50 text-blue-600 rounded hover:bg-blue-100 transition flex justify-center items-center"
-                  title="Ver letra"
-                >
-                  👁️
-                </button>
-                <button
-                  onClick={() => handleEditar(hino)}
-                  className="p-2 bg-yellow-50 text-yellow-600 rounded hover:bg-yellow-100 transition flex justify-center items-center"
-                  title="Editar"
-                >
-                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                  </svg>
-                </button>
-                <button
-                  onClick={() => handleGerarPdf(hino)}
-                  className="p-2 bg-orange-50 text-orange-600 rounded hover:bg-orange-100 transition flex justify-center items-center"
-                  title="Baixar PDF"
-                >
-                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
-                  </svg>
-                </button>
-                <button
-                  onClick={() => handleCompartilharWhatsApp(hino)}
-                  className="p-2 bg-green-50 text-green-600 rounded hover:bg-green-100 transition flex justify-center items-center"
-                  title="Compartilhar"
-                >
-                  <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
-                    <path d="M17.5 2c1.933 0 3.5 1.567 3.5 3.5v4.5h-2V5.5c0-.827-.673-1.5-1.5-1.5h-11c-.827 0-1.5.673-1.5 1.5v11c0 .827.673 1.5 1.5 1.5h4.5v2h-4.5c-1.933 0-3.5-1.567-3.5-3.5v-11c0-1.933 1.567-3.5 3.5-3.5h11zm0 8l-6 6v-4h-6v-4h6v-4l6 6z" />
-                  </svg>
-                </button>
-                <button
-                  onClick={() => handleDuplicar(hino)}
-                  className="p-2 bg-purple-50 text-purple-600 rounded hover:bg-purple-100 transition flex justify-center items-center"
-                  title="Duplicar"
-                >
-                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
-                  </svg>
-                </button>
-                <button
-                  onClick={() => handleDeletar(hino)}
-                  className="p-2 bg-red-50 text-red-600 rounded hover:bg-red-100 transition flex justify-center items-center"
-                  title="Deletar"
-                >
-                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                  </svg>
-                </button>
-              </div>
-            </div>
-          ))
+                {/* Ações extras */}
+                {aberto && (
+                  <div className="mt-3 pt-3 border-t border-gray-100 flex gap-2">
+                    <AcaoExtra
+                      icon={Download}
+                      texto="PDF"
+                      cor="bg-orange-50 text-orange-700 hover:bg-orange-100"
+                      onClick={() => handleGerarPdf(hino)}
+                    />
+                    <AcaoExtra
+                      icon={Share2}
+                      texto="Compartilhar"
+                      cor="bg-green-50 text-green-700 hover:bg-green-100"
+                      onClick={() => handleCompartilharWhatsApp(hino)}
+                    />
+                    <AcaoExtra
+                      icon={Copy}
+                      texto="Duplicar"
+                      cor="bg-purple-50 text-purple-700 hover:bg-purple-100"
+                      onClick={() => handleDuplicar(hino)}
+                    />
+                  </div>
+                )}
+              </Painel>
+            );
+          })
         )}
       </div>
 
