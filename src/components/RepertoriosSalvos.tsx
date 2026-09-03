@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Eye, Edit, Trash2, Download, Share2, Copy, Calendar, Music } from 'lucide-react';
+import { Eye, Edit, Trash2, Download, Share2, Copy, Calendar, Music, Minus, Plus, ChevronLeft, ChevronRight } from 'lucide-react';
 import { getAllRepertorios, deleteRepertorio, addRepertorio, getAllHinos } from '../services/db';
 import { generateRepertorioPdf, shareViaWhatsApp } from '../services/pdf';
 import { Repertorio, Configuracoes, Hino } from '../types';
@@ -16,7 +16,48 @@ export const RepertoriosSalvos: React.FC<RepertoriosSalvosProps> = ({ configurac
   const [loading, setLoading] = useState(true);
   const [modalAberto, setModalAberto] = useState<Repertorio | null>(null);
   const [hinoSelecionado, setHinoSelecionado] = useState<any>(null);
+  const [listaLetra, setListaLetra] = useState<Hino[]>([]);
+  const [indiceLetra, setIndiceLetra] = useState(0);
+  const [tamanhoLetra, setTamanhoLetra] = useState<number>(() => {
+    const salvo = Number(localStorage.getItem('tamanhoLetra'));
+    return salvo >= 12 && salvo <= 40 ? salvo : 18;
+  });
   const [mostrarPassados, setMostrarPassados] = useState(false);
+
+  useEffect(() => {
+    localStorage.setItem('tamanhoLetra', String(tamanhoLetra));
+  }, [tamanhoLetra]);
+
+  // Abre a letra guardando a lista do repertório, para navegar entre os hinos
+  const abrirLetra = (lista: Hino[], idx: number) => {
+    setListaLetra(lista);
+    setIndiceLetra(idx);
+    setHinoSelecionado(lista[idx]);
+  };
+
+  const irParaLetra = (idx: number) => {
+    if (idx < 0 || idx >= listaLetra.length) return;
+    setIndiceLetra(idx);
+    setHinoSelecionado(listaLetra[idx]);
+  };
+
+  const fecharLetra = () => {
+    setHinoSelecionado(null);
+    setListaLetra([]);
+    setIndiceLetra(0);
+  };
+
+  // Mostra "Hoje" no lugar da data quando o repertório é do dia atual
+  const ehHoje = (data?: string) => {
+    if (!data) return false;
+    const hoje = new Date();
+    const mm = String(hoje.getMonth() + 1).padStart(2, '0');
+    const dd = String(hoje.getDate()).padStart(2, '0');
+    return data === hoje.getFullYear() + '-' + mm + '-' + dd;
+  };
+
+  const formatarData = (data?: string) =>
+    data ? data.split('-').reverse().join('/') : 'Data não definida';
 
   useEffect(() => {
     loadRepertorios();
@@ -301,7 +342,13 @@ export const RepertoriosSalvos: React.FC<RepertoriosSalvosProps> = ({ configurac
                   <div className="flex flex-wrap gap-4 text-gray-600 text-sm md:text-base">
                     <span className="flex items-center gap-1">
                       <Calendar size={16} />
-                      {repertorio.data ? repertorio.data.split('-').reverse().join('/') : 'Data não definida'}
+                      {ehHoje(repertorio.data) ? (
+                        <span className="px-2 py-0.5 bg-green-100 text-green-700 rounded-full font-bold">
+                          Hoje
+                        </span>
+                      ) : (
+                        formatarData(repertorio.data)
+                      )}
                     </span>
                     <span className="flex items-center gap-1">
                       <Music size={16} />
@@ -405,7 +452,7 @@ export const RepertoriosSalvos: React.FC<RepertoriosSalvosProps> = ({ configurac
                             <td className="px-4 py-2 text-center">
                               {hino?.letra && (
                                 <button
-                                  onClick={() => setHinoSelecionado(hino)}
+                                  onClick={() => abrirLetra(getHinosCompletos(repertorio.hinos).filter(h => h !== null && h !== undefined), idx)}
                                   title="Ver letra"
                                   className="px-3 py-1 bg-blue-100 text-blue-600 rounded hover:bg-blue-200 transition text-sm font-medium"
                                 >
@@ -449,7 +496,7 @@ export const RepertoriosSalvos: React.FC<RepertoriosSalvosProps> = ({ configurac
                             </div>
                             {hino?.letra && (
                               <button
-                                onClick={() => setHinoSelecionado(hino)}
+                                onClick={() => abrirLetra(getHinosCompletos(repertorio.hinos).filter(h => h !== null && h !== undefined), idx)}
                                 className="ml-auto px-3 py-1 bg-blue-600 text-white rounded hover:bg-blue-700 transition text-xs font-medium whitespace-nowrap"
                               >
                                 Letra
@@ -474,7 +521,7 @@ export const RepertoriosSalvos: React.FC<RepertoriosSalvosProps> = ({ configurac
               <div>
                 <h2 className="text-2xl font-bold">{modalAberto.nome}</h2>
                 <p className="text-indigo-100 mt-1">
-                  {modalAberto.data ? modalAberto.data.split('-').reverse().join('/') : 'Data não definida'} • {getHinosCompletos(modalAberto.hinos).length} hino(s)
+                  {ehHoje(modalAberto.data) ? 'Hoje' : formatarData(modalAberto.data)} • {getHinosCompletos(modalAberto.hinos).length} hino(s)
                 </p>
               </div>
               <button
@@ -567,9 +614,14 @@ export const RepertoriosSalvos: React.FC<RepertoriosSalvosProps> = ({ configurac
                 <p className="text-blue-100 mt-1">
                   Tom: {hinoSelecionado?.tom || '?'} | Cantor: {hinoSelecionado?.cantor || '?'}
                 </p>
+                {listaLetra.length > 1 && (
+                  <p className="text-blue-200 text-sm mt-1">
+                    Hino {indiceLetra + 1} de {listaLetra.length}
+                  </p>
+                )}
               </div>
               <button
-                onClick={() => setHinoSelecionado(null)}
+                onClick={fecharLetra}
                 className="p-2 hover:bg-white hover:bg-opacity-20 rounded-lg transition text-2xl"
               >
                 ✕
@@ -577,8 +629,34 @@ export const RepertoriosSalvos: React.FC<RepertoriosSalvosProps> = ({ configurac
             </div>
 
             <div className="p-6">
+              {/* Controle de tamanho da letra */}
+              <div className="flex items-center justify-center gap-3 mb-4">
+                <button
+                  onClick={() => setTamanhoLetra(t => Math.max(12, t - 2))}
+                  title="Diminuir letra"
+                  className="p-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition disabled:opacity-40"
+                  disabled={tamanhoLetra <= 12}
+                >
+                  <Minus size={20} />
+                </button>
+                <span className="text-sm font-medium text-gray-600 select-none">
+                  Tamanho da letra
+                </span>
+                <button
+                  onClick={() => setTamanhoLetra(t => Math.min(40, t + 2))}
+                  title="Aumentar letra"
+                  className="p-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition disabled:opacity-40"
+                  disabled={tamanhoLetra >= 40}
+                >
+                  <Plus size={20} />
+                </button>
+              </div>
+
               <div className="bg-gray-50 p-6 rounded-lg">
-                <pre className="whitespace-pre-wrap font-sans text-gray-800 leading-relaxed text-lg">
+                <pre
+                  className="whitespace-pre-wrap font-sans text-gray-800 leading-relaxed"
+                  style={{ fontSize: tamanhoLetra + 'px' }}
+                >
                   {hinoSelecionado?.letra || 'Letra não disponível'}
                 </pre>
               </div>
@@ -592,9 +670,28 @@ export const RepertoriosSalvos: React.FC<RepertoriosSalvosProps> = ({ configurac
                 </div>
               )}
 
-              <div className="mt-6 flex gap-2">
+              {listaLetra.length > 1 && (
+                <div className="mt-6 flex gap-2">
+                  <button
+                    onClick={() => irParaLetra(indiceLetra - 1)}
+                    disabled={indiceLetra === 0}
+                    className="flex-1 px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition flex items-center justify-center gap-1 disabled:opacity-40 disabled:cursor-not-allowed"
+                  >
+                    <ChevronLeft size={18} /> Anterior
+                  </button>
+                  <button
+                    onClick={() => irParaLetra(indiceLetra + 1)}
+                    disabled={indiceLetra >= listaLetra.length - 1}
+                    className="flex-1 px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition flex items-center justify-center gap-1 disabled:opacity-40 disabled:cursor-not-allowed"
+                  >
+                    Próxima <ChevronRight size={18} />
+                  </button>
+                </div>
+              )}
+
+              <div className="mt-3 flex gap-2">
                 <button
-                  onClick={() => setHinoSelecionado(null)}
+                  onClick={fecharLetra}
                   className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition"
                 >
                   Fechar
