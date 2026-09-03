@@ -56,8 +56,8 @@ const Painel: React.FC<{ children: React.ReactNode; className?: string }> = ({
 
 /** Botão redondo de ação do hino. */
 const BotaoAcao = ({ icon: Icon, titulo, cor, onClick }: any) => (
-  <button onClick={onClick} title={titulo} className={`p-2 rounded-xl transition ${cor}`}>
-    <Icon size={17} />
+  <button onClick={onClick} title={titulo} className={`p-1.5 rounded-lg transition ${cor}`}>
+    <Icon size={15} />
   </button>
 );
 
@@ -561,12 +561,12 @@ export const Harpa: React.FC<HarpaProps> = ({ configuracoes }) => {
 
                     <div className="flex items-end justify-between gap-3 mt-1.5">
                       <div className="min-w-0">
-                        <div className="flex flex-wrap items-center gap-1.5">
-                          <span className="text-[11px] font-bold px-2.5 py-0.5 rounded-full bg-indigo-50 text-indigo-700">
+                        <div className="flex items-center gap-1.5 min-w-0">
+                          <span className="shrink-0 text-[11px] font-bold px-2.5 py-0.5 rounded-full bg-indigo-50 text-indigo-700">
                             {hino.tom}
                           </span>
                           {hino.cantor && (
-                            <span className="text-[11px] font-semibold px-2.5 py-0.5 rounded-full bg-indigo-50 text-gray-700">
+                            <span className="text-[11px] font-semibold px-2.5 py-0.5 rounded-full bg-indigo-50 text-gray-700 truncate">
                               {hino.cantor}
                             </span>
                           )}
@@ -578,10 +578,10 @@ export const Harpa: React.FC<HarpaProps> = ({ configuracoes }) => {
                         <button
                           onClick={() => toggleFavorito(hino.id)}
                           title={favorito ? 'Remover dos favoritos' : 'Adicionar aos favoritos'}
-                          className="p-2 rounded-xl hover:bg-gray-100 transition"
+                          className="p-1.5 rounded-lg hover:bg-gray-100 transition"
                         >
                           <Star
-                            size={17}
+                            size={15}
                             className={favorito ? 'fill-amber-400 text-amber-400' : 'text-gray-400'}
                           />
                         </button>

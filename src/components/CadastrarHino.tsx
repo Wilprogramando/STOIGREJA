@@ -48,9 +48,9 @@ const BotaoAcao = ({ icon: Icon, titulo, cor, onClick }: any) => (
   <button
     onClick={onClick}
     title={titulo}
-    className={`p-2 rounded-xl transition ${cor}`}
+    className={`p-1.5 rounded-lg transition ${cor}`}
   >
-    <Icon size={17} />
+    <Icon size={15} />
   </button>
 );
 
@@ -457,11 +457,11 @@ export const CadastrarHino: React.FC<CadastrarHinoProps> = ({
 
                     <div className="flex items-end justify-between gap-3 mt-1.5">
                       <div className="min-w-0">
-                        <div className="flex flex-wrap items-center gap-1.5">
-                          <span className="text-[11px] font-bold px-2.5 py-0.5 rounded-full bg-indigo-50 text-indigo-700">
+                        <div className="flex items-center gap-1.5 min-w-0">
+                          <span className="shrink-0 text-[11px] font-bold px-2.5 py-0.5 rounded-full bg-indigo-50 text-indigo-700">
                             {hino.tom}
                           </span>
-                          <span className="text-[11px] font-semibold px-2.5 py-0.5 rounded-full bg-indigo-50 text-gray-700">
+                          <span className="text-[11px] font-semibold px-2.5 py-0.5 rounded-full bg-indigo-50 text-gray-700 truncate">
                             {hino.cantor}
                           </span>
                         </div>
