@@ -95,6 +95,15 @@ export const Dashboard: React.FC<DashboardProps> = ({ onPageChange }) => {
     return new Date(inicio.getTime() + 24 * 60 * 60 * 1000);
   };
 
+  // Mostra "Hoje" no lugar da data quando o repertório é do dia atual
+  const ehHoje = (data?: string) => {
+    if (!data) return false;
+    const hoje = new Date();
+    const mm = String(hoje.getMonth() + 1).padStart(2, '0');
+    const dd = String(hoje.getDate()).padStart(2, '0');
+    return data === hoje.getFullYear() + '-' + mm + '-' + dd;
+  };
+
   const loadStats = async () => {
     try {
       const hinos = await getAllHinos();
@@ -201,6 +210,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ onPageChange }) => {
           <div className="space-y-3">
             {proximos.map((rep, index) => {
               const [, mes, dia] = (rep.data || '').split('-');
+              const hoje = ehHoje(rep.data);
 
               return (
                 <button
@@ -208,8 +218,12 @@ export const Dashboard: React.FC<DashboardProps> = ({ onPageChange }) => {
                   onClick={() => onPageChange('repertorios')}
                   className="w-full text-left bg-white rounded-2xl border border-gray-100 shadow-sm hover:shadow-md transition p-4 flex items-center gap-4"
                 >
-                  <div className="w-16 shrink-0 rounded-xl border border-gray-200 py-2 text-center">
-                    <p className="text-2xl font-extrabold text-indigo-600 leading-none">
+                  <div className={`w-16 shrink-0 rounded-xl border py-2 text-center ${
+                    hoje ? 'border-green-300 bg-green-50' : 'border-gray-200'
+                  }`}>
+                    <p className={`text-2xl font-extrabold leading-none ${
+                      hoje ? 'text-green-600' : 'text-indigo-600'
+                    }`}>
                       {dia || '--'}
                     </p>
                     <p className="text-xs font-bold text-gray-500 mt-1">
@@ -220,14 +234,22 @@ export const Dashboard: React.FC<DashboardProps> = ({ onPageChange }) => {
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2">
                       <h4 className="font-bold text-gray-900 truncate">{rep.nome}</h4>
-                      {index === 0 && (
+                      {hoje ? (
+                        <span className="shrink-0 text-[10px] font-bold text-green-700 bg-green-100 px-2 py-0.5 rounded-full">
+                          HOJE
+                        </span>
+                      ) : index === 0 ? (
                         <span className="shrink-0 text-[10px] font-bold text-indigo-700 bg-indigo-100 px-2 py-0.5 rounded-full">
                           PRÓXIMO
                         </span>
-                      )}
+                      ) : null}
                     </div>
                     <p className="text-sm text-gray-600 mt-1">
-                      📅 {rep.data ? rep.data.split('-').reverse().join('/') : 'Data não definida'}
+                      📅 {hoje
+                        ? 'Hoje'
+                        : rep.data
+                          ? rep.data.split('-').reverse().join('/')
+                          : 'Data não definida'}
                       {rep.horario && ` às ${rep.horario}`}
                     </p>
                     <p className="text-sm text-gray-500">🎵 {rep.hinos.length} hino(s)</p>
