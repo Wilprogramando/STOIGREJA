@@ -5,8 +5,8 @@
  * Depois disso, se a internet cair na igreja, a página continua abrindo normalmente.
  */
 
-const CACHE = 'repertorio-igreja-v1';
-const ESSENCIAIS = ['/', '/index.html', '/manifest.webmanifest'];
+const CACHE = 'repertorio-igreja-v2';
+const ESSENCIAIS = ['/', '/index.html', '/manifest.webmanifest', '/favicon.svg'];
 
 self.addEventListener('install', event => {
   event.waitUntil(
