@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { BarChart3, TrendingUp, BookOpen } from 'lucide-react';
+import { BarChart3, TrendingUp, BookOpen, Music2, Calendar, Table2, ChevronDown } from 'lucide-react';
 import { getAllRepertorios, getAllHinos } from '../services/db';
 import { Hino } from '../types';
 
@@ -32,12 +32,17 @@ function ehDaHarpa(hino: Hino) {
   return hino.tipo === 'harpa' || (hino.numeroHarpa !== undefined && hino.numeroHarpa !== null);
 }
 
+/** Medalha dos três primeiros; do quarto em diante, só o número. */
+const MEDALHAS = ['🥇', '🥈', '🥉'];
+
 export const Relatorios: React.FC = () => {
   const [hinosUsage, setHinosUsage] = useState<HinoUsage[]>([]);
   const [loading, setLoading] = useState(true);
   const [topHinos, setTopHinos] = useState<HinoUsage[]>([]);
   const [topHarpa, setTopHarpa] = useState<HinoUsage[]>([]);
   const [error, setError] = useState<string | null>(null);
+  const [aba, setAba] = useState<'comuns' | 'harpa'>('comuns');
+  const [mostrarTabela, setMostrarTabela] = useState(false);
 
   useEffect(() => {
     loadRelatorio();
@@ -48,57 +53,37 @@ export const Relatorios: React.FC = () => {
       setLoading(true);
       setError(null);
 
-      console.log('Carregando repertórios...');
       const repertorios = await getAllRepertorios();
-      console.log('Repertórios carregados:', repertorios.length);
-
-      console.log('Carregando hinos...');
       const todosHinos = await getAllHinos();
-      console.log('Hinos carregados:', todosHinos.length);
 
-      // Contar uso de cada hino
+      // Conta quantas vezes cada hino apareceu nos repertórios.
       const usageMap = new Map<string, { hino: Hino; count: number; ultimoUso: string }>();
 
       repertorios.forEach((rep: any) => {
-        console.log('Processando repertório:', rep.nome, 'Hinos:', rep.hinos?.length || 0);
-        
-        if (rep.hinos && Array.isArray(rep.hinos)) {
-          rep.hinos.forEach((hinoRef: any) => {
-            // Tentar pegar o ID do hino (pode ser string ou objeto)
-            const hinoId = typeof hinoRef === 'string' ? hinoRef : hinoRef?.id;
-            
-            if (!hinoId) {
-              console.warn('Hino sem ID:', hinoRef);
-              return;
-            }
+        if (!rep.hinos || !Array.isArray(rep.hinos)) return;
 
-            const hino = todosHinos.find(h => h.id === hinoId);
-            
-            if (hino) {
-              const dataUso = rep.data || new Date().toISOString();
-              const current = usageMap.get(hinoId);
-              
-              if (current) {
-                current.count += 1;
-                // Atualizar para data mais recente
-                if (new Date(dataUso) > new Date(current.ultimoUso)) {
-                  current.ultimoUso = dataUso;
-                }
-              } else {
-                usageMap.set(hinoId, {
-                  hino,
-                  count: 1,
-                  ultimoUso: dataUso
-                });
-              }
-            } else {
-              console.warn('Hino não encontrado:', hinoId);
+        rep.hinos.forEach((hinoRef: any) => {
+          // O repertório guarda o hino como ID (novos) ou como objeto (antigos).
+          const hinoId =
+            typeof hinoRef === 'string' ? hinoRef : hinoRef?.hinoId || hinoRef?.id;
+          if (!hinoId) return;
+
+          const hino = todosHinos.find(h => h.id === hinoId);
+          if (!hino) return;
+
+          const dataUso = rep.data || new Date().toISOString();
+          const atual = usageMap.get(hinoId);
+
+          if (atual) {
+            atual.count += 1;
+            if (new Date(dataUso) > new Date(atual.ultimoUso)) {
+              atual.ultimoUso = dataUso;
             }
-          });
-        }
+          } else {
+            usageMap.set(hinoId, { hino, count: 1, ultimoUso: dataUso });
+          }
+        });
       });
-
-      console.log('Hinos únicos usados:', usageMap.size);
 
       // Hinos de saudação ficam de fora de todos os relatórios.
       const usados = Array.from(usageMap.values()).filter(item => !ehSaudacao(item.hino));
@@ -114,28 +99,18 @@ export const Relatorios: React.FC = () => {
         ultimoUso: item.ultimoUso
       });
 
-      const porUso = (a: HinoUsage, b: HinoUsage) => b.usageCount - a.usageCount;
+      const porUso = (a: HinoUsage, b: HinoUsage) =>
+        b.usageCount - a.usageCount || a.nome.localeCompare(b.nome, 'pt-BR');
 
-      // Ranking dos hinos comuns (sem saudação e sem a Harpa)
-      const comuns = usados
-        .filter(item => !ehDaHarpa(item.hino))
-        .map(paraUsage)
-        .sort(porUso);
-
-      // Ranking só dos hinos da Harpa Cristã
-      const harpa = usados
-        .filter(item => ehDaHarpa(item.hino))
-        .map(paraUsage)
-        .sort(porUso);
-
-      console.log('Relatório processado:', comuns.length, 'hinos comuns |', harpa.length, 'da Harpa');
+      const comuns = usados.filter(item => !ehDaHarpa(item.hino)).map(paraUsage).sort(porUso);
+      const harpa = usados.filter(item => ehDaHarpa(item.hino)).map(paraUsage).sort(porUso);
 
       setHinosUsage(comuns);
       setTopHinos(comuns.slice(0, 10));
       setTopHarpa(harpa.slice(0, 10));
-    } catch (error) {
-      console.error('Erro ao carregar relatório:', error);
-      setError('Erro ao carregar relatório. Verifique o console para mais detalhes.');
+    } catch (erro) {
+      console.error('Erro ao carregar relatório:', erro);
+      setError('Não foi possível carregar o relatório. Tente novamente.');
     } finally {
       setLoading(false);
     }
@@ -144,56 +119,93 @@ export const Relatorios: React.FC = () => {
   const formatarData = (data: string) => {
     if (!data) return 'N/A';
     try {
-      const date = new Date(data);
-      return date.toLocaleDateString('pt-BR');
+      return new Date(data).toLocaleDateString('pt-BR');
     } catch {
       return 'N/A';
     }
   };
 
-  const getColorByRank = (index: number) => {
-    if (index === 0) return 'border-t-4 border-yellow-400 bg-yellow-50';
-    if (index === 1) return 'border-t-4 border-gray-400 bg-gray-50';
-    if (index === 2) return 'border-t-4 border-orange-400 bg-orange-50';
-    return 'border-t-4 border-blue-400 bg-blue-50';
+  /** Card branco padrão da tela. */
+  const Painel: React.FC<{ children: React.ReactNode; className?: string }> = ({
+    children,
+    className = ''
+  }) => (
+    <div className={`bg-white rounded-2xl border border-gray-100 shadow-lg ${className}`}>
+      {children}
+    </div>
+  );
+
+  /** Número em destaque, no mesmo estilo dos cards do Dashboard. */
+  const Resumo = ({ icon: Icon, label, valor }: any) => (
+    <Painel className="relative overflow-hidden p-4">
+      <Icon
+        size={52}
+        strokeWidth={1.5}
+        className="text-indigo-600 opacity-10 absolute -right-2 -bottom-2 pointer-events-none"
+      />
+      <div className="relative">
+        <p className="text-xs sm:text-sm font-semibold text-gray-700">{label}</p>
+        <p className="text-2xl sm:text-3xl font-extrabold text-gray-900 leading-tight">{valor}</p>
+      </div>
+    </Painel>
+  );
+
+  /** Uma linha do ranking: posição, nome, barra e total de usos. */
+  const LinhaRanking = ({
+    hino,
+    index,
+    maior
+  }: {
+    hino: HinoUsage;
+    index: number;
+    maior: number;
+  }) => {
+    const largura = Math.max(8, Math.round((hino.usageCount / (maior || 1)) * 100));
+
+    return (
+      <div className="bg-indigo-50/60 rounded-2xl p-3 flex items-center gap-3">
+        <span className="shrink-0 w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-indigo-100 text-indigo-700 font-extrabold flex items-center justify-center tabular-nums text-base">
+          {MEDALHAS[index] || index + 1}
+        </span>
+
+        <div className="flex-1 min-w-0">
+          <p className="text-sm sm:text-base font-bold text-gray-900 truncate">
+            {hino.numeroHarpa ? `${hino.numeroHarpa} - ` : ''}
+            {hino.nome}
+          </p>
+
+          <p className="text-xs text-gray-500 truncate mt-0.5">
+            {hino.tom} • {hino.cantor} • último uso {formatarData(hino.ultimoUso)}
+          </p>
+
+          <div className="mt-1.5 h-1.5 w-full bg-indigo-100 rounded-full overflow-hidden">
+            <div
+              className="h-full rounded-full bg-gradient-to-r from-indigo-500 to-violet-600 transition-all duration-500"
+              style={{ width: `${largura}%` }}
+            />
+          </div>
+        </div>
+
+        <div className="shrink-0 text-right">
+          <p className="text-lg sm:text-xl font-extrabold text-gray-900 tabular-nums leading-none">
+            {hino.usageCount}
+          </p>
+          <p className="text-[11px] text-gray-500">usos</p>
+        </div>
+      </div>
+    );
   };
 
-  const CardRanking = ({ hino, index }: { hino: HinoUsage; index: number }) => (
-    <div className={`p-4 rounded-lg shadow-sm ${getColorByRank(index)}`}>
-      <div className="flex items-start justify-between mb-2">
-        <div className="flex items-center gap-3">
-          <div className="text-3xl font-bold text-gray-600 w-12 text-center">
-            {index === 0 && '🥇'}
-            {index === 1 && '🥈'}
-            {index === 2 && '🥉'}
-            {index > 2 && `#${index + 1}`}
-          </div>
-          <div>
-            <h3 className="text-base font-bold text-gray-900">
-              {hino.numeroHarpa ? `${hino.numeroHarpa} - ` : ''}
-              {hino.nome}
-            </h3>
-            <p className="text-xs text-gray-600">
-              🎵 {hino.tom} • 👤 {hino.cantor}
-            </p>
-          </div>
-        </div>
-        <div className="text-right">
-          <p className="text-2xl font-bold text-indigo-600">{hino.usageCount}x</p>
-          <p className="text-xs text-gray-500">usos</p>
-        </div>
-      </div>
-
-      <div className="flex items-center justify-between text-xs text-gray-600 pt-2 border-t border-gray-200">
-        <span>📂 {hino.categoria}</span>
-        <span>📅 Último uso: {formatarData(hino.ultimoUso)}</span>
-      </div>
+  const Vazio = ({ texto }: { texto: string }) => (
+    <div className="text-center py-12">
+      <Music2 className="mx-auto text-gray-300 mb-3" size={40} />
+      <p className="text-gray-500">{texto}</p>
     </div>
   );
 
   if (loading) {
     return (
-      <div className="p-4 text-center">
+      <div className="max-w-4xl mx-auto py-12 text-center">
         <p className="text-gray-500">Carregando relatório...</p>
       </div>
     );
@@ -201,124 +213,148 @@ export const Relatorios: React.FC = () => {
 
   if (error) {
     return (
-      <div className="p-4 bg-red-50 border border-red-200 rounded-lg text-red-700">
-        <p>{error}</p>
-        <button
-          onClick={() => loadRelatorio()}
-          className="mt-2 px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700"
-        >
-          Tentar Novamente
-        </button>
+      <div className="max-w-4xl mx-auto">
+        <Painel className="p-6 text-center">
+          <p className="text-red-600 mb-4">{error}</p>
+          <button
+            onClick={loadRelatorio}
+            className="px-5 py-2.5 bg-indigo-600 text-white rounded-xl hover:bg-indigo-700 transition font-semibold"
+          >
+            Tentar novamente
+          </button>
+        </Painel>
       </div>
     );
   }
 
+  const lista = aba === 'comuns' ? topHinos : topHarpa;
+  const maior = lista[0]?.usageCount || 1;
+
   return (
-    <div className="p-4 pb-20">
-      {/* Header */}
-      <div className="mb-6">
-        <div className="flex items-center gap-3 mb-2">
-          <BarChart3 size={28} className="text-indigo-600" />
-          <h1 className="text-2xl font-bold text-gray-900">Relatório de Hinos</h1>
+    <div className="max-w-4xl mx-auto pb-20 space-y-5">
+      {/* Cabeçalho */}
+      <div className="flex items-start gap-3">
+        <div className="bg-indigo-50 text-indigo-600 p-2.5 rounded-xl shrink-0">
+          <BarChart3 size={22} />
         </div>
-        <p className="text-gray-600">
-          Hinos mais usados em repertórios (Top 10). Hinos de saudação não entram na contagem.
+        <div className="min-w-0">
+          <h2 className="text-2xl font-bold text-gray-900">Relatórios</h2>
+          <p className="text-sm text-gray-500">
+            Hinos mais usados nos repertórios • os de saudação não entram na conta
+          </p>
+        </div>
+      </div>
+
+      {/* Números */}
+      <div className="grid grid-cols-2 gap-3">
+        <Resumo icon={Music2} label="Hinos já usados" valor={hinosUsage.length} />
+        <Resumo icon={TrendingUp} label="Mais usado" valor={`${topHinos[0]?.usageCount || 0}x`} />
+      </div>
+
+      {/* Ranking */}
+      <Painel className="p-4 sm:p-6">
+        {/* Abas */}
+        <div className="flex gap-2 mb-5">
+          <button
+            onClick={() => setAba('comuns')}
+            className={`flex-1 px-4 py-2.5 rounded-xl font-semibold text-sm transition flex items-center justify-center gap-2 ${
+              aba === 'comuns'
+                ? 'bg-indigo-600 text-white shadow-md'
+                : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+            }`}
+          >
+            <Music2 size={16} />
+            Hinos comuns
+          </button>
+          <button
+            onClick={() => setAba('harpa')}
+            className={`flex-1 px-4 py-2.5 rounded-xl font-semibold text-sm transition flex items-center justify-center gap-2 ${
+              aba === 'harpa'
+                ? 'bg-indigo-600 text-white shadow-md'
+                : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+            }`}
+          >
+            <BookOpen size={16} />
+            Harpa Cristã
+          </button>
+        </div>
+
+        <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-3">
+          Top 10 mais usados
         </p>
-      </div>
 
-      {/* Stats - SEM "Total de Usos" */}
-      <div className="mb-6 p-4 bg-indigo-50 rounded-lg border border-indigo-200">
-        <div className="flex items-center justify-between">
-          <div>
-            <p className="text-sm text-indigo-600 font-medium">Total de Hinos Usados</p>
-            <p className="text-2xl font-bold text-indigo-900">{hinosUsage.length}</p>
-          </div>
-          <div>
-            <p className="text-sm text-indigo-600 font-medium">Hino Mais Usado</p>
-            <p className="text-2xl font-bold text-indigo-900">
-              {topHinos[0]?.usageCount || 0}x
-            </p>
-          </div>
-        </div>
-      </div>
-
-      {/* Top 10 Cards */}
-      {topHinos.length > 0 ? (
-        <div className="space-y-3">
-          <h2 className="text-lg font-bold text-gray-900 flex items-center gap-2">
-            <TrendingUp size={20} />
-            Top 10 Hinos Mais Usados (sem Harpa)
-          </h2>
-          
-          {topHinos.map((hino, index) => (
-            <CardRanking key={hino.id} hino={hino} index={index} />
-          ))}
-        </div>
-      ) : (
-        <div className="text-center py-12 bg-white rounded-lg">
-          <p className="text-gray-500 text-lg">Nenhum hino foi usado em repertórios ainda</p>
-          <p className="text-sm text-gray-400 mt-2">Crie um repertório e adicione hinos para ver aqui!</p>
-        </div>
-      )}
-
-      {/* Top 10 da Harpa Cristã */}
-      <div className="mt-8 space-y-3">
-        <h2 className="text-lg font-bold text-gray-900 flex items-center gap-2">
-          <BookOpen size={20} />
-          Top 10 Hinos da Harpa Mais Usados
-        </h2>
-
-        {topHarpa.length > 0 ? (
-          topHarpa.map((hino, index) => (
-            <CardRanking key={hino.id} hino={hino} index={index} />
-          ))
+        {lista.length === 0 ? (
+          <Vazio
+            texto={
+              aba === 'comuns'
+                ? 'Nenhum hino comum foi usado em repertórios ainda'
+                : 'Nenhum hino da Harpa foi usado em repertórios ainda'
+            }
+          />
         ) : (
-          <div className="text-center py-8 bg-white rounded-lg">
-            <p className="text-gray-500">Nenhum hino da Harpa foi usado em repertórios ainda</p>
+          <div className="space-y-3">
+            {lista.map((hino, index) => (
+              <LinhaRanking key={hino.id} hino={hino} index={index} maior={maior} />
+            ))}
           </div>
         )}
-      </div>
+      </Painel>
 
-      {/* Tabela Completa (opcional, hidden no mobile) */}
+      {/* Ranking completo dos hinos comuns */}
       {hinosUsage.length > 10 && (
-        <div className="mt-8">
-          <h2 className="text-lg font-bold text-gray-900 mb-4">Ranking Completo (sem Harpa)</h2>
-          <div className="overflow-x-auto bg-white rounded-lg shadow">
-            <table className="w-full text-sm">
-              <thead className="bg-gray-100 border-b">
-                <tr>
-                  <th className="px-4 py-2 text-left">#</th>
-                  <th className="px-4 py-2 text-left">Hino</th>
-                  <th className="px-4 py-2 text-center">Tom</th>
-                  <th className="px-4 py-2 text-left">Cantor</th>
-                  <th className="px-4 py-2 text-center">Usos</th>
-                  <th className="px-4 py-2 text-left">Último Uso</th>
-                </tr>
-              </thead>
-              <tbody>
-                {hinosUsage.map((hino, index) => (
-                  <tr key={hino.id} className="border-b hover:bg-gray-50">
-                    <td className="px-4 py-2 font-bold text-center text-gray-600">
-                      {index === 0 && '🥇'}
-                      {index === 1 && '🥈'}
-                      {index === 2 && '🥉'}
-                      {index > 2 && index + 1}
-                    </td>
-                    <td className="px-4 py-2 font-medium text-gray-900">{hino.nome}</td>
-                    <td className="px-4 py-2 text-center">{hino.tom}</td>
-                    <td className="px-4 py-2 text-gray-600">{hino.cantor}</td>
-                    <td className="px-4 py-2 text-center font-bold text-indigo-600">
-                      {hino.usageCount}x
-                    </td>
-                    <td className="px-4 py-2 text-gray-600">
-                      {formatarData(hino.ultimoUso)}
-                    </td>
+        <Painel className="overflow-hidden">
+          <button
+            onClick={() => setMostrarTabela(v => !v)}
+            className="w-full p-4 sm:p-5 flex items-center justify-between gap-3 hover:bg-gray-50 transition"
+          >
+            <span className="flex items-center gap-2 font-bold text-gray-900">
+              <Table2 size={18} className="text-indigo-600" />
+              Ranking completo ({hinosUsage.length} hinos comuns)
+            </span>
+            <ChevronDown
+              size={18}
+              className={`text-gray-400 transition-transform ${mostrarTabela ? 'rotate-180' : ''}`}
+            />
+          </button>
+
+          {mostrarTabela && (
+            <div className="overflow-x-auto border-t border-gray-100">
+              <table className="w-full text-sm">
+                <thead className="bg-gray-50">
+                  <tr className="text-gray-500">
+                    <th className="px-4 py-2.5 text-center font-semibold w-12">#</th>
+                    <th className="px-4 py-2.5 text-left font-semibold">Hino</th>
+                    <th className="px-4 py-2.5 text-center font-semibold">Tom</th>
+                    <th className="px-4 py-2.5 text-left font-semibold">Cantor</th>
+                    <th className="px-4 py-2.5 text-center font-semibold">Usos</th>
+                    <th className="px-4 py-2.5 text-left font-semibold whitespace-nowrap">
+                      <Calendar size={14} className="inline mr-1 -mt-0.5" />
+                      Último uso
+                    </th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </div>
+                </thead>
+                <tbody>
+                  {hinosUsage.map((hino, index) => (
+                    <tr key={hino.id} className="border-t border-gray-100 hover:bg-indigo-50/40">
+                      <td className="px-4 py-2.5 text-center font-bold text-gray-500 tabular-nums">
+                        {MEDALHAS[index] || index + 1}
+                      </td>
+                      <td className="px-4 py-2.5 font-medium text-gray-900">{hino.nome}</td>
+                      <td className="px-4 py-2.5 text-center text-gray-600">{hino.tom}</td>
+                      <td className="px-4 py-2.5 text-gray-600">{hino.cantor}</td>
+                      <td className="px-4 py-2.5 text-center font-bold text-indigo-600 tabular-nums">
+                        {hino.usageCount}
+                      </td>
+                      <td className="px-4 py-2.5 text-gray-600 whitespace-nowrap">
+                        {formatarData(hino.ultimoUso)}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </Painel>
       )}
     </div>
   );
