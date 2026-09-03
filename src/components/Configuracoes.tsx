@@ -49,8 +49,8 @@ export const ConfiguracoesView: React.FC<ConfiguracoesProps> = ({ onConfigChange
       alert('Esse cantor já está cadastrado.');
       return;
     }
-    setCantores(adicionarCantor(nome));
     setNovoCantor('');
+    adicionarCantor(nome).then(setCantores);
   };
 
   const handleRenomearCantor = (nome: string) => {
@@ -60,14 +60,14 @@ export const ConfiguracoesView: React.FC<ConfiguracoesProps> = ({ onConfigChange
       alert('O nome não pode ficar em branco.');
       return;
     }
-    setCantores(renomearCantor(nome, novo.trim()));
+    renomearCantor(nome, novo.trim()).then(setCantores);
   };
 
   const handleRemoverCantor = (nome: string) => {
     if (!confirm(`Remover "${nome}" da lista de cantores?
 
 Os hinos já cadastrados com esse cantor não mudam.`)) return;
-    setCantores(removerCantor(nome));
+    removerCantor(nome).then(setCantores);
   };
 
   const loadConfiguracoes = async () => {

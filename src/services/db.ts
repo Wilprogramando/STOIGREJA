@@ -6,6 +6,7 @@ import {
   CACHE_CONFIG,
   CACHE_HARPA,
   CACHE_ANOTACOES,
+  CACHE_CANTORES,
   OperacaoPendente,
   cacheSalvar,
   cacheLer,
@@ -169,6 +170,18 @@ async function executarNoSupabase(op: OperacaoPendente): Promise<void> {
             .upsert([payloadAnotacao(op.dados)], { onConflict: 'id' })
         ).error
       );
+      return;
+    case 'cantor.add':
+      falhar(
+        (
+          await supabase
+            .from('cantores')
+            .upsert([{ nome: op.dados }], { onConflict: 'nome' })
+        ).error
+      );
+      return;
+    case 'cantor.delete':
+      falhar((await supabase.from('cantores').delete().eq('nome', op.dados)).error);
       return;
     case 'anotacao.delete':
       falhar((await supabase.from('anotacoes_hinos').delete().eq('id', op.dados)).error);
@@ -597,6 +610,60 @@ export async function saveConfiguracoes(config: Configuracoes): Promise<void> {
     console.error('❌ Erro ao salvar configurações:', error);
     throw error;
   }
+}
+
+// ==================== CANTORES ====================
+
+/**
+ * Lista de cantores compartilhada entre todos os aparelhos.
+ * Sem internet (ou sem Supabase), usa a cópia guardada no aparelho.
+ */
+export async function getAllCantores(): Promise<string[]> {
+  try {
+    if (supabase) {
+      if (!estaOnline()) {
+        return cacheLer<string[]>(CACHE_CANTORES) || [];
+      }
+
+      await sincronizarPendentes();
+
+      const { data, error } = await supabase
+        .from('cantores')
+        .select('nome')
+        .order('nome', { ascending: true });
+
+      if (error) throw error;
+
+      const nomes = (data || []).map((linha: any) => linha.nome).filter(Boolean);
+      cacheSalvar(CACHE_CANTORES, nomes);
+      return nomes;
+    }
+
+    const chave = `${DB_PREFIX}cantores`;
+    const dados = localStorage.getItem(chave);
+    return dados ? JSON.parse(dados) : [];
+  } catch (error) {
+    console.error('❌ Erro ao carregar cantores, usando cópia local:', error);
+    return cacheLer<string[]>(CACHE_CANTORES) || [];
+  }
+}
+
+/** Guarda a lista inteira no aparelho, para funcionar offline. */
+function salvarCantoresLocal(nomes: string[]): void {
+  cacheSalvar(CACHE_CANTORES, nomes);
+  if (!supabase) {
+    localStorage.setItem(`${DB_PREFIX}cantores`, JSON.stringify(nomes));
+  }
+}
+
+export async function addCantor(nome: string, listaAtualizada: string[]): Promise<void> {
+  salvarCantoresLocal(listaAtualizada);
+  if (supabase) await gravar('cantor.add', nome);
+}
+
+export async function deleteCantor(nome: string, listaAtualizada: string[]): Promise<void> {
+  salvarCantoresLocal(listaAtualizada);
+  if (supabase) await gravar('cantor.delete', nome);
 }
 
 // ==================== HARPA ====================
