@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { Save, Download, Upload, Trash2, AlertCircle, Eye, EyeOff, BarChart3, Mic2, UserPlus, Pencil } from 'lucide-react';
+import { Save, Download, Upload, Trash2, AlertCircle, Eye, EyeOff, BarChart3, Mic2, UserPlus, Pencil, BookOpen } from 'lucide-react';
 import { getConfiguracoes, saveConfiguracoes, exportData, importData, clearAllData } from '../services/db';
 import { Configuracoes } from '../types';
 import { LogoUploader } from './LogoUploader';
+import { ImportCSVModal } from './ImportCSVModal';
 import { MENUS, lerMenusOcultos, salvarMenusOcultos } from '../services/menus';
 import { lerAcessos, zerarAcessos, RegistroAcessos } from '../services/acessos';
 import {
@@ -32,6 +33,7 @@ export const ConfiguracoesView: React.FC<ConfiguracoesProps> = ({ onConfigChange
   const [menusOcultos, setMenusOcultos] = useState<string[]>(() => lerMenusOcultos());
   const [cantores, setCantores] = useState<string[]>(() => lerCantores());
   const [novoCantor, setNovoCantor] = useState('');
+  const [showCSVModal, setShowCSVModal] = useState(false);
 
   useEffect(() => {
     loadConfiguracoes();
@@ -364,6 +366,26 @@ Os hinos já cadastrados com esse cantor não mudam.`)) return;
           </div>
         </div>
 
+        {/* Importar hinos da Harpa */}
+        <div className="bg-white p-6 rounded-lg shadow-md">
+          <h3 className="text-xl font-bold text-gray-900 mb-1 flex items-center gap-2">
+            <BookOpen size={20} className="text-indigo-600" />
+            Importar Hinos da Harpa
+          </h3>
+          <p className="text-sm text-gray-500 mb-4">
+            Cadastre vários hinos da Harpa Cristã de uma vez, a partir de uma planilha em CSV.
+            Dá para baixar um modelo pronto na própria janela de importação.
+          </p>
+
+          <button
+            onClick={() => setShowCSVModal(true)}
+            className="w-full px-4 py-3 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition font-medium flex items-center justify-center gap-2"
+          >
+            <Upload size={20} />
+            Importar CSV da Harpa
+          </button>
+        </div>
+
         {/* Cantores */}
         <div className="bg-white p-6 rounded-lg shadow-md">
           <h3 className="text-xl font-bold text-gray-900 mb-1 flex items-center gap-2">
@@ -604,6 +626,14 @@ Os hinos já cadastrados com esse cantor não mudam.`)) return;
           </ul>
         </div>
       </div>
+
+      {showCSVModal && (
+        <ImportCSVModal
+          onClose={() => setShowCSVModal(false)}
+          onImportSuccess={() => setShowCSVModal(false)}
+          tipoHino="harpa"
+        />
+      )}
     </div>
   );
 };

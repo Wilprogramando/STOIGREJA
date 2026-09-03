@@ -5,7 +5,6 @@ import {
   Eye,
   Download,
   Share2,
-  Upload,
   Star,
   BookOpen,
   Pencil,
@@ -29,7 +28,6 @@ import { carregarFavoritosSupabase, adicionarFavoritoSupabase, removerFavoritoSu
 import { Hino, HarpaItem, Configuracoes } from '../types';
 import { ModalVisualizaLetra } from './ModalVisualizaLetra';
 import { lerCantores, sincronizarCantoresDosHinos } from '../services/cantores';
-import { ImportCSVModal } from './ImportCSVModal';
 import { DeletePasswordModal } from './DeletePasswordModal';
 import { createClient } from '@supabase/supabase-js';
 
@@ -54,7 +52,6 @@ export const Harpa: React.FC<HarpaProps> = ({ configuracoes }) => {
   const [modalLetra, setModalLetra] = useState<Hino | null>(null);
   const [searchNumber, setSearchNumber] = useState('');
   const [searchResult, setSearchResult] = useState<HarpaItem | null>(null);
-  const [showCSVModal, setShowCSVModal] = useState(false);
   const [deletePasswordModal, setDeletePasswordModal] = useState<Hino | null>(null);
   const [favoritos, setFavoritos] = useState<Set<string>>(new Set());
   const [usuarioId, setUsuarioId] = useState<string>(USUARIO_ANONIMO_ID);
@@ -338,16 +335,8 @@ export const Harpa: React.FC<HarpaProps> = ({ configuracoes }) => {
         </div>
       </div>
 
-      {/* Botões do topo */}
-      <div className="grid grid-cols-2 gap-3 mb-5">
-        <button
-          onClick={() => setShowCSVModal(true)}
-          className="px-4 py-3 bg-white border border-gray-200 text-gray-700 rounded-2xl hover:bg-gray-50 transition font-semibold text-sm flex items-center justify-center gap-2 shadow-sm"
-        >
-          <Upload size={18} />
-          Importar CSV
-        </button>
-
+      {/* Botão do topo */}
+      <div className="mb-5">
         {!showForm && (
           <button
             onClick={() => {
@@ -364,9 +353,9 @@ export const Harpa: React.FC<HarpaProps> = ({ configuracoes }) => {
               setSearchResult(null);
               setShowForm(true);
             }}
-            className="px-4 py-3 bg-indigo-600 text-white rounded-2xl hover:bg-indigo-700 transition font-semibold text-sm flex items-center justify-center gap-2 shadow-lg"
+            className="w-full px-4 py-3.5 bg-indigo-600 text-white rounded-2xl hover:bg-indigo-700 transition font-semibold flex items-center justify-center gap-2 shadow-lg"
           >
-            <Plus size={18} />
+            <Plus size={20} />
             Novo Hino
           </button>
         )}
@@ -662,17 +651,6 @@ export const Harpa: React.FC<HarpaProps> = ({ configuracoes }) => {
         <ModalVisualizaLetra
           hino={modalLetra}
           onClose={() => setModalLetra(null)}
-        />
-      )}
-
-      {showCSVModal && (
-        <ImportCSVModal
-          onClose={() => setShowCSVModal(false)}
-          onImportSuccess={() => {
-            setShowCSVModal(false);
-            loadHinos();
-          }}
-          tipoHino="harpa"
         />
       )}
 
