@@ -11,6 +11,11 @@
 html, body, #root {
   width: 100%;
   height: 100%;
+  /* dvh = altura real da viewport no celular (desconta a barra do navegador),
+     para o rodape ficar visivel sem precisar rolar a pagina. */
+  height: 100dvh;
+  overflow: hidden;
+  overscroll-behavior: none;
 }
 
 body {
