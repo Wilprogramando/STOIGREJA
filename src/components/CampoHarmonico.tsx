@@ -75,8 +75,8 @@ const Topico: React.FC<{
 export const CampoHarmonico = () => {
   const [tomSelecionado, setTomSelecionado] = useState<Tom>('C');
   const [instrumento, setInstrumento] = useState<'violao' | 'baixo'>('violao');
-  /** Tópicos abertos. O campo harmônico já começa aberto. */
-  const [abertos, setAbertos] = useState<string[]>(['campo']);
+  /** Tópicos abertos. Todos começam fechados. */
+  const [abertos, setAbertos] = useState<string[]>([]);
 
   const acordes = CAMPOS[tomSelecionado];
 
