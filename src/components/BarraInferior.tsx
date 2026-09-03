@@ -17,12 +17,14 @@ export const BarraInferior: React.FC<BarraInferiorProps> = ({ currentPage, onPag
     return (
       <button
         onClick={() => onPageChange(id)}
-        className={`flex-1 flex flex-col items-center justify-center gap-1 py-2 rounded-xl transition ${
-          ativo ? 'text-indigo-600' : 'text-gray-500 hover:text-gray-700'
+        className={`flex-1 flex flex-col items-center justify-center gap-0.5 py-1.5 rounded-lg transition active:scale-95 ${
+          ativo ? 'text-indigo-600' : 'text-gray-400 hover:text-gray-600'
         }`}
       >
-        <Icon size={22} />
-        <span className={`text-xs ${ativo ? 'font-bold' : 'font-medium'}`}>{label}</span>
+        <Icon size={18} strokeWidth={ativo ? 2.5 : 2} />
+        <span className={`text-[10px] leading-none ${ativo ? 'font-semibold' : 'font-medium'}`}>
+          {label}
+        </span>
       </button>
     );
   };
@@ -30,21 +32,24 @@ export const BarraInferior: React.FC<BarraInferiorProps> = ({ currentPage, onPag
   const repertoriosAtivo = currentPage === 'repertorios';
 
   return (
-    <nav className="shrink-0 bg-white border-t border-gray-200 shadow-[0_-2px_10px_rgba(0,0,0,0.06)]">
-      <div className="max-w-3xl mx-auto flex items-center gap-2 px-4 py-2">
+    <nav
+      className="shrink-0 bg-white/95 backdrop-blur border-t border-gray-200 shadow-[0_-1px_8px_rgba(0,0,0,0.05)]"
+      style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}
+    >
+      <div className="max-w-md mx-auto flex items-center gap-1 px-3 py-1.5">
         <Atalho id="dashboard" label="Home" icon={Home} />
 
-        {/* Repertórios: botão principal, maior que os outros */}
+        {/* Repertórios: botão principal, um pouco maior que os outros */}
         <button
           onClick={() => onPageChange('repertorios')}
-          className={`flex-[1.6] flex items-center justify-center gap-2 py-3 px-4 rounded-2xl font-bold shadow-md transition ${
+          className={`flex-[1.3] flex items-center justify-center gap-1.5 py-2 px-3 rounded-xl font-semibold shadow-sm transition active:scale-95 ${
             repertoriosAtivo
               ? 'bg-indigo-700 text-white'
               : 'bg-indigo-600 text-white hover:bg-indigo-700'
           }`}
         >
-          <List size={22} />
-          <span className="text-sm">Repertórios</span>
+          <List size={17} />
+          <span className="text-xs">Repertórios</span>
         </button>
 
         <Atalho id="cadastrar-hino" label="Novo" icon={PlusCircle} />
