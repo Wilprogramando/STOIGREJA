@@ -1,100 +1,157 @@
 import React, { useState } from 'react';
 
+const CAMPOS = {
+  C: ['C', 'Dm', 'Em', 'F', 'G', 'Am', 'B°'],
+  D: ['D', 'Em', 'F#m', 'G', 'A', 'Bm', 'C#°'],
+  E: ['E', 'F#m', 'G#m', 'A', 'B', 'C#m', 'D#°'],
+  F: ['F', 'Gm', 'Am', 'Bb', 'C', 'Dm', 'E°'],
+  G: ['G', 'Am', 'Bm', 'C', 'D', 'Em', 'F#°'],
+  A: ['A', 'Bm', 'C#m', 'D', 'E', 'F#m', 'G#°'],
+  B: ['B', 'C#m', 'D#m', 'E', 'F#', 'G#m', 'A#°'],
+};
+
+type Tom = keyof typeof CAMPOS;
+
+const GRAUS = ['I', 'ii', 'iii', 'IV', 'V', 'vi', 'vii°'];
+
+/** Papel de cada grau, com a cor usada no cartão. */
+const FUNCOES = [
+  { nome: 'Tônica', cor: 'bg-indigo-50 border-indigo-200 text-indigo-700' },
+  { nome: 'Subdominante', cor: 'bg-sky-50 border-sky-200 text-sky-700' },
+  { nome: 'Tônica', cor: 'bg-indigo-50 border-indigo-200 text-indigo-700' },
+  { nome: 'Subdominante', cor: 'bg-sky-50 border-sky-200 text-sky-700' },
+  { nome: 'Dominante', cor: 'bg-amber-50 border-amber-200 text-amber-700' },
+  { nome: 'Tônica', cor: 'bg-indigo-50 border-indigo-200 text-indigo-700' },
+  { nome: 'Dominante', cor: 'bg-amber-50 border-amber-200 text-amber-700' },
+];
+
+/** Progressões comuns, guardadas pelo índice do grau. */
+const PROGRESSOES = [
+  { rotulo: 'I - V - vi - IV', graus: [0, 4, 5, 3] },
+  { rotulo: 'I - IV - V', graus: [0, 3, 4] },
+  { rotulo: 'vi - IV - I - V', graus: [5, 3, 0, 4] },
+  { rotulo: 'I - vi - IV - V', graus: [0, 5, 3, 4] },
+];
+
 export const CampoHarmonico = () => {
-  const campos = {
-    C: ['C', 'Dm', 'Em', 'F', 'G', 'Am', 'B°'],
-    D: ['D', 'Em', 'F#m', 'G', 'A', 'Bm', 'C#°'],
-    E: ['E', 'F#m', 'G#m', 'A', 'B', 'C#m', 'D#°'],
-    F: ['F', 'Gm', 'Am', 'Bb', 'C', 'Dm', 'E°'],
-    G: ['G', 'Am', 'Bm', 'C', 'D', 'Em', 'F#°'],
-    A: ['A', 'Bm', 'C#m', 'D', 'E', 'F#m', 'G#°'],
-    B: ['B', 'C#m', 'D#m', 'E', 'F#', 'G#m', 'A#°'],
-  };
+  const [tomSelecionado, setTomSelecionado] = useState<Tom>('C');
 
-  const [tomSelecionado, setTomSelecionado] = useState('C');
-
-  const graus = ['I', 'II', 'III', 'IV', 'V', 'VI', 'VII'];
+  const acordes = CAMPOS[tomSelecionado];
 
   return (
-    <div className="max-w-7xl mx-auto">
-      <h2 className="text-3xl font-bold text-gray-900 mb-6">
-        🎹 Campo Harmônico
-      </h2>
+    <div className="max-w-5xl mx-auto pb-4">
+      <h2 className="text-2xl md:text-3xl font-bold text-gray-900 mb-4">🎹 Campo Harmônico</h2>
 
-      {/* MOBILE */}
-      <div className="block lg:hidden">
-        <div className="bg-white rounded-xl shadow-md p-4 mb-4">
-          <label className="block text-sm font-semibold text-gray-600 mb-2">
-            Selecione o Tom
-          </label>
+      {/* Escolha do tom: botões grandes, melhores que um select no celular. */}
+      <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-4 mb-4">
+        <p className="text-sm font-semibold text-gray-600 mb-3">Escolha o tom</p>
 
-          <select
-            value={tomSelecionado}
-            onChange={(e) => setTomSelecionado(e.target.value)}
-            className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500"
-          >
-            {Object.keys(campos).map((tom) => (
-              <option key={tom} value={tom}>
-                Tom de {tom}
-              </option>
-            ))}
-          </select>
-        </div>
+        <div className="grid grid-cols-4 sm:grid-cols-7 gap-2">
+          {(Object.keys(CAMPOS) as Tom[]).map(tom => {
+            const ativo = tom === tomSelecionado;
 
-        <div className="bg-white rounded-xl shadow-md overflow-hidden">
-          <div className="bg-indigo-600 text-white p-4">
-            <h3 className="text-xl font-bold">
-              Tom de {tomSelecionado}
-            </h3>
-          </div>
-
-          <div className="p-4">
-            {graus.map((grau, index) => (
-              <div
-                key={grau}
-                className="flex justify-between items-center py-3 border-b last:border-b-0"
+            return (
+              <button
+                key={tom}
+                onClick={() => setTomSelecionado(tom)}
+                className={`py-3 rounded-xl font-bold text-lg transition active:scale-95 ${
+                  ativo
+                    ? 'bg-indigo-600 text-white shadow-md'
+                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                }`}
               >
-                <span className="font-semibold text-gray-700">
-                  {grau}
-                </span>
-
-                <span className="text-lg font-bold text-indigo-600">
-                  {campos[tomSelecionado as keyof typeof campos][index]}
-                </span>
-              </div>
-            ))}
-          </div>
+                {tom}
+              </button>
+            );
+          })}
         </div>
       </div>
 
-      {/* DESKTOP */}
-      <div className="hidden lg:block bg-white rounded-lg shadow-md overflow-hidden">
+      {/* Acordes do tom escolhido */}
+      <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden mb-4">
+        <div className="bg-gradient-to-r from-indigo-600 to-purple-600 text-white px-4 py-3">
+          <h3 className="text-lg font-bold">Tom de {tomSelecionado}</h3>
+          <p className="text-xs text-indigo-100">Os 7 acordes que combinam neste tom</p>
+        </div>
+
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 p-3">
+          {acordes.map((acorde, index) => (
+            <div
+              key={GRAUS[index]}
+              className={`rounded-xl border p-3 text-center ${FUNCOES[index].cor}`}
+            >
+              <p className="text-xs font-bold opacity-70">{GRAUS[index]}</p>
+              <p className="text-2xl font-extrabold leading-tight text-gray-900">{acorde}</p>
+              <p className="text-[10px] font-medium opacity-80">{FUNCOES[index].nome}</p>
+            </div>
+          ))}
+        </div>
+
+        <div className="flex flex-wrap gap-3 px-4 pb-4 text-[11px] text-gray-500">
+          <span className="flex items-center gap-1">
+            <span className="w-2.5 h-2.5 rounded-full bg-indigo-400" /> Tônica (repouso)
+          </span>
+          <span className="flex items-center gap-1">
+            <span className="w-2.5 h-2.5 rounded-full bg-sky-400" /> Subdominante (preparação)
+          </span>
+          <span className="flex items-center gap-1">
+            <span className="w-2.5 h-2.5 rounded-full bg-amber-400" /> Dominante (tensão)
+          </span>
+        </div>
+      </div>
+
+      {/* Progressões já com os acordes do tom escolhido */}
+      <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-4 mb-4">
+        <h3 className="font-bold text-gray-900 mb-1">🎵 Progressões mais usadas</h3>
+        <p className="text-xs text-gray-500 mb-3">Já no tom de {tomSelecionado}</p>
+
+        <div className="space-y-3">
+          {PROGRESSOES.map(prog => (
+            <div key={prog.rotulo} className="rounded-xl bg-gray-50 border border-gray-100 p-3">
+              <p className="text-xs font-semibold text-gray-500 mb-2">{prog.rotulo}</p>
+
+              <div className="flex flex-wrap gap-2">
+                {prog.graus.map((grau, i) => (
+                  <span
+                    key={i}
+                    className="px-3 py-1.5 rounded-lg bg-white border border-gray-200 font-bold text-indigo-700"
+                  >
+                    {acordes[grau]}
+                  </span>
+                ))}
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* Tabela completa: só faz sentido em tela grande. */}
+      <div className="hidden lg:block bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
         <table className="w-full">
-          <thead className="bg-indigo-600 text-white">
+          <thead className="bg-gray-50 text-gray-600 text-sm">
             <tr>
-              <th className="p-3">Tom</th>
-              <th className="p-3">I</th>
-              <th className="p-3">II</th>
-              <th className="p-3">III</th>
-              <th className="p-3">IV</th>
-              <th className="p-3">V</th>
-              <th className="p-3">VI</th>
-              <th className="p-3">VII</th>
+              <th className="p-3 text-left">Tom</th>
+              {GRAUS.map(grau => (
+                <th key={grau} className="p-3">
+                  {grau}
+                </th>
+              ))}
             </tr>
           </thead>
 
           <tbody>
-            {Object.entries(campos).map(([tom, acordes]) => (
+            {(Object.entries(CAMPOS) as [Tom, string[]][]).map(([tom, lista]) => (
               <tr
                 key={tom}
-                className="border-b hover:bg-gray-50"
+                onClick={() => setTomSelecionado(tom)}
+                className={`border-t border-gray-100 cursor-pointer transition ${
+                  tom === tomSelecionado ? 'bg-indigo-50' : 'hover:bg-gray-50'
+                }`}
               >
-                <td className="p-3 font-bold text-indigo-600">
-                  {tom}
-                </td>
+                <td className="p-3 font-bold text-indigo-600">{tom}</td>
 
-                {acordes.map((acorde, index) => (
-                  <td key={index} className="p-3 text-center">
+                {lista.map((acorde, index) => (
+                  <td key={index} className="p-3 text-center text-gray-800">
                     {acorde}
                   </td>
                 ))}
@@ -102,31 +159,6 @@ export const CampoHarmonico = () => {
             ))}
           </tbody>
         </table>
-      </div>
-
-      {/* Progressões */}
-      <div className="mt-6 bg-indigo-50 rounded-xl p-5">
-        <h3 className="font-bold text-lg mb-4">
-          🎵 Progressões mais usadas
-        </h3>
-
-        <div className="grid gap-3">
-          <div className="bg-white rounded-lg p-3 shadow-sm font-medium">
-            I - V - vi - IV
-          </div>
-
-          <div className="bg-white rounded-lg p-3 shadow-sm font-medium">
-            I - IV - V
-          </div>
-
-          <div className="bg-white rounded-lg p-3 shadow-sm font-medium">
-            vi - IV - I - V
-          </div>
-
-          <div className="bg-white rounded-lg p-3 shadow-sm font-medium">
-            I - vi - IV - V
-          </div>
-        </div>
       </div>
     </div>
   );
