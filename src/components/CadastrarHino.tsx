@@ -12,7 +12,10 @@ import {
   MoreHorizontal,
   Search,
   Check,
-  X
+  X,
+  Music4,
+  Mic2,
+  Users
 } from 'lucide-react';
 import { addHino, updateHino, deleteHino, getAllHinos } from '../services/db';
 import { generateHinoPdf, shareViaWhatsApp } from '../services/pdf';
@@ -349,24 +352,34 @@ export const CadastrarHino: React.FC<CadastrarHinoProps> = ({ configuracoes }) =
         </div>
 
         <div className="grid grid-cols-2 gap-3">
-          <select
-            value={filtros.tom}
-            onChange={(e) => setFiltros({ ...filtros, tom: e.target.value })}
-            className={campo}
-          >
-            <option value="">Todos os tons</option>
-            {TONS.map(ton => (
-              <option key={ton} value={ton}>{ton}</option>
-            ))}
-          </select>
+          <div className="relative">
+            <span className="absolute left-2 top-1/2 -translate-y-1/2 w-8 h-8 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center pointer-events-none">
+              <Music4 size={16} />
+            </span>
+            <select
+              value={filtros.tom}
+              onChange={(e) => setFiltros({ ...filtros, tom: e.target.value })}
+              className={`${campo} pl-12`}
+            >
+              <option value="">Todos os tons</option>
+              {TONS.map(ton => (
+                <option key={ton} value={ton}>{ton}</option>
+              ))}
+            </select>
+          </div>
 
-          <input
-            type="text"
-            placeholder="Cantor..."
-            value={filtros.cantor}
-            onChange={(e) => setFiltros({ ...filtros, cantor: e.target.value })}
-            className={campo}
-          />
+          <div className="relative">
+            <span className="absolute left-2 top-1/2 -translate-y-1/2 w-8 h-8 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center pointer-events-none">
+              <Mic2 size={16} />
+            </span>
+            <input
+              type="text"
+              placeholder="Cantor..."
+              value={filtros.cantor}
+              onChange={(e) => setFiltros({ ...filtros, cantor: e.target.value })}
+              className={`${campo} pl-12`}
+            />
+          </div>
         </div>
       </Painel>
 
@@ -384,23 +397,28 @@ export const CadastrarHino: React.FC<CadastrarHinoProps> = ({ configuracoes }) =
             return (
               <Painel key={hino.id} className="p-3 sm:p-4">
                 <div className="flex items-center gap-3">
-                  <div className="shrink-0 w-10 h-10 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center">
-                    <Music2 size={18} />
+                  <div className="shrink-0 w-14 h-14 sm:w-16 sm:h-16 rounded-2xl bg-indigo-50 text-indigo-600 flex items-center justify-center">
+                    <Music2 size={26} />
                   </div>
 
                   <div className="flex-1 min-w-0">
-                    <h3 className="font-bold text-gray-900 break-words">{hino.nome}</h3>
-                    <div className="flex flex-wrap items-center gap-1.5 mt-1">
-                      <span className="text-[11px] font-semibold px-2 py-0.5 rounded-full bg-indigo-100 text-indigo-700">
+                    <h3 className="font-bold text-gray-900 break-words text-base sm:text-lg leading-tight">
+                      {hino.nome}
+                    </h3>
+
+                    <div className="flex flex-wrap items-center gap-1.5 mt-1.5">
+                      <span className="text-[11px] font-bold px-2.5 py-0.5 rounded-full bg-indigo-50 text-indigo-700">
                         {hino.tom}
                       </span>
-                      <span className="text-[11px] font-semibold px-2 py-0.5 rounded-full bg-gray-100 text-gray-600">
+                      <span className="text-[11px] font-semibold px-2.5 py-0.5 rounded-full bg-indigo-50 text-gray-700">
                         {hino.cantor}
                       </span>
-                      <span className="text-[11px] font-semibold px-2 py-0.5 rounded-full bg-gray-100 text-gray-600">
-                        {hino.categoria}
-                      </span>
                     </div>
+
+                    <p className="flex items-center gap-1.5 text-xs text-gray-500 mt-1.5">
+                      <Users size={14} className="shrink-0" />
+                      {hino.categoria}
+                    </p>
                   </div>
 
                   {/* Ações principais */}
