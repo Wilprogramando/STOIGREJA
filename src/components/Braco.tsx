@@ -143,3 +143,12 @@ export const CORDAS_BAIXO = [
   { nome: '3ª', nota: 'A' },
   { nome: '4ª', nota: 'E' },
 ];
+
+/** Baixo de 5 cordas: igual ao de 4, com a corda Si grave a mais. */
+export const CORDAS_BAIXO_5 = [
+  { nome: '1ª', nota: 'G' },
+  { nome: '2ª', nota: 'D' },
+  { nome: '3ª', nota: 'A' },
+  { nome: '4ª', nota: 'E' },
+  { nome: '5ª', nota: 'B' },
+];

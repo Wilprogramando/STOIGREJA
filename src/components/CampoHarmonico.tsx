@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { ChevronDown } from 'lucide-react';
-import { Braco, CORDAS_VIOLAO, CORDAS_BAIXO, notaDoAcorde } from './Braco';
+import { Braco, CORDAS_VIOLAO, CORDAS_BAIXO, CORDAS_BAIXO_5, notaDoAcorde } from './Braco';
 
 const CAMPOS = {
   C: ['C', 'Dm', 'Em', 'F', 'G', 'Am', 'B°'],
@@ -74,7 +74,7 @@ const Topico: React.FC<{
 
 export const CampoHarmonico = () => {
   const [tomSelecionado, setTomSelecionado] = useState<Tom>('C');
-  const [instrumento, setInstrumento] = useState<'violao' | 'baixo'>('violao');
+  const [instrumento, setInstrumento] = useState<'violao' | 'baixo' | 'baixo5'>('violao');
   /** Tópicos abertos. Todos começam fechados. */
   const [abertos, setAbertos] = useState<string[]>([]);
 
@@ -202,7 +202,8 @@ export const CampoHarmonico = () => {
             <div className="flex gap-1 bg-gray-100 rounded-lg p-1">
               {([
                 ['violao', 'Violão'],
-                ['baixo', 'Baixo'],
+                ['baixo', 'Baixo 4'],
+                ['baixo5', 'Baixo 5'],
               ] as const).map(([id, rotulo]) => (
                 <button
                   key={id}
@@ -218,7 +219,13 @@ export const CampoHarmonico = () => {
           </div>
 
           <Braco
-            cordas={instrumento === 'violao' ? CORDAS_VIOLAO : CORDAS_BAIXO}
+            cordas={
+              instrumento === 'violao'
+                ? CORDAS_VIOLAO
+                : instrumento === 'baixo5'
+                  ? CORDAS_BAIXO_5
+                  : CORDAS_BAIXO
+            }
             notasDoTom={notasDoTom}
             tonica={notaDoAcorde(acordes[0])}
           />
