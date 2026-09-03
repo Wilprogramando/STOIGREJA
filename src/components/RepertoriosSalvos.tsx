@@ -334,9 +334,6 @@ export const RepertoriosSalvos: React.FC<RepertoriosSalvosProps> = ({ configurac
         </div>
         <div className="min-w-0 flex-1">
           <h2 className="text-2xl font-bold text-gray-900">Repertórios Salvos</h2>
-          <p className="text-sm text-gray-500">
-            Veja, edite, compartilhe e gere o PDF dos seus cultos
-          </p>
         </div>
 
         {/* Ilustração decorativa */}
