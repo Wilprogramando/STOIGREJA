@@ -157,3 +157,11 @@ th {
     font-size: 18px;
   }
 }
+
+/* Papel de parede discreto dos cards do Dashboard.
+   A opacidade já vem embutida no SVG, para não apagar o conteúdo do card. */
+.fundo-musical {
+  background-image: url('/padrao-musical.svg');
+  background-repeat: repeat;
+  background-size: 150px 150px;
+}
