@@ -170,8 +170,6 @@ export default function App() {
 
       <div className="flex-1 flex flex-col overflow-hidden">
         <Header
-          currentPage={currentPage}
-          onPageChange={handlePageChange}
           onToggleSidebar={() => setSidebarOpen(!sidebarOpen)}
           tituloSistema={configuracoes?.tituloSistema}
           logoSistema={configuracoes?.logoSistema}

@@ -1,9 +1,7 @@
 import React, { useState } from 'react';
-import { Music, Menu, RefreshCw, Settings as SettingsIcon } from 'lucide-react';
+import { Music, Menu, RefreshCw } from 'lucide-react';
 
 interface HeaderProps {
-  currentPage: string;
-  onPageChange: (page: string) => void;
   onToggleSidebar: () => void;
   tituloSistema?: string;
   logoSistema?: string;
@@ -11,8 +9,6 @@ interface HeaderProps {
 }
 
 export const Header: React.FC<HeaderProps> = ({ 
-  currentPage, 
-  onPageChange, 
   onToggleSidebar,
   tituloSistema,
   logoSistema,
@@ -78,15 +74,6 @@ export const Header: React.FC<HeaderProps> = ({
             aria-label="Atualizar página"
           >
             <RefreshCw size={24} className={atualizando ? 'animate-spin' : undefined} />
-          </button>
-
-          <button
-            onClick={() => onPageChange('configuracoes')}
-            className="p-2 hover:bg-white hover:bg-opacity-20 rounded-lg transition"
-            title="Configurações"
-            aria-label="Configurações"
-          >
-            <SettingsIcon size={24} />
           </button>
         </div>
       </div>
