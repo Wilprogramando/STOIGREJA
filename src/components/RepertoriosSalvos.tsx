@@ -43,8 +43,8 @@ export const RepertoriosSalvos: React.FC<RepertoriosSalvosProps> = ({ configurac
   const [indiceLetra, setIndiceLetra] = useState(0);
   const [tamanhoLetra, setTamanhoLetra] = useState<number>(TAMANHO_LETRA_PADRAO);
   const [mostrarPassados, setMostrarPassados] = useState(false);
-  /** Repertórios com o painel de ações recolhido. */
-  const [acoesFechadas, setAcoesFechadas] = useState<string[]>([]);
+  /** Repertório com o painel de ações aberto (só um por vez). */
+  const [acoesAbertas, setAcoesAbertas] = useState<string | null>(null);
 
   // Abre a letra guardando a lista do repertório, para navegar entre os hinos
   const abrirLetra = (lista: Hino[], idx: number) => {
@@ -407,7 +407,7 @@ export const RepertoriosSalvos: React.FC<RepertoriosSalvosProps> = ({ configurac
               h => h !== null && h !== undefined
             );
             const hoje = ehHoje(repertorio.data);
-            const acoesVisiveis = !acoesFechadas.includes(repertorio.id);
+            const acoesVisiveis = acoesAbertas === repertorio.id;
 
             return (
               <Painel key={repertorio.id} className="p-4 sm:p-6">
@@ -447,15 +447,13 @@ export const RepertoriosSalvos: React.FC<RepertoriosSalvosProps> = ({ configurac
                   </div>
 
                   <button
-                    onClick={() =>
-                      setAcoesFechadas(atual =>
-                        acoesVisiveis
-                          ? [...atual, repertorio.id]
-                          : atual.filter(id => id !== repertorio.id)
-                      )
-                    }
+                    onClick={() => setAcoesAbertas(acoesVisiveis ? null : repertorio.id)}
                     title={acoesVisiveis ? 'Esconder ações' : 'Mostrar ações'}
-                    className="shrink-0 p-2 rounded-xl border border-gray-200 text-gray-500 hover:bg-gray-50 transition"
+                    className={`shrink-0 p-2 rounded-xl border transition ${
+                      acoesVisiveis
+                        ? 'bg-gray-700 border-gray-700 text-white'
+                        : 'border-gray-200 text-gray-500 hover:bg-gray-50'
+                    }`}
                   >
                     <MoreVertical size={18} />
                   </button>
