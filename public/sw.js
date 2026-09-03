@@ -6,7 +6,7 @@
  */
 
 const CACHE = 'repertorio-igreja-v2';
-const ESSENCIAIS = ['/', '/index.html', '/manifest.webmanifest', '/favicon.svg', '/padrao-musical.svg'];
+const ESSENCIAIS = ['/', '/index.html', '/manifest.webmanifest', '/favicon.svg'];
 
 self.addEventListener('install', event => {
   event.waitUntil(
