@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect } from "react";
 import {
   Plus,
   Music,
@@ -15,40 +15,44 @@ import {
   X,
   Music4,
   Mic2,
-  Users
-} from 'lucide-react';
-import { addHino, updateHino, deleteHino, getAllHinos } from '../services/db';
-import { generateHinoPdf, shareViaWhatsApp } from '../services/pdf';
-import { Hino, Configuracoes } from '../types';
-import { ModalVisualizaLetra } from './ModalVisualizaLetra';
-import { lerCantores, sincronizarCantoresDosHinos } from '../services/cantores';
-import { DeletePasswordModal } from './DeletePasswordModal';
+  Users,
+} from "lucide-react";
+import { addHino, updateHino, deleteHino, getAllHinos } from "../services/db";
+import { generateHinoPdf, shareViaWhatsApp } from "../services/pdf";
+import { Hino, Configuracoes } from "../types";
+import { ModalVisualizaLetra } from "./ModalVisualizaLetra";
+import { lerCantores, sincronizarCantoresDosHinos } from "../services/cantores";
+import { DeletePasswordModal } from "./DeletePasswordModal";
 
 interface CadastrarHinoProps {
   configuracoes: Configuracoes | null;
 }
 
-const TONS = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'];
-const CATEGORIAS = ['Alfa', 'Manancial', 'Louvor', 'Consagração', 'Outro'];
+const TONS = ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"];
+const CATEGORIAS = ["Alfa", "Manancial", "Louvor", "Consagração", "Outro"];
 
-export const CadastrarHino: React.FC<CadastrarHinoProps> = ({ configuracoes }) => {
+export const CadastrarHino: React.FC<CadastrarHinoProps> = ({
+  configuracoes,
+}) => {
   const [hinos, setHinos] = useState<Hino[]>([]);
   const [showForm, setShowForm] = useState(false);
   const [editando, setEditando] = useState<Hino | null>(null);
-  const [filtros, setFiltros] = useState({ tom: '', cantor: '', nome: '' });
+  const [filtros, setFiltros] = useState({ tom: "", cantor: "", nome: "" });
   const [cantores, setCantores] = useState<string[]>(() => lerCantores());
   const [modalLetra, setModalLetra] = useState<Hino | null>(null);
-  const [deletePasswordModal, setDeletePasswordModal] = useState<Hino | null>(null);
+  const [deletePasswordModal, setDeletePasswordModal] = useState<Hino | null>(
+    null,
+  );
   /** Qual hino está com as ações extras abertas (PDF, compartilhar, duplicar). */
   const [acoesAbertas, setAcoesAbertas] = useState<string | null>(null);
 
   const [formData, setFormData] = useState({
-    nome: '',
-    tom: 'C',
-    cantor: '',
-    letra: '',
-    categoria: 'Manancial',
-    observacoes: ''
+    nome: "",
+    tom: "C",
+    cantor: "",
+    letra: "",
+    categoria: "Manancial",
+    observacoes: "",
   });
 
   useEffect(() => {
@@ -59,14 +63,14 @@ export const CadastrarHino: React.FC<CadastrarHinoProps> = ({ configuracoes }) =
 
   const loadHinos = async () => {
     const todos = await getAllHinos();
-    setHinos(todos.filter(h => h.tipo === 'comum'));
+    setHinos(todos.filter((h) => h.tipo === "comum"));
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
     if (!formData.nome || !formData.cantor) {
-      alert('Preencha os campos obrigatórios: Nome e Cantor!');
+      alert("Preencha os campos obrigatórios: Nome e Cantor!");
       return;
     }
 
@@ -77,34 +81,34 @@ export const CadastrarHino: React.FC<CadastrarHinoProps> = ({ configuracoes }) =
         const hinoAtualizado: Hino = {
           ...editando,
           ...formData,
-          atualizadoEm: agora
+          atualizadoEm: agora,
         };
         await updateHino(hinoAtualizado);
       } else {
         const novoHino: Hino = {
           id: Date.now().toString(),
           ...formData,
-          tipo: 'comum',
+          tipo: "comum",
           criadoEm: agora,
-          atualizadoEm: agora
+          atualizadoEm: agora,
         };
         await addHino(novoHino);
       }
 
       setFormData({
-        nome: '',
-        tom: 'C',
-        cantor: '',
-        letra: '',
-        categoria: 'Manancial',
-        observacoes: ''
+        nome: "",
+        tom: "C",
+        cantor: "",
+        letra: "",
+        categoria: "Manancial",
+        observacoes: "",
       });
       setEditando(null);
       setShowForm(false);
       loadHinos();
     } catch (error) {
-      console.error('Erro ao salvar hino:', error);
-      alert('Erro ao salvar hino');
+      console.error("Erro ao salvar hino:", error);
+      alert("Erro ao salvar hino");
     }
   };
 
@@ -115,7 +119,7 @@ export const CadastrarHino: React.FC<CadastrarHinoProps> = ({ configuracoes }) =
       cantor: hino.cantor,
       letra: hino.letra,
       categoria: hino.categoria,
-      observacoes: hino.observacoes || ''
+      observacoes: hino.observacoes || "",
     });
     setEditando(hino);
     setShowForm(true);
@@ -124,12 +128,12 @@ export const CadastrarHino: React.FC<CadastrarHinoProps> = ({ configuracoes }) =
 
   const handleDuplicar = (hino: Hino) => {
     setFormData({
-      nome: hino.nome + ' (Cópia)',
+      nome: hino.nome + " (Cópia)",
       tom: hino.tom,
       cantor: hino.cantor,
       letra: hino.letra,
       categoria: hino.categoria,
-      observacoes: hino.observacoes || ''
+      observacoes: hino.observacoes || "",
     });
     setEditando(null);
     setShowForm(true);
@@ -142,34 +146,44 @@ export const CadastrarHino: React.FC<CadastrarHinoProps> = ({ configuracoes }) =
       loadHinos();
       setDeletePasswordModal(null);
     } catch (error) {
-      console.error('Erro ao deletar hino:', error);
-      alert('Erro ao deletar hino');
+      console.error("Erro ao deletar hino:", error);
+      alert("Erro ao deletar hino");
     }
   };
 
-  const hinosFiltrados = hinos.filter(hino => {
-    const nomeMatch = hino.nome.toLowerCase().includes(filtros.nome.toLowerCase());
+  const hinosFiltrados = hinos.filter((hino) => {
+    const nomeMatch = hino.nome
+      .toLowerCase()
+      .includes(filtros.nome.toLowerCase());
     const tomMatch = !filtros.tom || hino.tom === filtros.tom;
-    const cantorMatch = hino.cantor.toLowerCase().includes(filtros.cantor.toLowerCase());
+    const cantorMatch = hino.cantor
+      .toLowerCase()
+      .includes(filtros.cantor.toLowerCase());
     return nomeMatch && tomMatch && cantorMatch;
   });
 
   /** Card branco padrão da tela. */
   const Painel: React.FC<{ children: React.ReactNode; className?: string }> = ({
     children,
-    className = ''
+    className = "",
   }) => (
-    <div className={`bg-white rounded-2xl border border-gray-100 shadow-lg ${className}`}>
+    <div
+      className={`bg-white rounded-2xl border border-gray-100 shadow-lg ${className}`}
+    >
       {children}
     </div>
   );
 
   const campo =
-    'w-full px-3.5 py-2.5 border border-gray-200 rounded-xl bg-gray-50 focus:bg-white focus:outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100 transition text-sm';
+    "w-full px-3.5 py-2.5 border border-gray-200 rounded-xl bg-gray-50 focus:bg-white focus:outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100 transition text-sm";
 
   /** Botão redondo de ação do hino. */
   const BotaoAcao = ({ icon: Icon, titulo, cor, onClick }: any) => (
-    <button onClick={onClick} title={titulo} className={`p-2 rounded-xl transition ${cor}`}>
+    <button
+      onClick={onClick}
+      title={titulo}
+      className={`p-2 rounded-xl transition ${cor}`}
+    >
       <Icon size={17} />
     </button>
   );
@@ -206,12 +220,12 @@ export const CadastrarHino: React.FC<CadastrarHinoProps> = ({ configuracoes }) =
           onClick={() => {
             setEditando(null);
             setFormData({
-              nome: '',
-              tom: 'C',
-              cantor: '',
-              letra: '',
-              categoria: 'Manancial',
-              observacoes: ''
+              nome: "",
+              tom: "C",
+              cantor: "",
+              letra: "",
+              categoria: "Manancial",
+              observacoes: "",
             });
             setShowForm(true);
           }}
@@ -226,7 +240,7 @@ export const CadastrarHino: React.FC<CadastrarHinoProps> = ({ configuracoes }) =
       {showForm && (
         <Painel className="p-4 sm:p-6 mb-5">
           <h3 className="text-lg font-bold text-gray-900 mb-4">
-            {editando ? 'Editar Hino' : 'Novo Hino'}
+            {editando ? "Editar Hino" : "Novo Hino"}
           </h3>
 
           <form onSubmit={handleSubmit} className="space-y-3">
@@ -237,7 +251,9 @@ export const CadastrarHino: React.FC<CadastrarHinoProps> = ({ configuracoes }) =
               <input
                 type="text"
                 value={formData.nome}
-                onChange={(e) => setFormData({ ...formData, nome: e.target.value })}
+                onChange={(e) =>
+                  setFormData({ ...formData, nome: e.target.value })
+                }
                 className={campo}
                 placeholder="Ex: Poderoso Deus"
               />
@@ -245,55 +261,77 @@ export const CadastrarHino: React.FC<CadastrarHinoProps> = ({ configuracoes }) =
 
             <div className="grid grid-cols-2 gap-3">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1.5">Tom</label>
+                <label className="block text-sm font-medium text-gray-700 mb-1.5">
+                  Tom
+                </label>
                 <select
                   value={formData.tom}
-                  onChange={(e) => setFormData({ ...formData, tom: e.target.value })}
+                  onChange={(e) =>
+                    setFormData({ ...formData, tom: e.target.value })
+                  }
                   className={campo}
                 >
-                  {TONS.map(ton => (
-                    <option key={ton} value={ton}>{ton}</option>
+                  {TONS.map((ton) => (
+                    <option key={ton} value={ton}>
+                      {ton}
+                    </option>
                   ))}
                 </select>
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1.5">Categoria</label>
+                <label className="block text-sm font-medium text-gray-700 mb-1.5">
+                  Categoria
+                </label>
                 <select
                   value={formData.categoria}
-                  onChange={(e) => setFormData({ ...formData, categoria: e.target.value })}
+                  onChange={(e) =>
+                    setFormData({ ...formData, categoria: e.target.value })
+                  }
                   className={campo}
                 >
-                  {CATEGORIAS.map(cat => (
-                    <option key={cat} value={cat}>{cat}</option>
+                  {CATEGORIAS.map((cat) => (
+                    <option key={cat} value={cat}>
+                      {cat}
+                    </option>
                   ))}
                 </select>
               </div>
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1.5">Cantor *</label>
+              <label className="block text-sm font-medium text-gray-700 mb-1.5">
+                Cantor *
+              </label>
               {/* Cantores vêm do gerenciador em Configurações */}
               <select
                 value={formData.cantor}
-                onChange={(e) => setFormData({ ...formData, cantor: e.target.value })}
+                onChange={(e) =>
+                  setFormData({ ...formData, cantor: e.target.value })
+                }
                 className={campo}
               >
                 <option value="">Selecione o cantor</option>
                 {formData.cantor && !cantores.includes(formData.cantor) && (
                   <option value={formData.cantor}>{formData.cantor}</option>
                 )}
-                {cantores.map(c => (
-                  <option key={c} value={c}>{c}</option>
+                {cantores.map((c) => (
+                  <option key={c} value={c}>
+                    {c}
+                  </option>
                 ))}
               </select>
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1.5">Letra</label>
+              <label className="block text-sm font-medium text-gray-700 mb-1.5">
+                Letra
+              </label>
               <textarea
                 value={formData.letra}
-                onChange={(e) => setFormData({ ...formData, letra: e.target.value })}
+                onChange={(e) =>
+                  setFormData({ ...formData, letra: e.target.value })
+                }
                 rows={6}
                 className={campo}
                 placeholder="Letra do hino (opcional)"
@@ -301,10 +339,14 @@ export const CadastrarHino: React.FC<CadastrarHinoProps> = ({ configuracoes }) =
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1.5">Observações</label>
+              <label className="block text-sm font-medium text-gray-700 mb-1.5">
+                Observações
+              </label>
               <textarea
                 value={formData.observacoes}
-                onChange={(e) => setFormData({ ...formData, observacoes: e.target.value })}
+                onChange={(e) =>
+                  setFormData({ ...formData, observacoes: e.target.value })
+                }
                 rows={2}
                 className={campo}
                 placeholder="Observações (opcional)"
@@ -317,7 +359,7 @@ export const CadastrarHino: React.FC<CadastrarHinoProps> = ({ configuracoes }) =
                 className="px-4 py-3 bg-indigo-600 text-white rounded-xl hover:bg-indigo-700 transition font-semibold text-sm flex items-center justify-center gap-2 shadow-md"
               >
                 <Check size={18} />
-                {editando ? 'Atualizar' : 'Salvar'}
+                {editando ? "Atualizar" : "Salvar"}
               </button>
               <button
                 type="button"
@@ -362,8 +404,10 @@ export const CadastrarHino: React.FC<CadastrarHinoProps> = ({ configuracoes }) =
               className={`${campo} pl-12`}
             >
               <option value="">Todos os tons</option>
-              {TONS.map(ton => (
-                <option key={ton} value={ton}>{ton}</option>
+              {TONS.map((ton) => (
+                <option key={ton} value={ton}>
+                  {ton}
+                </option>
               ))}
             </select>
           </div>
@@ -376,7 +420,9 @@ export const CadastrarHino: React.FC<CadastrarHinoProps> = ({ configuracoes }) =
               type="text"
               placeholder="Cantor..."
               value={filtros.cantor}
-              onChange={(e) => setFiltros({ ...filtros, cantor: e.target.value })}
+              onChange={(e) =>
+                setFiltros({ ...filtros, cantor: e.target.value })
+              }
               className={`${campo} pl-12`}
             />
           </div>
@@ -391,11 +437,14 @@ export const CadastrarHino: React.FC<CadastrarHinoProps> = ({ configuracoes }) =
             <p className="text-gray-500">Nenhum hino encontrado</p>
           </Painel>
         ) : (
-          hinosFiltrados.map(hino => {
+          hinosFiltrados.map((hino) => {
             const aberto = acoesAbertas === hino.id;
 
             return (
-              <Painel key={hino.id} className="p-3 sm:p-4 border-l-4 border-l-indigo-500">
+              <Painel
+                key={hino.id}
+                className="p-3 sm:p-4 border-l-4 border-l-indigo-500"
+              >
                 <div className="flex items-center gap-3">
                   <div className="shrink-0 w-14 h-14 sm:w-16 sm:h-16 rounded-2xl bg-indigo-50 text-indigo-600 flex items-center justify-center">
                     <Music2 size={26} />
@@ -420,38 +469,38 @@ export const CadastrarHino: React.FC<CadastrarHinoProps> = ({ configuracoes }) =
                       {hino.categoria}
                     </p>
                   </div>
+                </div>
 
-                  {/* Ações principais */}
-                  <div className="shrink-0 flex gap-1">
-                    <BotaoAcao
-                      icon={Eye}
-                      titulo="Ver letra"
-                      cor="bg-blue-50 text-blue-600 hover:bg-blue-100"
-                      onClick={() => setModalLetra(hino)}
-                    />
-                    <BotaoAcao
-                      icon={Pencil}
-                      titulo="Editar"
-                      cor="bg-indigo-50 text-indigo-600 hover:bg-indigo-100"
-                      onClick={() => handleEditar(hino)}
-                    />
-                    <BotaoAcao
-                      icon={Trash2}
-                      titulo="Apagar"
-                      cor="bg-red-50 text-red-600 hover:bg-red-100"
-                      onClick={() => setDeletePasswordModal(hino)}
-                    />
-                    <BotaoAcao
-                      icon={MoreHorizontal}
-                      titulo="Mais opções"
-                      cor={
-                        aberto
-                          ? 'bg-gray-700 text-white'
-                          : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-                      }
-                      onClick={() => setAcoesAbertas(aberto ? null : hino.id)}
-                    />
-                  </div>
+                {/* Ações principais */}
+                <div className="mt-3 flex gap-1 justify-end">
+                  <BotaoAcao
+                    icon={Eye}
+                    titulo="Ver letra"
+                    cor="bg-blue-50 text-blue-600 hover:bg-blue-100"
+                    onClick={() => setModalLetra(hino)}
+                  />
+                  <BotaoAcao
+                    icon={Pencil}
+                    titulo="Editar"
+                    cor="bg-indigo-50 text-indigo-600 hover:bg-indigo-100"
+                    onClick={() => handleEditar(hino)}
+                  />
+                  <BotaoAcao
+                    icon={Trash2}
+                    titulo="Apagar"
+                    cor="bg-red-50 text-red-600 hover:bg-red-100"
+                    onClick={() => setDeletePasswordModal(hino)}
+                  />
+                  <BotaoAcao
+                    icon={MoreHorizontal}
+                    titulo="Mais opções"
+                    cor={
+                      aberto
+                        ? "bg-gray-700 text-white"
+                        : "bg-gray-100 text-gray-600 hover:bg-gray-200"
+                    }
+                    onClick={() => setAcoesAbertas(aberto ? null : hino.id)}
+                  />
                 </div>
 
                 {/* Ações extras */}
@@ -469,7 +518,7 @@ export const CadastrarHino: React.FC<CadastrarHinoProps> = ({ configuracoes }) =
                       cor="bg-green-50 text-green-700 hover:bg-green-100"
                       onClick={() =>
                         shareViaWhatsApp(
-                          `Confira o hino: ${hino.nome} (Tom: ${hino.tom}, Cantor: ${hino.cantor})`
+                          `Confira o hino: ${hino.nome} (Tom: ${hino.tom}, Cantor: ${hino.cantor})`,
                         )
                       }
                     />
