@@ -58,13 +58,14 @@ export const Sidebar: React.FC<SidebarProps> = ({
 
       <aside
         className={`
-          fixed md:relative w-64 h-screen bg-white border-r border-gray-200 shadow-lg
+          fixed md:relative top-0 left-0 w-64 h-[100dvh] md:h-full bg-white border-r border-gray-200 shadow-lg
           transform transition-transform duration-300 z-50
           ${isOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'}
-          overflow-y-auto
+          flex flex-col
         `}
       >
-        <nav className="p-4">
+        {/* Só a lista de itens rola; o rodapé com o crédito fica sempre visível. */}
+        <nav className="flex-1 overflow-y-auto p-4">
           {menuItems.map((item) => {
             const Icon = item.icon;
             const isActive = currentPage === item.id;
@@ -89,7 +90,10 @@ export const Sidebar: React.FC<SidebarProps> = ({
           })}
         </nav>
 
-        <div className="absolute bottom-4 left-4 right-4 p-3 bg-indigo-50 rounded-lg">
+        <div
+          className="shrink-0 m-4 mt-0 p-3 bg-indigo-50 rounded-lg"
+          style={{ marginBottom: 'calc(1rem + env(safe-area-inset-bottom))' }}
+        >
           <p className="text-xs text-gray-600">
             💡 <strong>Dica:</strong> Todos os dados são salvos automaticamente.
           </p>
