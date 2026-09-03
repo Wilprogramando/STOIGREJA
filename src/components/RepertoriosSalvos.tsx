@@ -4,6 +4,9 @@ import { getAllRepertorios, deleteRepertorio, addRepertorio, getAllHinos } from 
 import { generateRepertorioPdf, shareViaWhatsApp } from '../services/pdf';
 import { Repertorio, Configuracoes, Hino } from '../types';
 
+// Tamanho inicial da letra (px). Ao fechar e abrir a letra, volta para este valor.
+const TAMANHO_LETRA_PADRAO = 18;
+
 interface RepertoriosSalvosProps {
   configuracoes: Configuracoes | null;
   onEdit?: (repertorio: Repertorio) => void;
@@ -18,18 +21,12 @@ export const RepertoriosSalvos: React.FC<RepertoriosSalvosProps> = ({ configurac
   const [hinoSelecionado, setHinoSelecionado] = useState<any>(null);
   const [listaLetra, setListaLetra] = useState<Hino[]>([]);
   const [indiceLetra, setIndiceLetra] = useState(0);
-  const [tamanhoLetra, setTamanhoLetra] = useState<number>(() => {
-    const salvo = Number(localStorage.getItem('tamanhoLetra'));
-    return salvo >= 12 && salvo <= 40 ? salvo : 18;
-  });
+  const [tamanhoLetra, setTamanhoLetra] = useState<number>(TAMANHO_LETRA_PADRAO);
   const [mostrarPassados, setMostrarPassados] = useState(false);
-
-  useEffect(() => {
-    localStorage.setItem('tamanhoLetra', String(tamanhoLetra));
-  }, [tamanhoLetra]);
 
   // Abre a letra guardando a lista do repertório, para navegar entre os hinos
   const abrirLetra = (lista: Hino[], idx: number) => {
+    setTamanhoLetra(TAMANHO_LETRA_PADRAO);
     setListaLetra(lista);
     setIndiceLetra(idx);
     setHinoSelecionado(lista[idx]);
@@ -42,6 +39,7 @@ export const RepertoriosSalvos: React.FC<RepertoriosSalvosProps> = ({ configurac
   };
 
   const fecharLetra = () => {
+    setTamanhoLetra(TAMANHO_LETRA_PADRAO);
     setHinoSelecionado(null);
     setListaLetra([]);
     setIndiceLetra(0);
