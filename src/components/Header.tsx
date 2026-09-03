@@ -40,7 +40,7 @@ export const Header: React.FC<HeaderProps> = ({
 
   return (
     <header className="relative bg-gradient-to-r from-indigo-600 to-purple-600 text-white">
-      <div className="max-w-7xl mx-auto px-4 pt-4 pb-9 flex items-center justify-between">
+      <div className="max-w-7xl mx-auto px-4 pt-4 pb-6 flex items-center justify-between">
         <div className="flex items-center gap-3">
           <button
             onClick={onToggleSidebar}
@@ -80,14 +80,14 @@ export const Header: React.FC<HeaderProps> = ({
 
       {/* Onda na base: tira o corte reto do cabeçalho. */}
       <svg
-        className="absolute inset-x-0 bottom-0 w-full h-8 text-gray-100"
+        className="absolute inset-x-0 bottom-0 w-full h-4 text-gray-100"
         viewBox="0 0 1440 60"
         preserveAspectRatio="none"
         aria-hidden="true"
       >
         <path
           fill="currentColor"
-          d="M0,22 C240,60 560,58 820,36 C1060,16 1280,10 1440,26 L1440,60 L0,60 Z"
+          d="M0,38 C300,56 620,54 900,44 C1130,36 1300,34 1440,40 L1440,60 L0,60 Z"
         />
       </svg>
     </header>
