@@ -17,6 +17,7 @@ import { BarraInferior } from './components/BarraInferior';
 import { initializeHarpaBase, getConfiguracoes } from './services/db';
 import { registrarAcesso } from './services/acessos';
 import { menuVisivel, lerMenusOcultos } from './services/menus';
+import { sincronizarCantoresDosHinos } from './services/cantores';
 import { Configuracoes, Repertorio } from './types';
 
 export default function App() {
@@ -65,6 +66,9 @@ export default function App() {
   const initializeApp = async () => {
     try {
       await initializeHarpaBase();
+
+      // Cantores já gravados nos hinos entram na lista das Configurações.
+      sincronizarCantoresDosHinos();
 
       const cfg = await getConfiguracoes();
 

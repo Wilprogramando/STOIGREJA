@@ -4,6 +4,7 @@ import { addHino, updateHino, deleteHino, getAllHinos } from '../services/db';
 import { generateHinoPdf, shareViaWhatsApp } from '../services/pdf';
 import { Hino, Configuracoes } from '../types';
 import { ModalVisualizaLetra } from './ModalVisualizaLetra';
+import { lerCantores, sincronizarCantoresDosHinos } from '../services/cantores';
 import { DeletePasswordModal } from './DeletePasswordModal';
 
 interface CadastrarHinoProps {
@@ -18,6 +19,7 @@ export const CadastrarHino: React.FC<CadastrarHinoProps> = ({ configuracoes }) =
   const [showForm, setShowForm] = useState(false);
   const [editando, setEditando] = useState<Hino | null>(null);
   const [filtros, setFiltros] = useState({ tom: '', cantor: '', nome: '' });
+  const [cantores, setCantores] = useState<string[]>(() => lerCantores());
   const [modalLetra, setModalLetra] = useState<Hino | null>(null);
   const [deletePasswordModal, setDeletePasswordModal] = useState<Hino | null>(null);
 
@@ -32,6 +34,8 @@ export const CadastrarHino: React.FC<CadastrarHinoProps> = ({ configuracoes }) =
 
   useEffect(() => {
     loadHinos();
+    // Mantém a lista de cantores em dia com o gerenciador das Configurações.
+    sincronizarCantoresDosHinos().then(setCantores);
   }, []);
 
   const loadHinos = async () => {
@@ -197,13 +201,20 @@ export const CadastrarHino: React.FC<CadastrarHinoProps> = ({ configuracoes }) =
                 </select>
               </div>
 
-              <input
-                type="text"
+              {/* Cantores vêm do gerenciador em Configurações */}
+              <select
                 value={formData.cantor}
                 onChange={(e) => setFormData({ ...formData, cantor: e.target.value })}
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-indigo-600 text-sm"
-                placeholder="👤 Cantor"
-              />
+              >
+                <option value="">👤 Selecione o cantor</option>
+                {formData.cantor && !cantores.includes(formData.cantor) && (
+                  <option value={formData.cantor}>{formData.cantor}</option>
+                )}
+                {cantores.map(c => (
+                  <option key={c} value={c}>{c}</option>
+                ))}
+              </select>
             </div>
 
             {/* Letra */}

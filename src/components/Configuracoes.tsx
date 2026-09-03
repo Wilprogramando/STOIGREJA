@@ -1,10 +1,17 @@
 import React, { useState, useEffect } from 'react';
-import { Save, Download, Upload, Trash2, AlertCircle, Eye, EyeOff, BarChart3 } from 'lucide-react';
+import { Save, Download, Upload, Trash2, AlertCircle, Eye, EyeOff, BarChart3, Mic2, UserPlus, Pencil } from 'lucide-react';
 import { getConfiguracoes, saveConfiguracoes, exportData, importData, clearAllData } from '../services/db';
 import { Configuracoes } from '../types';
 import { LogoUploader } from './LogoUploader';
 import { MENUS, lerMenusOcultos, salvarMenusOcultos } from '../services/menus';
 import { lerAcessos, zerarAcessos, RegistroAcessos } from '../services/acessos';
+import {
+  lerCantores,
+  adicionarCantor,
+  removerCantor,
+  renomearCantor,
+  sincronizarCantoresDosHinos,
+} from '../services/cantores';
 
 interface ConfiguracoesProps {
   onConfigChange?: () => void;
@@ -23,10 +30,45 @@ export const ConfiguracoesView: React.FC<ConfiguracoesProps> = ({ onConfigChange
   const [senhaInput, setSenhaInput] = useState('');
   const [acessos, setAcessos] = useState<RegistroAcessos>(() => lerAcessos());
   const [menusOcultos, setMenusOcultos] = useState<string[]>(() => lerMenusOcultos());
+  const [cantores, setCantores] = useState<string[]>(() => lerCantores());
+  const [novoCantor, setNovoCantor] = useState('');
 
   useEffect(() => {
     loadConfiguracoes();
+    // Traz para a lista quem já está gravado como cantor nos hinos cadastrados.
+    sincronizarCantoresDosHinos().then(setCantores);
   }, []);
+
+  const handleAdicionarCantor = () => {
+    const nome = novoCantor.trim();
+    if (!nome) return;
+    const jaExiste = cantores.some(
+      c => c.toLocaleLowerCase('pt-BR') === nome.toLocaleLowerCase('pt-BR')
+    );
+    if (jaExiste) {
+      alert('Esse cantor já está cadastrado.');
+      return;
+    }
+    setCantores(adicionarCantor(nome));
+    setNovoCantor('');
+  };
+
+  const handleRenomearCantor = (nome: string) => {
+    const novo = prompt('Novo nome do cantor:', nome);
+    if (novo === null) return;
+    if (!novo.trim()) {
+      alert('O nome não pode ficar em branco.');
+      return;
+    }
+    setCantores(renomearCantor(nome, novo.trim()));
+  };
+
+  const handleRemoverCantor = (nome: string) => {
+    if (!confirm(`Remover "${nome}" da lista de cantores?
+
+Os hinos já cadastrados com esse cantor não mudam.`)) return;
+    setCantores(removerCantor(nome));
+  };
 
   const loadConfiguracoes = async () => {
     try {
@@ -320,6 +362,74 @@ export const ConfiguracoesView: React.FC<ConfiguracoesProps> = ({ onConfigChange
           <div className="mt-4 p-3 bg-blue-50 border border-blue-200 rounded-lg text-sm text-blue-800">
             💡 A logo será exibida no topo dos PDFs gerados (hinos e repertórios).
           </div>
+        </div>
+
+        {/* Cantores */}
+        <div className="bg-white p-6 rounded-lg shadow-md">
+          <h3 className="text-xl font-bold text-gray-900 mb-1 flex items-center gap-2">
+            <Mic2 size={20} className="text-indigo-600" />
+            Cantores
+          </h3>
+          <p className="text-sm text-gray-500 mb-4">
+            Quem estiver nesta lista aparece para escolher no campo "Cantor" ao cadastrar
+            ou editar um hino.
+          </p>
+
+          <div className="flex gap-2 mb-4">
+            <input
+              type="text"
+              value={novoCantor}
+              onChange={(e) => setNovoCantor(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') {
+                  e.preventDefault();
+                  handleAdicionarCantor();
+                }
+              }}
+              placeholder="Nome do cantor"
+              className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-indigo-600"
+            />
+            <button
+              onClick={handleAdicionarCantor}
+              className="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition flex items-center gap-2"
+            >
+              <UserPlus size={18} />
+              Adicionar
+            </button>
+          </div>
+
+          {cantores.length === 0 ? (
+            <p className="text-gray-500 text-sm text-center py-4">
+              Nenhum cantor cadastrado ainda.
+            </p>
+          ) : (
+            <div className="space-y-2">
+              {cantores.map(cantor => (
+                <div
+                  key={cantor}
+                  className="flex items-center justify-between gap-3 p-3 rounded-lg border border-gray-200"
+                >
+                  <p className="font-medium text-gray-800 truncate">👤 {cantor}</p>
+                  <div className="flex gap-1 shrink-0">
+                    <button
+                      onClick={() => handleRenomearCantor(cantor)}
+                      title="Renomear"
+                      className="p-2 bg-indigo-50 text-indigo-600 rounded-lg hover:bg-indigo-100 transition"
+                    >
+                      <Pencil size={16} />
+                    </button>
+                    <button
+                      onClick={() => handleRemoverCantor(cantor)}
+                      title="Remover"
+                      className="p-2 bg-red-50 text-red-600 rounded-lg hover:bg-red-100 transition"
+                    >
+                      <Trash2 size={16} />
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
 
         {/* Menus liberados */}

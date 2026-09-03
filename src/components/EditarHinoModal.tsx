@@ -1,7 +1,8 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { X, Save } from 'lucide-react';
 import { Hino } from '../types';
 import { updateHino } from '../services/db';
+import { lerCantores, sincronizarCantoresDosHinos } from '../services/cantores';
 
 interface EditarHinoModalProps {
   hino: Hino;
@@ -44,6 +45,12 @@ export const EditarHinoModal: React.FC<EditarHinoModalProps> = ({ hino, onClose,
   const [nome, setNome] = useState(hino.nome || '');
   const [tom, setTom] = useState(hino.tom || '');
   const [cantor, setCantor] = useState(hino.cantor || '');
+  const [cantores, setCantores] = useState<string[]>(() => lerCantores());
+
+  useEffect(() => {
+    // Mantém a lista de cantores em dia com o gerenciador das Configurações.
+    sincronizarCantoresDosHinos().then(setCantores);
+  }, []);
   const [categoria, setCategoria] = useState(hino.categoria || '');
   const [observacoes, setObservacoes] = useState(hino.observacoes || '');
   const [letra, setLetra] = useState(hino.letra || '');
@@ -126,11 +133,18 @@ export const EditarHinoModal: React.FC<EditarHinoModalProps> = ({ hino, onClose,
 
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">Cantor</label>
-              <input
+              {/* Cantores vêm do gerenciador em Configurações */}
+              <select
                 value={cantor}
                 onChange={e => setCantor(e.target.value)}
                 className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-indigo-500 focus:outline-none"
-              />
+              >
+                <option value="">Selecione o cantor</option>
+                {cantor && !cantores.includes(cantor) && <option value={cantor}>{cantor}</option>}
+                {cantores.map(c => (
+                  <option key={c} value={c}>{c}</option>
+                ))}
+              </select>
             </div>
 
             <div>

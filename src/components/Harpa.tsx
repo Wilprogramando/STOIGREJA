@@ -13,6 +13,7 @@ import { generateHinoPdf, shareViaWhatsApp } from '../services/pdf';
 import { carregarFavoritosSupabase, adicionarFavoritoSupabase, removerFavoritoSupabase } from '../services/supabase';
 import { Hino, HarpaItem, Configuracoes } from '../types';
 import { ModalVisualizaLetra } from './ModalVisualizaLetra';
+import { lerCantores, sincronizarCantoresDosHinos } from '../services/cantores';
 import { ImportCSVModal } from './ImportCSVModal';
 import { DeletePasswordModal } from './DeletePasswordModal';
 import { createClient } from '@supabase/supabase-js';
@@ -43,6 +44,7 @@ export const Harpa: React.FC<HarpaProps> = ({ configuracoes }) => {
   const [favoritos, setFavoritos] = useState<Set<string>>(new Set());
   const [usuarioId, setUsuarioId] = useState<string>(USUARIO_ANONIMO_ID);
 
+  const [cantores, setCantores] = useState<string[]>(() => lerCantores());
   const [formData, setFormData] = useState({
     numeroHarpa: '',
     nome: '',
@@ -55,6 +57,8 @@ export const Harpa: React.FC<HarpaProps> = ({ configuracoes }) => {
   useEffect(() => {
     loadHinos();
     carregarFavoritos();
+    // Mantém a lista de cantores em dia com o gerenciador das Configurações.
+    sincronizarCantoresDosHinos().then(setCantores);
   }, []);
 
   const loadHinos = async () => {
@@ -367,13 +371,20 @@ export const Harpa: React.FC<HarpaProps> = ({ configuracoes }) => {
 
               <div className="lg:col-span-4">
                 <label className="block text-sm font-medium text-gray-700 mb-1">👤 Cantor</label>
-                <input
-                  type="text"
+                {/* Cantores vêm do gerenciador em Configurações */}
+                <select
                   value={formData.cantor}
                   onChange={(e) => setFormData({ ...formData, cantor: e.target.value })}
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-indigo-600 text-sm"
-                  placeholder="Nome de quem vai cantar"
-                />
+                >
+                  <option value="">Selecione o cantor</option>
+                  {formData.cantor && !cantores.includes(formData.cantor) && (
+                    <option value={formData.cantor}>{formData.cantor}</option>
+                  )}
+                  {cantores.map(c => (
+                    <option key={c} value={c}>{c}</option>
+                  ))}
+                </select>
               </div>
             </div>
 
