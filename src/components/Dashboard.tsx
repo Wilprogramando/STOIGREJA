@@ -7,7 +7,8 @@ import {
   Plus,
   BarChart3,
   ChevronRight,
-  TrendingUp
+  TrendingUp,
+  Music2
 } from 'lucide-react';
 import { getAllHinos, getAllRepertorios, getHinosByType } from '../services/db';
 import { Repertorio, Hino } from '../types';
@@ -366,31 +367,45 @@ export const Dashboard: React.FC<DashboardProps> = ({ onPageChange }) => {
             Nenhum hino cantado nos últimos 30 dias.
           </p>
         ) : (
-          <div className="mt-5 space-y-4">
+          <div className="mt-5 space-y-3">
             {stats.maisCantados.map((item, index) => {
               const maior = stats.maisCantados[0].total || 1;
-              const largura = Math.max(6, Math.round((item.total / maior) * 100));
+              const largura = Math.max(8, Math.round((item.total / maior) * 100));
 
               return (
-                <div key={item.nome} title={`${item.nome}: ${item.total} vez(es)`}>
-                  <div className="flex items-baseline justify-between gap-3 mb-1.5">
-                    <p className="text-sm font-medium text-gray-700 truncate">
-                      <span className="text-gray-400 tabular-nums mr-2">{index + 1}</span>
+                <div
+                  key={item.nome}
+                  title={`${item.nome}: ${item.total} vez(es)`}
+                  className="bg-indigo-50/60 rounded-2xl p-3 flex items-center gap-3"
+                >
+                  {/* Posição no ranking */}
+                  <span className="shrink-0 w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-indigo-100 text-indigo-700 font-extrabold flex items-center justify-center tabular-nums">
+                    {index + 1}
+                  </span>
+
+                  <Music2 size={18} className="text-indigo-500 shrink-0 hidden sm:block" />
+
+                  {/* Nome e barra */}
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm sm:text-base font-bold text-gray-900 truncate">
                       {item.nome}
                     </p>
-                    <p className="text-sm font-bold text-gray-900 tabular-nums shrink-0">
-                      {item.total}
-                    </p>
+                    <div className="mt-1.5 h-1.5 w-full bg-indigo-100 rounded-full overflow-hidden">
+                      <div
+                        className="h-full rounded-full bg-gradient-to-r from-indigo-500 to-violet-600 transition-all duration-500"
+                        style={{ width: `${largura}%` }}
+                      />
+                    </div>
                   </div>
 
-                  <div className="h-2.5 w-full bg-gray-100 rounded-full overflow-hidden">
-                    <div
-                      className={`h-full rounded-full transition-all duration-500 ${
-                        index === 0 ? 'bg-indigo-600' : 'bg-indigo-400'
-                      }`}
-                      style={{ width: `${largura}%` }}
-                    />
-                  </div>
+                  {/* Quantidade */}
+                  <span className="shrink-0 text-lg sm:text-xl font-extrabold text-gray-900 tabular-nums">
+                    {item.total}
+                  </span>
+
+                  <span className="shrink-0 w-8 h-8 rounded-full bg-indigo-100 text-indigo-600 flex items-center justify-center">
+                    <Music2 size={15} />
+                  </span>
                 </div>
               );
             })}
