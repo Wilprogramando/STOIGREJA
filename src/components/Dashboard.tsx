@@ -209,7 +209,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ onPageChange }) => {
     >
       {/* Marca d'água: o próprio ícone do card, grande e bem apagado */}
       <Icon
-        size={72}
+        size={52}
         className={`${cor.icone} opacity-10 absolute -right-2 -bottom-2 pointer-events-none`}
         strokeWidth={1.5}
       />
@@ -235,7 +235,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ onPageChange }) => {
     >
       {/* Marca d'água: o próprio ícone do botão, bem apagado */}
       <Icon
-        size={64}
+        size={46}
         className="opacity-10 absolute -right-2 -bottom-2 pointer-events-none"
         strokeWidth={1.5}
       />
