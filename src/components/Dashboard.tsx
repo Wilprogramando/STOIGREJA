@@ -221,7 +221,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ onPageChange }) => {
         <div className="min-w-0">
           <p className="text-xs sm:text-sm font-semibold text-gray-700 truncate">{label}</p>
           <p className="text-2xl sm:text-3xl font-extrabold text-gray-900 leading-tight">{value}</p>
-          <p className="text-xs text-gray-500 truncate">{rodape}</p>
+          {rodape && <p className="text-xs text-gray-500 truncate">{rodape}</p>}
         </div>
       </div>
     </button>
@@ -348,7 +348,6 @@ export const Dashboard: React.FC<DashboardProps> = ({ onPageChange }) => {
           icon={Music}
           label="Hinos Comuns"
           value={stats.totalHinos}
-          rodape="Cifrados e prontos"
           cor={{ borda: 'border-l-indigo-500', fundo: 'bg-indigo-50', icone: 'text-indigo-600' }}
           onClick={() => onPageChange('cadastrar-hino')}
         />
@@ -356,7 +355,6 @@ export const Dashboard: React.FC<DashboardProps> = ({ onPageChange }) => {
           icon={BookOpen}
           label="Hinos da Harpa"
           value={stats.totalHarpa}
-          rodape="Harpa Cristã"
           cor={{ borda: 'border-l-purple-500', fundo: 'bg-purple-50', icone: 'text-purple-600' }}
           onClick={() => onPageChange('harpa')}
         />
