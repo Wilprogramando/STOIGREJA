@@ -79,15 +79,15 @@ export const CampoHarmonico = () => {
           <p className="text-xs text-indigo-100">Os 7 acordes que combinam neste tom</p>
         </div>
 
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 p-3">
+        <div className="grid grid-cols-4 sm:grid-cols-7 gap-1.5 p-3">
           {acordes.map((acorde, index) => (
             <div
               key={GRAUS[index]}
-              className={`rounded-xl border p-3 text-center ${FUNCOES[index].cor}`}
+              className={`rounded-lg border p-1.5 text-center ${FUNCOES[index].cor}`}
             >
-              <p className="text-xs font-bold opacity-70">{GRAUS[index]}</p>
-              <p className="text-2xl font-extrabold leading-tight text-gray-900">{acorde}</p>
-              <p className="text-[10px] font-medium opacity-80">{FUNCOES[index].nome}</p>
+              <p className="text-[10px] font-bold opacity-70">{GRAUS[index]}</p>
+              <p className="text-lg font-extrabold leading-tight text-gray-900">{acorde}</p>
+              <p className="text-[9px] font-medium opacity-80 leading-tight">{FUNCOES[index].nome}</p>
             </div>
           ))}
         </div>
