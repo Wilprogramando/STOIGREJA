@@ -11,7 +11,24 @@ interface HinoUsage {
   categoria: string;
   numeroHarpa?: number;
   usageCount: number;
+  usos30dias: number;
   ultimoUso: string;
+}
+
+/** Data de corte: repertórios dos últimos 30 dias entram na conta do período. */
+function inicioDos30Dias() {
+  const limite = new Date();
+  limite.setDate(limite.getDate() - 30);
+  limite.setHours(0, 0, 0, 0);
+  return limite;
+}
+
+/** O culto aconteceu nos últimos 30 dias? */
+function dentroDos30Dias(data: string, limite: Date) {
+  const [ano, mes, dia] = (data || '').split('-').map(Number);
+  if (!ano || !mes || !dia) return false;
+  const doCulto = new Date(ano, mes - 1, dia);
+  return doCulto >= limite && doCulto.getTime() <= Date.now();
 }
 
 /** Tira acentos e maiúsculas para comparar nomes com segurança. */
@@ -41,6 +58,7 @@ export const Relatorios: React.FC = () => {
   const [topHinos, setTopHinos] = useState<HinoUsage[]>([]);
   const [topHarpa, setTopHarpa] = useState<HinoUsage[]>([]);
   const [error, setError] = useState<string | null>(null);
+  const [repertorios30dias, setRepertorios30dias] = useState(0);
   const [aba, setAba] = useState<'comuns' | 'harpa'>('comuns');
   const [mostrarTabela, setMostrarTabela] = useState(false);
 
@@ -56,11 +74,23 @@ export const Relatorios: React.FC = () => {
       const repertorios = await getAllRepertorios();
       const todosHinos = await getAllHinos();
 
+      const limite30dias = inicioDos30Dias();
+
+      // Repertórios (cultos) que aconteceram nos últimos 30 dias.
+      setRepertorios30dias(
+        repertorios.filter((rep: any) => dentroDos30Dias(rep.data, limite30dias)).length
+      );
+
       // Conta quantas vezes cada hino apareceu nos repertórios.
-      const usageMap = new Map<string, { hino: Hino; count: number; ultimoUso: string }>();
+      const usageMap = new Map<
+        string,
+        { hino: Hino; count: number; count30: number; ultimoUso: string }
+      >();
 
       repertorios.forEach((rep: any) => {
         if (!rep.hinos || !Array.isArray(rep.hinos)) return;
+
+        const recente = dentroDos30Dias(rep.data, limite30dias);
 
         rep.hinos.forEach((hinoRef: any) => {
           // O repertório guarda o hino como ID (novos) ou como objeto (antigos).
@@ -76,11 +106,17 @@ export const Relatorios: React.FC = () => {
 
           if (atual) {
             atual.count += 1;
+            if (recente) atual.count30 += 1;
             if (new Date(dataUso) > new Date(atual.ultimoUso)) {
               atual.ultimoUso = dataUso;
             }
           } else {
-            usageMap.set(hinoId, { hino, count: 1, ultimoUso: dataUso });
+            usageMap.set(hinoId, {
+              hino,
+              count: 1,
+              count30: recente ? 1 : 0,
+              ultimoUso: dataUso
+            });
           }
         });
       });
@@ -88,7 +124,12 @@ export const Relatorios: React.FC = () => {
       // Hinos de saudação ficam de fora de todos os relatórios.
       const usados = Array.from(usageMap.values()).filter(item => !ehSaudacao(item.hino));
 
-      const paraUsage = (item: { hino: Hino; count: number; ultimoUso: string }): HinoUsage => ({
+      const paraUsage = (item: {
+        hino: Hino;
+        count: number;
+        count30: number;
+        ultimoUso: string;
+      }): HinoUsage => ({
         id: item.hino.id,
         nome: item.hino.nome,
         tom: item.hino.tom || 'N/A',
@@ -96,6 +137,7 @@ export const Relatorios: React.FC = () => {
         categoria: item.hino.categoria || 'Sem categoria',
         numeroHarpa: item.hino.numeroHarpa,
         usageCount: item.count,
+        usos30dias: item.count30,
         ultimoUso: item.ultimoUso
       });
 
@@ -136,8 +178,8 @@ export const Relatorios: React.FC = () => {
   );
 
   /** Número em destaque, no mesmo estilo dos cards do Dashboard. */
-  const Resumo = ({ icon: Icon, label, valor }: any) => (
-    <Painel className="relative overflow-hidden p-4">
+  const Resumo = ({ icon: Icon, label, valor, className = '' }: any) => (
+    <Painel className={`relative overflow-hidden p-4 ${className}`}>
       <Icon
         size={52}
         strokeWidth={1.5}
@@ -174,9 +216,21 @@ export const Relatorios: React.FC = () => {
             {hino.nome}
           </p>
 
-          <p className="text-xs text-gray-500 truncate mt-0.5">
-            {hino.tom} • {hino.cantor} • último uso {formatarData(hino.ultimoUso)}
-          </p>
+          <div className="flex items-center gap-2 mt-1">
+            <span
+              className={`shrink-0 text-[10px] font-bold px-2 py-0.5 rounded-full ${
+                hino.usos30dias > 0
+                  ? 'bg-green-100 text-green-700'
+                  : 'bg-gray-100 text-gray-500'
+              }`}
+              title="Vezes cantado nos últimos 30 dias"
+            >
+              {hino.usos30dias}x em 30 dias
+            </span>
+            <p className="text-xs text-gray-500 truncate">
+              {hino.tom} • {hino.cantor} • último uso {formatarData(hino.ultimoUso)}
+            </p>
+          </div>
 
           <div className="mt-1.5 h-1.5 w-full bg-indigo-100 rounded-full overflow-hidden">
             <div
@@ -246,9 +300,15 @@ export const Relatorios: React.FC = () => {
       </div>
 
       {/* Números */}
-      <div className="grid grid-cols-2 gap-3">
+      <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
         <Resumo icon={Music2} label="Hinos já usados" valor={hinosUsage.length} />
         <Resumo icon={TrendingUp} label="Mais usado" valor={`${topHinos[0]?.usageCount || 0}x`} />
+        <Resumo
+          icon={Calendar}
+          label="Cultos em 30 dias"
+          valor={repertorios30dias}
+          className="col-span-2 sm:col-span-1"
+        />
       </div>
 
       {/* Ranking */}
@@ -327,6 +387,9 @@ export const Relatorios: React.FC = () => {
                     <th className="px-4 py-2.5 text-center font-semibold">Tom</th>
                     <th className="px-4 py-2.5 text-left font-semibold">Cantor</th>
                     <th className="px-4 py-2.5 text-center font-semibold">Usos</th>
+                    <th className="px-4 py-2.5 text-center font-semibold whitespace-nowrap">
+                      30 dias
+                    </th>
                     <th className="px-4 py-2.5 text-left font-semibold whitespace-nowrap">
                       <Calendar size={14} className="inline mr-1 -mt-0.5" />
                       Último uso
@@ -344,6 +407,9 @@ export const Relatorios: React.FC = () => {
                       <td className="px-4 py-2.5 text-gray-600">{hino.cantor}</td>
                       <td className="px-4 py-2.5 text-center font-bold text-indigo-600 tabular-nums">
                         {hino.usageCount}
+                      </td>
+                      <td className="px-4 py-2.5 text-center font-bold text-green-600 tabular-nums">
+                        {hino.usos30dias}
                       </td>
                       <td className="px-4 py-2.5 text-gray-600 whitespace-nowrap">
                         {formatarData(hino.ultimoUso)}
