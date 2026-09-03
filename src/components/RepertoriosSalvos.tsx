@@ -15,7 +15,10 @@ import {
   FolderOpen,
   Search,
   Clock,
-  X
+  X,
+  Church,
+  FileText,
+  MoreVertical
 } from 'lucide-react';
 import { getAllRepertorios, deleteRepertorio, addRepertorio, getAllHinos } from '../services/db';
 import { generateRepertorioPdf, shareViaWhatsApp } from '../services/pdf';
@@ -40,6 +43,8 @@ export const RepertoriosSalvos: React.FC<RepertoriosSalvosProps> = ({ configurac
   const [indiceLetra, setIndiceLetra] = useState(0);
   const [tamanhoLetra, setTamanhoLetra] = useState<number>(TAMANHO_LETRA_PADRAO);
   const [mostrarPassados, setMostrarPassados] = useState(false);
+  /** Repertórios com o painel de ações recolhido. */
+  const [acoesFechadas, setAcoesFechadas] = useState<string[]>([]);
 
   // Abre a letra guardando a lista do repertório, para navegar entre os hinos
   const abrirLetra = (lista: Hino[], idx: number) => {
@@ -304,30 +309,43 @@ export const RepertoriosSalvos: React.FC<RepertoriosSalvosProps> = ({ configurac
     </div>
   );
 
-  /** Botão redondo de ação do card. */
+  /** Botão de ação do card: ícone em cima, nome embaixo. */
   const BotaoAcao = ({ icon: Icon, titulo, cor, onClick }: any) => (
     <button
       onClick={onClick}
       title={titulo}
-      className={`p-2.5 rounded-xl transition ${cor}`}
+      className="flex flex-col items-center gap-1.5 min-w-0 flex-1"
     >
-      <Icon size={18} />
+      <span className={`p-2.5 rounded-xl transition ${cor}`}>
+        <Icon size={18} />
+      </span>
+      <span className="text-[10px] sm:text-xs font-medium text-gray-500 text-center leading-tight">
+        {titulo}
+      </span>
     </button>
   );
 
   return (
     <div className="max-w-6xl mx-auto pb-20">
       {/* Cabeçalho */}
-      <div className="flex items-start gap-3 mb-5">
+      <div className="relative flex items-start gap-3 mb-5">
         <div className="bg-indigo-50 text-indigo-600 p-2.5 rounded-xl shrink-0">
           <FolderOpen size={22} />
         </div>
-        <div className="min-w-0">
+        <div className="min-w-0 flex-1">
           <h2 className="text-2xl font-bold text-gray-900">Repertórios Salvos</h2>
           <p className="text-sm text-gray-500">
             Veja, edite, compartilhe e gere o PDF dos seus cultos
           </p>
         </div>
+
+        {/* Ilustração decorativa */}
+        <img
+          src="/ilustracao-repertorios.svg"
+          alt=""
+          aria-hidden="true"
+          className="shrink-0 w-24 sm:w-32 -mt-3 -mr-1 pointer-events-none select-none"
+        />
       </div>
 
       {/* Abas */}
@@ -337,7 +355,7 @@ export const RepertoriosSalvos: React.FC<RepertoriosSalvosProps> = ({ configurac
           className={`flex-1 px-4 py-2.5 rounded-xl font-semibold text-sm transition flex items-center justify-center gap-2 ${
             !mostrarPassados
               ? 'bg-indigo-600 text-white shadow-md'
-              : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+              : 'bg-white border border-gray-200 text-gray-600 hover:bg-gray-50'
           }`}
         >
           <Calendar size={16} />
@@ -348,7 +366,7 @@ export const RepertoriosSalvos: React.FC<RepertoriosSalvosProps> = ({ configurac
           className={`flex-1 px-4 py-2.5 rounded-xl font-semibold text-sm transition flex items-center justify-center gap-2 ${
             mostrarPassados
               ? 'bg-purple-600 text-white shadow-md'
-              : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+              : 'bg-white border border-gray-200 text-gray-600 hover:bg-gray-50'
           }`}
         >
           <FolderOpen size={16} />
@@ -389,12 +407,17 @@ export const RepertoriosSalvos: React.FC<RepertoriosSalvosProps> = ({ configurac
               h => h !== null && h !== undefined
             );
             const hoje = ehHoje(repertorio.data);
+            const acoesVisiveis = !acoesFechadas.includes(repertorio.id);
 
             return (
               <Painel key={repertorio.id} className="p-4 sm:p-6">
                 {/* Título e data */}
-                <div className="flex items-start justify-between gap-3 mb-3">
-                  <div className="min-w-0">
+                <div className="flex items-start gap-3 mb-4">
+                  <div className="shrink-0 w-14 h-14 sm:w-16 sm:h-16 rounded-2xl bg-gradient-to-br from-indigo-500 to-violet-700 text-white flex items-center justify-center shadow-md">
+                    <Church size={26} />
+                  </div>
+
+                  <div className="min-w-0 flex-1">
                     <h3 className="text-lg sm:text-xl font-bold text-gray-900 break-words">
                       {repertorio.nome}
                     </h3>
@@ -422,10 +445,25 @@ export const RepertoriosSalvos: React.FC<RepertoriosSalvosProps> = ({ configurac
                       </span>
                     </div>
                   </div>
+
+                  <button
+                    onClick={() =>
+                      setAcoesFechadas(atual =>
+                        acoesVisiveis
+                          ? [...atual, repertorio.id]
+                          : atual.filter(id => id !== repertorio.id)
+                      )
+                    }
+                    title={acoesVisiveis ? 'Esconder ações' : 'Mostrar ações'}
+                    className="shrink-0 p-2 rounded-xl border border-gray-200 text-gray-500 hover:bg-gray-50 transition"
+                  >
+                    <MoreVertical size={18} />
+                  </button>
                 </div>
 
                 {/* Botões */}
-                <div className="flex gap-1.5 flex-wrap mb-4">
+                {acoesVisiveis && (
+                <div className="flex gap-1 mb-4 p-3 rounded-2xl border border-gray-100 bg-gray-50/60">
                   <BotaoAcao
                     icon={Eye}
                     titulo="Visualizar"
@@ -444,7 +482,7 @@ export const RepertoriosSalvos: React.FC<RepertoriosSalvosProps> = ({ configurac
                   />
                   <BotaoAcao
                     icon={Download}
-                    titulo="Baixar PDF"
+                    titulo="Exportar PDF"
                     cor="bg-orange-50 text-orange-600 hover:bg-orange-100"
                     onClick={() => handleGerarPdf(repertorio)}
                   />
@@ -462,11 +500,12 @@ export const RepertoriosSalvos: React.FC<RepertoriosSalvosProps> = ({ configurac
                   />
                   <BotaoAcao
                     icon={Trash2}
-                    titulo="Deletar"
+                    titulo="Excluir"
                     cor="bg-red-50 text-red-600 hover:bg-red-100"
                     onClick={() => handleDeletar(repertorio.id)}
                   />
                 </div>
+                )}
 
                 {repertorio.observacoes && (
                   <div className="bg-amber-50 border border-amber-100 p-3 rounded-xl text-sm text-amber-900 mb-4">
@@ -482,7 +521,7 @@ export const RepertoriosSalvos: React.FC<RepertoriosSalvosProps> = ({ configurac
                     return (
                       <div
                         key={hino.id}
-                        className="bg-indigo-50/60 rounded-2xl p-3 flex items-center gap-3"
+                        className="bg-gray-50 border border-gray-100 border-l-4 border-l-indigo-500 rounded-2xl p-3 flex items-center gap-3"
                       >
                         <span className="shrink-0 w-8 h-8 sm:w-9 sm:h-9 rounded-xl bg-indigo-100 text-indigo-700 font-extrabold flex items-center justify-center tabular-nums text-sm">
                           {idx + 1}
@@ -501,8 +540,9 @@ export const RepertoriosSalvos: React.FC<RepertoriosSalvosProps> = ({ configurac
                         {hino?.letra && (
                           <button
                             onClick={() => abrirLetra(hinosDoRepertorio, idx)}
-                            className="shrink-0 px-3 py-1.5 bg-white text-indigo-600 border border-indigo-200 rounded-lg hover:bg-indigo-600 hover:text-white hover:border-indigo-600 transition text-xs font-semibold"
+                            className="shrink-0 px-3.5 py-2 bg-indigo-600 text-white rounded-xl hover:bg-indigo-700 transition text-xs font-bold flex items-center gap-1.5 shadow-sm"
                           >
+                            <FileText size={14} />
                             Letra
                           </button>
                         )}
@@ -510,6 +550,14 @@ export const RepertoriosSalvos: React.FC<RepertoriosSalvosProps> = ({ configurac
                     );
                   })}
                 </div>
+
+                {/* Total de hinos */}
+                {hinosDoRepertorio.length > 0 && (
+                  <div className="mt-3 py-2.5 rounded-xl bg-indigo-50 text-indigo-700 text-sm font-bold flex items-center justify-center gap-2">
+                    <Music size={15} />
+                    Total: {hinosDoRepertorio.length} hinos
+                  </div>
+                )}
               </Painel>
             );
           })

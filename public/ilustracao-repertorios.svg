@@ -1,0 +1,27 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="220" height="180" viewBox="0 0 220 180" fill="none">
+  <defs>
+    <linearGradient id="pastaFrente" x1="30" y1="70" x2="190" y2="165" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#6366f1"/>
+      <stop offset="1" stop-color="#4c1d95"/>
+    </linearGradient>
+    <linearGradient id="pastaFundo" x1="35" y1="35" x2="185" y2="120" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#a5b4fc"/>
+      <stop offset="1" stop-color="#6366f1"/>
+    </linearGradient>
+  </defs>
+
+  <!-- folhas saindo da pasta -->
+  <rect x="74" y="18" width="86" height="76" rx="10" fill="#ffffff" opacity="0.95"/>
+  <rect x="86" y="30" width="42" height="5" rx="2.5" fill="#c7d2fe"/>
+  <rect x="86" y="44" width="56" height="5" rx="2.5" fill="#e0e7ff"/>
+  <rect x="86" y="58" width="34" height="5" rx="2.5" fill="#e0e7ff"/>
+
+  <!-- nota musical na folha -->
+  <path d="M150 34v30a10 10 0 1 1-6-9V44l-22 6v26a10 10 0 1 1-6-9V47a5 5 0 0 1 4-5l26-7a4 4 0 0 1 4 4z" fill="#4338ca"/>
+
+  <!-- pasta: parte de tras -->
+  <path d="M28 58a12 12 0 0 1 12-12h38l12 14h56a12 12 0 0 1 12 12v18H28z" fill="url(#pastaFundo)"/>
+
+  <!-- pasta: parte da frente -->
+  <path d="M26 84a10 10 0 0 1 10-10h148a10 10 0 0 1 9.8 12l-11 54a12 12 0 0 1-11.8 9.6H45a12 12 0 0 1-11.8-9.7L23.4 96A10 10 0 0 1 26 84z" fill="url(#pastaFrente)"/>
+</svg>
