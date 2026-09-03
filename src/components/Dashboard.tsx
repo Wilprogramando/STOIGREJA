@@ -152,7 +152,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ onPageChange }) => {
   const StatCard = ({ icon: Icon, label, value, rodape, cor, onClick }: any) => (
     <button
       onClick={onClick}
-      className={`text-left bg-white rounded-2xl border border-gray-100 border-l-4 ${cor.borda} shadow-sm hover:shadow-md transition p-3 sm:p-4 w-full`}
+      className={`text-left bg-white rounded-2xl border border-gray-100 border-l-4 ${cor.borda} shadow-lg hover:shadow-xl transition p-3 sm:p-4 w-full`}
     >
       <div className="flex items-start gap-2 sm:gap-3">
         <div className={`${cor.fundo} ${cor.icone} p-2 sm:p-3 rounded-xl shrink-0`}>
@@ -171,7 +171,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ onPageChange }) => {
   const AcaoRapida = ({ icon: Icon, label, cor, onClick }: any) => (
     <button
       onClick={onClick}
-      className={`${cor.fundo} ${cor.texto} rounded-2xl py-5 px-4 font-semibold flex flex-col items-center justify-center gap-2 hover:brightness-95 transition`}
+      className={`${cor.fundo} ${cor.texto} rounded-2xl py-5 px-4 font-semibold flex flex-col items-center justify-center gap-2 shadow-lg hover:shadow-xl hover:brightness-95 transition`}
     >
       <Icon size={24} />
       <span className="text-sm">{label}</span>
@@ -216,7 +216,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ onPageChange }) => {
                 <button
                   key={rep.id}
                   onClick={() => onPageChange('repertorios')}
-                  className="w-full text-left bg-white rounded-2xl border border-gray-100 shadow-sm hover:shadow-md transition p-4 flex items-center gap-4"
+                  className="w-full text-left bg-white rounded-2xl border border-gray-100 shadow-lg hover:shadow-xl transition p-4 flex items-center gap-4"
                 >
                   <div className={`w-16 shrink-0 rounded-xl border py-2 text-center ${
                     hoje ? 'border-green-300 bg-green-50' : 'border-gray-200'
@@ -263,7 +263,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ onPageChange }) => {
             })}
           </div>
         ) : (
-          <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-8 text-center">
+          <div className="bg-white rounded-2xl border border-gray-100 shadow-lg p-8 text-center">
             <p className="text-gray-600">Nenhum repertório agendado</p>
             <button
               onClick={() => onPageChange('montar-repertorio')}
