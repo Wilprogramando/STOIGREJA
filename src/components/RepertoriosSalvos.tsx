@@ -395,7 +395,7 @@ export const RepertoriosSalvos: React.FC<RepertoriosSalvosProps> = ({ configurac
                 {/* Título e data */}
                 <div className="flex items-start justify-between gap-3 mb-3">
                   <div className="min-w-0">
-                    <h3 className="text-lg sm:text-xl font-bold text-gray-900 truncate">
+                    <h3 className="text-lg sm:text-xl font-bold text-gray-900 break-words">
                       {repertorio.nome}
                     </h3>
 
@@ -489,7 +489,7 @@ export const RepertoriosSalvos: React.FC<RepertoriosSalvosProps> = ({ configurac
                         </span>
 
                         <div className="flex-1 min-w-0">
-                          <p className="font-bold text-gray-900 text-sm truncate">
+                          <p className="font-bold text-gray-900 text-sm break-words">
                             {hino?.nome || 'Hino desconhecido'}
                           </p>
                           <p className="text-xs text-gray-500 truncate mt-0.5">
@@ -522,7 +522,7 @@ export const RepertoriosSalvos: React.FC<RepertoriosSalvosProps> = ({ configurac
           <div className="bg-white rounded-3xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-auto">
             <div className="sticky top-0 bg-gradient-to-r from-indigo-600 to-purple-600 text-white p-5 sm:p-6 flex items-start justify-between gap-3">
               <div className="min-w-0">
-                <h2 className="text-xl sm:text-2xl font-bold truncate">{modalAberto.nome}</h2>
+                <h2 className="text-xl sm:text-2xl font-bold break-words">{modalAberto.nome}</h2>
                 <p className="text-indigo-100 text-sm mt-1">
                   {ehHoje(modalAberto.data) ? 'Hoje' : formatarData(modalAberto.data)} •{' '}
                   {getHinosCompletos(modalAberto.hinos).length} hino(s)
@@ -559,7 +559,7 @@ export const RepertoriosSalvos: React.FC<RepertoriosSalvosProps> = ({ configurac
                           {idx + 1}
                         </span>
                         <div className="flex-1 min-w-0">
-                          <p className="font-bold text-gray-900 text-sm truncate">
+                          <p className="font-bold text-gray-900 text-sm break-words">
                             {hino?.nome || 'Hino desconhecido'}
                           </p>
                           <p className="text-xs text-gray-500 truncate mt-0.5">
@@ -611,7 +611,7 @@ export const RepertoriosSalvos: React.FC<RepertoriosSalvosProps> = ({ configurac
           <div className="bg-white rounded-3xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-auto">
             <div className="sticky top-0 bg-gradient-to-r from-blue-600 to-indigo-600 text-white p-5 sm:p-6 flex items-start justify-between gap-3">
               <div className="min-w-0">
-                <h2 className="text-xl sm:text-2xl font-bold truncate">
+                <h2 className="text-xl sm:text-2xl font-bold break-words">
                   {hinoSelecionado?.nome || 'Hino desconhecido'}
                 </h2>
                 <p className="text-blue-100 text-sm mt-1">

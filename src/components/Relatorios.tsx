@@ -211,7 +211,7 @@ export const Relatorios: React.FC = () => {
         </span>
 
         <div className="flex-1 min-w-0">
-          <p className="text-sm sm:text-base font-bold text-gray-900 truncate">
+          <p className="text-sm sm:text-base font-bold text-gray-900 break-words">
             {hino.numeroHarpa ? `${hino.numeroHarpa} - ` : ''}
             {hino.nome}
           </p>

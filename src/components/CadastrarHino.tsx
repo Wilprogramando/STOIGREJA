@@ -389,7 +389,7 @@ export const CadastrarHino: React.FC<CadastrarHinoProps> = ({ configuracoes }) =
                   </div>
 
                   <div className="flex-1 min-w-0">
-                    <h3 className="font-bold text-gray-900 truncate">{hino.nome}</h3>
+                    <h3 className="font-bold text-gray-900 break-words">{hino.nome}</h3>
                     <div className="flex flex-wrap items-center gap-1.5 mt-1">
                       <span className="text-[11px] font-semibold px-2 py-0.5 rounded-full bg-indigo-100 text-indigo-700">
                         {hino.tom}

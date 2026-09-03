@@ -300,7 +300,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ onPageChange }) => {
 
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2">
-                      <h4 className="font-bold text-gray-900 truncate">{rep.nome}</h4>
+                      <h4 className="font-bold text-gray-900 break-words">{rep.nome}</h4>
                       {hoje ? (
                         <span className="shrink-0 text-[10px] font-bold text-green-700 bg-green-100 px-2 py-0.5 rounded-full">
                           HOJE
@@ -399,7 +399,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ onPageChange }) => {
 
                   {/* Nome e barra */}
                   <div className="flex-1 min-w-0">
-                    <p className="text-sm sm:text-base font-bold text-gray-900 truncate">
+                    <p className="text-sm sm:text-base font-bold text-gray-900 break-words">
                       {item.nome}
                     </p>
                     <div className="mt-1.5 h-1.5 w-full bg-indigo-100 rounded-full overflow-hidden">

@@ -530,7 +530,7 @@ export const MontarRepertorio: React.FC<MontarRepertorioProps> = ({
                           }`}
                         >
                           <div className="flex items-center justify-between gap-2">
-                            <div className="font-semibold text-gray-900 truncate">
+                            <div className="font-semibold text-gray-900 break-words">
                               {h.numeroHarpa && `Harpa nº ${h.numeroHarpa} - `}
                               {h.nome}
                             </div>
@@ -576,7 +576,7 @@ export const MontarRepertorio: React.FC<MontarRepertorioProps> = ({
                       </span>
 
                       <div className="flex-1 min-w-0">
-                        <p className="font-bold text-gray-900 text-sm sm:text-base truncate">
+                        <p className="font-bold text-gray-900 text-sm sm:text-base break-words">
                           {hinoRep.nome}
                         </p>
                         <p className="text-xs text-gray-500 truncate mt-0.5">
