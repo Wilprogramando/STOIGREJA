@@ -6,8 +6,7 @@ import {
   FileText,
   Plus,
   BarChart3,
-  ChevronRight,
-  Heart
+  ChevronRight
 } from 'lucide-react';
 import { getAllHinos, getAllRepertorios, getHinosByType } from '../services/db';
 import { Repertorio } from '../types';
@@ -22,7 +21,6 @@ export const Dashboard: React.FC<DashboardProps> = ({ onPageChange }) => {
   const [stats, setStats] = useState({
     totalHinos: 0,
     totalHarpa: 0,
-    totalRepertorios: 0,
     proximosRepertorios: [] as Repertorio[],
   });
   const [loading, setLoading] = useState(true);
@@ -64,7 +62,6 @@ export const Dashboard: React.FC<DashboardProps> = ({ onPageChange }) => {
       setStats({
         totalHinos: hinos.filter(h => h.tipo === 'comum').length,
         totalHarpa: harpaHinos.length,
-        totalRepertorios: repertorios.length,
         proximosRepertorios: ativos,
       });
     } catch (error) {
@@ -127,42 +124,6 @@ export const Dashboard: React.FC<DashboardProps> = ({ onPageChange }) => {
       <div>
         <h2 className="text-2xl md:text-3xl font-bold text-gray-900">{saudacao()}! 🙌</h2>
         <p className="text-gray-500 mt-1">Que Deus abençoe o seu ministério.</p>
-      </div>
-
-      {/* Números */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-        <StatCard
-          icon={Music}
-          label="Hinos Comuns"
-          value={stats.totalHinos}
-          rodape="Cifrados e prontos"
-          cor={{ borda: 'border-l-indigo-500', fundo: 'bg-indigo-50', icone: 'text-indigo-600' }}
-          onClick={() => onPageChange('cadastrar-hino')}
-        />
-        <StatCard
-          icon={BookOpen}
-          label="Hinos da Harpa"
-          value={stats.totalHarpa}
-          rodape="Harpa Cristã"
-          cor={{ borda: 'border-l-purple-500', fundo: 'bg-purple-50', icone: 'text-purple-600' }}
-          onClick={() => onPageChange('harpa')}
-        />
-        <StatCard
-          icon={Music}
-          label="Repertórios Criados"
-          value={stats.totalRepertorios}
-          rodape="No total"
-          cor={{ borda: 'border-l-green-500', fundo: 'bg-green-50', icone: 'text-green-600' }}
-          onClick={() => onPageChange('repertorios')}
-        />
-        <StatCard
-          icon={Calendar}
-          label="Próximos Repertórios"
-          value={proximos.length}
-          rodape="Ainda ativos"
-          cor={{ borda: 'border-l-orange-500', fundo: 'bg-orange-50', icone: 'text-orange-600' }}
-          onClick={() => onPageChange('repertorios')}
-        />
       </div>
 
       {/* Próximos Repertórios */}
@@ -236,6 +197,26 @@ export const Dashboard: React.FC<DashboardProps> = ({ onPageChange }) => {
         )}
       </div>
 
+      {/* Números */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+        <StatCard
+          icon={Music}
+          label="Hinos Comuns"
+          value={stats.totalHinos}
+          rodape="Cifrados e prontos"
+          cor={{ borda: 'border-l-indigo-500', fundo: 'bg-indigo-50', icone: 'text-indigo-600' }}
+          onClick={() => onPageChange('cadastrar-hino')}
+        />
+        <StatCard
+          icon={BookOpen}
+          label="Hinos da Harpa"
+          value={stats.totalHarpa}
+          rodape="Harpa Cristã"
+          cor={{ borda: 'border-l-purple-500', fundo: 'bg-purple-50', icone: 'text-purple-600' }}
+          onClick={() => onPageChange('harpa')}
+        />
+      </div>
+
       {/* Ações rápidas */}
       <div>
         <h3 className="text-lg font-bold text-gray-900 mb-3">Ações rápidas</h3>
@@ -267,20 +248,6 @@ export const Dashboard: React.FC<DashboardProps> = ({ onPageChange }) => {
         </div>
       </div>
 
-      {/* Chamada final */}
-      <button
-        onClick={() => onPageChange('montar-repertorio')}
-        className="w-full text-left bg-gradient-to-r from-indigo-700 to-violet-600 text-white rounded-2xl p-5 flex items-center gap-4 shadow-md hover:shadow-lg transition"
-      >
-        <Heart size={40} className="shrink-0 opacity-90" />
-        <div className="flex-1">
-          <p className="font-bold">Prepare-se para o próximo culto!</p>
-          <p className="text-indigo-100 text-sm">
-            Monte seu repertório e leve adoração com excelência.
-          </p>
-        </div>
-        <ChevronRight size={22} className="shrink-0" />
-      </button>
     </div>
   );
 };
