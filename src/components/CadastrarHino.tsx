@@ -455,52 +455,58 @@ export const CadastrarHino: React.FC<CadastrarHinoProps> = ({
                       {hino.nome}
                     </h3>
 
-                    <div className="flex flex-wrap items-center gap-1.5 mt-1.5">
-                      <span className="text-[11px] font-bold px-2.5 py-0.5 rounded-full bg-indigo-50 text-indigo-700">
-                        {hino.tom}
-                      </span>
-                      <span className="text-[11px] font-semibold px-2.5 py-0.5 rounded-full bg-indigo-50 text-gray-700">
-                        {hino.cantor}
-                      </span>
+                    <div className="flex items-end justify-between gap-3 mt-1.5">
+                      <div className="min-w-0">
+                        <div className="flex flex-wrap items-center gap-1.5">
+                          <span className="text-[11px] font-bold px-2.5 py-0.5 rounded-full bg-indigo-50 text-indigo-700">
+                            {hino.tom}
+                          </span>
+                          <span className="text-[11px] font-semibold px-2.5 py-0.5 rounded-full bg-indigo-50 text-gray-700">
+                            {hino.cantor}
+                          </span>
+                        </div>
+
+                        <p className="flex items-center gap-1.5 text-xs text-gray-500 mt-1.5">
+                          <Users size={14} className="shrink-0" />
+                          {hino.categoria}
+                        </p>
+                      </div>
+
+                      {/* Ações principais */}
+                      <div className="shrink-0 flex gap-1">
+                        <BotaoAcao
+                          icon={Eye}
+                          titulo="Ver letra"
+                          cor="bg-blue-50 text-blue-600 hover:bg-blue-100"
+                          onClick={() => setModalLetra(hino)}
+                        />
+                        <BotaoAcao
+                          icon={Pencil}
+                          titulo="Editar"
+                          cor="bg-indigo-50 text-indigo-600 hover:bg-indigo-100"
+                          onClick={() => handleEditar(hino)}
+                        />
+                        <BotaoAcao
+                          icon={Trash2}
+                          titulo="Apagar"
+                          cor="bg-red-50 text-red-600 hover:bg-red-100"
+                          onClick={() => setDeletePasswordModal(hino)}
+                        />
+                        <BotaoAcao
+                          icon={MoreHorizontal}
+                          titulo="Mais opções"
+                          cor={
+                            aberto
+                              ? "bg-gray-700 text-white"
+                              : "bg-gray-100 text-gray-600 hover:bg-gray-200"
+                          }
+                          onClick={() =>
+                            setAcoesAbertas(aberto ? null : hino.id)
+                          }
+                        />
+                      </div>
                     </div>
-
-                    <p className="flex items-center gap-1.5 text-xs text-gray-500 mt-1.5">
-                      <Users size={14} className="shrink-0" />
-                      {hino.categoria}
-                    </p>
                   </div>
-                </div>
-
-                {/* Ações principais */}
-                <div className="mt-3 flex gap-1 justify-end">
-                  <BotaoAcao
-                    icon={Eye}
-                    titulo="Ver letra"
-                    cor="bg-blue-50 text-blue-600 hover:bg-blue-100"
-                    onClick={() => setModalLetra(hino)}
-                  />
-                  <BotaoAcao
-                    icon={Pencil}
-                    titulo="Editar"
-                    cor="bg-indigo-50 text-indigo-600 hover:bg-indigo-100"
-                    onClick={() => handleEditar(hino)}
-                  />
-                  <BotaoAcao
-                    icon={Trash2}
-                    titulo="Apagar"
-                    cor="bg-red-50 text-red-600 hover:bg-red-100"
-                    onClick={() => setDeletePasswordModal(hino)}
-                  />
-                  <BotaoAcao
-                    icon={MoreHorizontal}
-                    titulo="Mais opções"
-                    cor={
-                      aberto
-                        ? "bg-gray-700 text-white"
-                        : "bg-gray-100 text-gray-600 hover:bg-gray-200"
-                    }
-                    onClick={() => setAcoesAbertas(aberto ? null : hino.id)}
-                  />
                 </div>
 
                 {/* Ações extras */}
