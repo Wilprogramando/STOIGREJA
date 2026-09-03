@@ -12,8 +12,6 @@ import {
   ListMusic,
   BookOpen,
   Music2,
-  Calendar,
-  Clock,
   Search
 } from 'lucide-react';
 import { getAllHinos, addRepertorio, updateRepertorio } from '../services/db';
@@ -351,10 +349,6 @@ export const MontarRepertorio: React.FC<MontarRepertorioProps> = ({
   const campo =
     'w-full px-4 py-2.5 border border-gray-200 rounded-xl bg-gray-50 focus:bg-white focus:outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100 transition';
 
-  const dataFormatada = formData.data
-    ? formData.data.split('-').reverse().join('/')
-    : 'Não definida';
-
   return (
     <div className="max-w-6xl mx-auto pb-20">
       {/* Cabeçalho */}
@@ -633,41 +627,6 @@ export const MontarRepertorio: React.FC<MontarRepertorioProps> = ({
 
         {/* Painel lateral */}
         <div className="space-y-5 lg:sticky lg:top-4 lg:self-start">
-          {/* Resumo */}
-          <Painel className="p-4 sm:p-5">
-            <h3 className="text-sm font-bold text-gray-400 uppercase tracking-wide mb-3">
-              Resumo
-            </h3>
-
-            <div className="space-y-2">
-              <div className="flex items-center gap-3 bg-indigo-50/60 rounded-xl p-3">
-                <Calendar size={18} className="text-indigo-600 shrink-0" />
-                <div className="min-w-0">
-                  <p className="text-xs text-gray-500">Data</p>
-                  <p className="font-bold text-gray-900 text-sm">{dataFormatada}</p>
-                </div>
-              </div>
-
-              <div className="flex items-center gap-3 bg-indigo-50/60 rounded-xl p-3">
-                <Clock size={18} className="text-indigo-600 shrink-0" />
-                <div className="min-w-0">
-                  <p className="text-xs text-gray-500">Horário</p>
-                  <p className="font-bold text-gray-900 text-sm">
-                    {formData.horario || 'Não definido'}
-                  </p>
-                </div>
-              </div>
-
-              <div className="flex items-center gap-3 bg-indigo-50/60 rounded-xl p-3">
-                <Music2 size={18} className="text-indigo-600 shrink-0" />
-                <div className="min-w-0">
-                  <p className="text-xs text-gray-500">Hinos</p>
-                  <p className="font-bold text-gray-900 text-sm">{hinosNoRepertorio.length}</p>
-                </div>
-              </div>
-            </div>
-          </Painel>
-
           {/* Ações */}
           <Painel className="p-4 sm:p-5">
             <h3 className="text-sm font-bold text-gray-400 uppercase tracking-wide mb-3">
