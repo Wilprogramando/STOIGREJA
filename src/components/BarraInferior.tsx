@@ -1,5 +1,5 @@
 import React from 'react';
-import { StickyNote, Guitar, List } from 'lucide-react';
+import { Home, PlusCircle, List } from 'lucide-react';
 
 interface BarraInferiorProps {
   currentPage: string;
@@ -32,7 +32,7 @@ export const BarraInferior: React.FC<BarraInferiorProps> = ({ currentPage, onPag
   return (
     <nav className="shrink-0 bg-white border-t border-gray-200 shadow-[0_-2px_10px_rgba(0,0,0,0.06)]">
       <div className="max-w-3xl mx-auto flex items-center gap-2 px-4 py-2">
-        <Atalho id="anotacoes" label="Anotações" icon={StickyNote} />
+        <Atalho id="dashboard" label="Home" icon={Home} />
 
         {/* Repertórios: botão principal, maior que os outros */}
         <button
@@ -47,7 +47,7 @@ export const BarraInferior: React.FC<BarraInferiorProps> = ({ currentPage, onPag
           <span className="text-sm">Repertórios</span>
         </button>
 
-        <Atalho id="afinador" label="Afinador" icon={Guitar} />
+        <Atalho id="cadastrar-hino" label="Novo" icon={PlusCircle} />
       </div>
     </nav>
   );
