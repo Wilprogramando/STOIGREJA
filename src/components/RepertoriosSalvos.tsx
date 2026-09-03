@@ -1,5 +1,22 @@
 import React, { useState, useEffect } from 'react';
-import { Eye, Edit, Trash2, Download, Share2, Copy, Calendar, Music, Minus, Plus, ChevronLeft, ChevronRight } from 'lucide-react';
+import {
+  Eye,
+  Edit,
+  Trash2,
+  Download,
+  Share2,
+  Copy,
+  Calendar,
+  Music,
+  Minus,
+  Plus,
+  ChevronLeft,
+  ChevronRight,
+  FolderOpen,
+  Search,
+  Clock,
+  X
+} from 'lucide-react';
 import { getAllRepertorios, deleteRepertorio, addRepertorio, getAllHinos } from '../services/db';
 import { generateRepertorioPdf, shareViaWhatsApp } from '../services/pdf';
 import { Repertorio, Configuracoes, Hino } from '../types';
@@ -277,322 +294,308 @@ export const RepertoriosSalvos: React.FC<RepertoriosSalvosProps> = ({ configurac
     );
   }
 
+  /** Card branco padrão da tela. */
+  const Painel: React.FC<{ children: React.ReactNode; className?: string }> = ({
+    children,
+    className = ''
+  }) => (
+    <div className={`bg-white rounded-2xl border border-gray-100 shadow-lg ${className}`}>
+      {children}
+    </div>
+  );
+
+  /** Botão redondo de ação do card. */
+  const BotaoAcao = ({ icon: Icon, titulo, cor, onClick }: any) => (
+    <button
+      onClick={onClick}
+      title={titulo}
+      className={`p-2.5 rounded-xl transition ${cor}`}
+    >
+      <Icon size={18} />
+    </button>
+  );
+
   return (
     <div className="max-w-6xl mx-auto pb-20">
-      <h2 className="text-3xl font-bold text-gray-900 mb-8">Repertórios Salvos</h2>
+      {/* Cabeçalho */}
+      <div className="flex items-start gap-3 mb-5">
+        <div className="bg-indigo-50 text-indigo-600 p-2.5 rounded-xl shrink-0">
+          <FolderOpen size={22} />
+        </div>
+        <div className="min-w-0">
+          <h2 className="text-2xl font-bold text-gray-900">Repertórios Salvos</h2>
+          <p className="text-sm text-gray-500">
+            Veja, edite, compartilhe e gere o PDF dos seus cultos
+          </p>
+        </div>
+      </div>
 
-      {/* ✅ BOTÕES DE FILTRO */}
-      <div className="flex gap-3 mb-6">
+      {/* Abas */}
+      <div className="flex gap-2 mb-4">
         <button
           onClick={() => setMostrarPassados(false)}
-          className={`px-6 py-3 rounded-lg font-medium transition flex-1 ${
+          className={`flex-1 px-4 py-2.5 rounded-xl font-semibold text-sm transition flex items-center justify-center gap-2 ${
             !mostrarPassados
               ? 'bg-indigo-600 text-white shadow-md'
-              : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+              : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
           }`}
         >
-          📅 Próximos Repertórios ({futuros.length})
+          <Calendar size={16} />
+          Próximos ({futuros.length})
         </button>
         <button
           onClick={() => setMostrarPassados(true)}
-          className={`px-6 py-3 rounded-lg font-medium transition flex-1 ${
+          className={`flex-1 px-4 py-2.5 rounded-xl font-semibold text-sm transition flex items-center justify-center gap-2 ${
             mostrarPassados
               ? 'bg-purple-600 text-white shadow-md'
-              : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+              : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
           }`}
         >
-          📂 Repertórios Passados ({passados.length})
+          <FolderOpen size={16} />
+          Passados ({passados.length})
         </button>
       </div>
 
-      {/* BARRA DE PESQUISA */}
-      <div className="mb-6">
+      {/* Pesquisa */}
+      <div className="relative mb-5">
+        <Search
+          size={18}
+          className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none"
+        />
         <input
           type="text"
           value={filtro}
           onChange={(e) => setFiltro(e.target.value)}
           placeholder="Pesquisar por nome ou data..."
-          className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:border-indigo-600"
+          className="w-full pl-10 pr-4 py-3 border border-gray-200 rounded-xl bg-white focus:outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100 transition"
         />
       </div>
 
       {/* Lista */}
       <div className="space-y-4">
         {repertoriosFiltrados.length === 0 ? (
-          <div className="text-center py-12 bg-white rounded-lg">
-            <Music className="mx-auto text-gray-400 mb-4" size={48} />
-            <p className="text-gray-500 text-lg">
+          <Painel className="text-center py-12">
+            <Music className="mx-auto text-gray-300 mb-3" size={40} />
+            <p className="text-gray-500">
               {mostrarPassados ? 'Nenhum repertório passado' : 'Nenhum repertório próximo'}
             </p>
             {futuros.length === 0 && passados.length === 0 && (
               <p className="text-gray-400 text-sm mt-2">Crie um novo repertório para começar</p>
             )}
-          </div>
+          </Painel>
         ) : (
-          repertoriosFiltrados.map(repertorio => (
-            <div key={repertorio.id} className="bg-white rounded-lg shadow-md hover:shadow-lg transition">
-              <div className="p-4 md:p-6">
-                <div className="flex flex-col gap-3">
-                  {/* Título */}
-                  <h3 className="text-xl md:text-2xl font-bold text-gray-900">{repertorio.nome}</h3>
+          repertoriosFiltrados.map(repertorio => {
+            const hinosDoRepertorio = getHinosCompletos(repertorio.hinos).filter(
+              h => h !== null && h !== undefined
+            );
+            const hoje = ehHoje(repertorio.data);
 
-                  {/* Info em uma linha */}
-                  <div className="flex flex-wrap gap-4 text-gray-600 text-sm md:text-base">
-                    <span className="flex items-center gap-1">
-                      <Calendar size={16} />
-                      {ehHoje(repertorio.data) ? (
-                        <span className="px-2 py-0.5 bg-green-100 text-green-700 rounded-full font-bold">
-                          Hoje
-                        </span>
-                      ) : (
-                        formatarData(repertorio.data)
-                      )}
-                    </span>
-                    <span className="flex items-center gap-1">
-                      <Music size={16} />
-                      {repertorio.hinos.length} hino(s)
-                    </span>
-                    {repertorio.horario && (
-                      <span className="flex items-center gap-1">
-                        ⏱️ {repertorio.horario}
+            return (
+              <Painel key={repertorio.id} className="p-4 sm:p-6">
+                {/* Título e data */}
+                <div className="flex items-start justify-between gap-3 mb-3">
+                  <div className="min-w-0">
+                    <h3 className="text-lg sm:text-xl font-bold text-gray-900 truncate">
+                      {repertorio.nome}
+                    </h3>
+
+                    <div className="flex flex-wrap items-center gap-2 mt-2">
+                      <span
+                        className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold ${
+                          hoje ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-600'
+                        }`}
+                      >
+                        <Calendar size={13} />
+                        {hoje ? 'Hoje' : formatarData(repertorio.data)}
                       </span>
-                    )}
-                  </div>
 
-                  {/* Botões */}
-                  <div className="flex gap-1 flex-wrap">
-                    <button
-                      onClick={() => setModalAberto(repertorio)}
-                      title="Visualizar"
-                      className="p-2 bg-blue-50 text-blue-600 rounded-lg hover:bg-blue-100 transition"
-                    >
-                      <Eye size={20} />
-                    </button>
-                    <button
-                      onClick={() => {
-                        console.log('📝 Clicando em editar - Repertório:', repertorio);
-                        console.log('📝 Hinos no repertório:', repertorio.hinos);
-                        onEdit?.(repertorio);
-                      }}
-                      title="Editar"
-                      className="p-2 bg-indigo-50 text-indigo-600 rounded-lg hover:bg-indigo-100 transition"
-                    >
-                      <Edit size={20} />
-                    </button>
-                    <button
-                      onClick={() => handleGerarPdf(repertorio)}
-                      title="Baixar PDF"
-                      className="p-2 bg-orange-50 text-orange-600 rounded-lg hover:bg-orange-100 transition"
-                    >
-                      <Download size={20} />
-                    </button>
-                    <button
-                      onClick={() => handleCompartilharWhatsApp(repertorio)}
-                      title="Compartilhar"
-                      className="p-2 bg-green-50 text-green-600 rounded-lg hover:bg-green-100 transition"
-                    >
-                      <Share2 size={20} />
-                    </button>
-                    <button
-                      onClick={() => handleDuplicar(repertorio)}
-                      title="Duplicar"
-                      className="p-2 bg-purple-50 text-purple-600 rounded-lg hover:bg-purple-100 transition"
-                    >
-                      <Copy size={20} />
-                    </button>
-                    <button
-                      onClick={() => handleDeletar(repertorio.id)}
-                      title="Deletar"
-                      className="p-2 bg-red-50 text-red-600 rounded-lg hover:bg-red-100 transition"
-                    >
-                      <Trash2 size={20} />
-                    </button>
+                      {repertorio.horario && (
+                        <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-gray-100 text-gray-600">
+                          <Clock size={13} />
+                          {repertorio.horario}
+                        </span>
+                      )}
+
+                      <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-indigo-100 text-indigo-700">
+                        <Music size={13} />
+                        {repertorio.hinos.length} hino(s)
+                      </span>
+                    </div>
                   </div>
                 </div>
 
-                {/* Espaçamento */}
-                <div className="mt-4"></div>
+                {/* Botões */}
+                <div className="flex gap-1.5 flex-wrap mb-4">
+                  <BotaoAcao
+                    icon={Eye}
+                    titulo="Visualizar"
+                    cor="bg-blue-50 text-blue-600 hover:bg-blue-100"
+                    onClick={() => setModalAberto(repertorio)}
+                  />
+                  <BotaoAcao
+                    icon={Edit}
+                    titulo="Editar"
+                    cor="bg-indigo-50 text-indigo-600 hover:bg-indigo-100"
+                    onClick={() => {
+                      console.log('📝 Clicando em editar - Repertório:', repertorio);
+                      console.log('📝 Hinos no repertório:', repertorio.hinos);
+                      onEdit?.(repertorio);
+                    }}
+                  />
+                  <BotaoAcao
+                    icon={Download}
+                    titulo="Baixar PDF"
+                    cor="bg-orange-50 text-orange-600 hover:bg-orange-100"
+                    onClick={() => handleGerarPdf(repertorio)}
+                  />
+                  <BotaoAcao
+                    icon={Share2}
+                    titulo="Compartilhar"
+                    cor="bg-green-50 text-green-600 hover:bg-green-100"
+                    onClick={() => handleCompartilharWhatsApp(repertorio)}
+                  />
+                  <BotaoAcao
+                    icon={Copy}
+                    titulo="Duplicar"
+                    cor="bg-purple-50 text-purple-600 hover:bg-purple-100"
+                    onClick={() => handleDuplicar(repertorio)}
+                  />
+                  <BotaoAcao
+                    icon={Trash2}
+                    titulo="Deletar"
+                    cor="bg-red-50 text-red-600 hover:bg-red-100"
+                    onClick={() => handleDeletar(repertorio.id)}
+                  />
+                </div>
 
                 {repertorio.observacoes && (
-                  <div className="bg-yellow-50 p-3 rounded-lg text-sm text-gray-700 mb-4">
-                    <strong>Observações:</strong> {repertorio.observacoes}
+                  <div className="bg-amber-50 border border-amber-100 p-3 rounded-xl text-sm text-amber-900 mb-4">
+                    <strong className="font-semibold">Observações:</strong> {repertorio.observacoes}
                   </div>
                 )}
 
-                {/* Tabela de Hinos - Desktop */}
-                <div className="hidden md:block overflow-x-auto">
-                  <table className="w-full text-sm">
-                    <thead className="bg-gray-100">
-                      <tr>
-                        <th className="px-4 py-2 text-left font-medium text-gray-700">#</th>
-                        <th className="px-4 py-2 text-left font-medium text-gray-700">Hino</th>
-                        <th className="px-4 py-2 text-left font-medium text-gray-700">Tom</th>
-                        <th className="px-4 py-2 text-left font-medium text-gray-700">Cantor</th>
-                        <th className="px-4 py-2 text-center font-medium text-gray-700">Ação</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {getHinosCompletos(repertorio.hinos)
-                        .filter(h => h !== null && h !== undefined)
-                        .map((hino, idx) => {
-                          if (!hino) return null;
-                          return (
-                          <tr key={hino.id} className="border-b hover:bg-gray-50">
-                            <td className="px-4 py-2 font-bold text-indigo-600">{idx + 1}</td>
-                            <td className="px-4 py-2">
-                              {hino?.nome || 'Hino desconhecido'}
-                              {hino?.numeroHarpa && (
-                                <span className="text-gray-500 text-xs ml-2">(Harpa nº {hino.numeroHarpa})</span>
-                              )}
-                            </td>
-                            <td className="px-4 py-2">{hino?.tom || '?'}</td>
-                            <td className="px-4 py-2">{hino?.cantor || '?'}</td>
-                            <td className="px-4 py-2 text-center">
-                              {hino?.letra && (
-                                <button
-                                  onClick={() => abrirLetra(getHinosCompletos(repertorio.hinos).filter(h => h !== null && h !== undefined), idx)}
-                                  title="Ver letra"
-                                  className="px-3 py-1 bg-blue-100 text-blue-600 rounded hover:bg-blue-200 transition text-sm font-medium"
-                                >
-                                  Ver Letra
-                                </button>
-                              )}
-                            </td>
-                          </tr>
-                        );
-                        })}
-                    </tbody>
-                  </table>
-                </div>
+                {/* Hinos do repertório */}
+                <div className="space-y-2">
+                  {hinosDoRepertorio.map((hino, idx) => {
+                    if (!hino) return null;
 
-                {/* Cards de Hinos - Mobile */}
-                <div className="md:hidden space-y-3">
-                  {getHinosCompletos(repertorio.hinos)
-                    .filter(h => h !== null && h !== undefined)
-                    .map((hino, idx) => {
-                      if (!hino) return null;
-                      return (
-                        <div key={hino.id} className="bg-gradient-to-r from-indigo-50 to-purple-50 p-4 rounded-lg border border-indigo-200">
-                          <div className="flex items-center gap-3 mb-3">
-                            <span className="inline-block w-7 h-7 bg-indigo-600 text-white rounded-full text-center text-xs font-bold flex-shrink-0 flex items-center justify-center">
-                              {idx + 1}
-                            </span>
-                            <h4 className="font-bold text-gray-900 text-sm flex-1">{hino?.nome || 'Hino desconhecido'}</h4>
-                            {hino?.numeroHarpa && (
-                              <p className="text-xs text-gray-500">Harpa nº {hino.numeroHarpa}</p>
-                            )}
-                          </div>
+                    return (
+                      <div
+                        key={hino.id}
+                        className="bg-indigo-50/60 rounded-2xl p-3 flex items-center gap-3"
+                      >
+                        <span className="shrink-0 w-8 h-8 sm:w-9 sm:h-9 rounded-xl bg-indigo-100 text-indigo-700 font-extrabold flex items-center justify-center tabular-nums text-sm">
+                          {idx + 1}
+                        </span>
 
-                          <div className="flex items-center gap-3 text-sm">
-                            <div className="flex items-center gap-1">
-                              <p className="text-gray-600 text-xs font-medium">Tom:</p>
-                              <p className="font-bold text-gray-900">{hino?.tom || '?'}</p>
-                            </div>
-                            <div className="flex items-center gap-1">
-                              <p className="text-gray-600 text-xs font-medium">Cantor:</p>
-                              <p className="font-bold text-gray-900 truncate">{hino?.cantor || '?'}</p>
-                            </div>
-                            {hino?.letra && (
-                              <button
-                                onClick={() => abrirLetra(getHinosCompletos(repertorio.hinos).filter(h => h !== null && h !== undefined), idx)}
-                                className="ml-auto px-3 py-1 bg-blue-600 text-white rounded hover:bg-blue-700 transition text-xs font-medium whitespace-nowrap"
-                              >
-                                Letra
-                              </button>
-                            )}
-                          </div>
+                        <div className="flex-1 min-w-0">
+                          <p className="font-bold text-gray-900 text-sm truncate">
+                            {hino?.nome || 'Hino desconhecido'}
+                          </p>
+                          <p className="text-xs text-gray-500 truncate mt-0.5">
+                            {hino?.numeroHarpa ? `Harpa nº ${hino.numeroHarpa} • ` : ''}
+                            Tom: {hino?.tom || '?'} • {hino?.cantor || '?'}
+                          </p>
                         </div>
-                      );
-                    })}
+
+                        {hino?.letra && (
+                          <button
+                            onClick={() => abrirLetra(hinosDoRepertorio, idx)}
+                            className="shrink-0 px-3 py-1.5 bg-white text-indigo-600 border border-indigo-200 rounded-lg hover:bg-indigo-600 hover:text-white hover:border-indigo-600 transition text-xs font-semibold"
+                          >
+                            Letra
+                          </button>
+                        )}
+                      </div>
+                    );
+                  })}
                 </div>
-              </div>
-            </div>
-          ))
+              </Painel>
+            );
+          })
         )}
       </div>
 
       {/* Modal de Visualização */}
       {modalAberto && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-lg shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-auto">
-            <div className="sticky top-0 bg-gradient-to-r from-indigo-600 to-purple-600 text-white p-6 flex items-center justify-between">
-              <div>
-                <h2 className="text-2xl font-bold">{modalAberto.nome}</h2>
-                <p className="text-indigo-100 mt-1">
-                  {ehHoje(modalAberto.data) ? 'Hoje' : formatarData(modalAberto.data)} • {getHinosCompletos(modalAberto.hinos).length} hino(s)
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-3xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-auto">
+            <div className="sticky top-0 bg-gradient-to-r from-indigo-600 to-purple-600 text-white p-5 sm:p-6 flex items-start justify-between gap-3">
+              <div className="min-w-0">
+                <h2 className="text-xl sm:text-2xl font-bold truncate">{modalAberto.nome}</h2>
+                <p className="text-indigo-100 text-sm mt-1">
+                  {ehHoje(modalAberto.data) ? 'Hoje' : formatarData(modalAberto.data)} •{' '}
+                  {getHinosCompletos(modalAberto.hinos).length} hino(s)
                 </p>
               </div>
               <button
                 onClick={() => setModalAberto(null)}
-                className="p-2 hover:bg-white hover:bg-opacity-20 rounded-lg transition"
+                className="shrink-0 p-2 hover:bg-white/20 rounded-xl transition"
+                title="Fechar"
               >
-                ✕
+                <X size={20} />
               </button>
             </div>
 
-            <div className="p-6">
+            <div className="p-5 sm:p-6">
               {modalAberto.observacoes && (
-                <div className="bg-yellow-50 p-4 rounded-lg mb-6 border border-yellow-200">
-                  <h4 className="font-bold text-yellow-900 mb-2">Observações</h4>
-                  <p className="text-yellow-800">{modalAberto.observacoes}</p>
+                <div className="bg-amber-50 border border-amber-100 p-4 rounded-xl mb-5">
+                  <h4 className="font-bold text-amber-900 mb-1 text-sm">Observações</h4>
+                  <p className="text-amber-900 text-sm">{modalAberto.observacoes}</p>
                 </div>
               )}
 
-              <div className="overflow-x-auto">
-                <table className="w-full">
-                  <thead className="bg-gray-100">
-                    <tr>
-                      <th className="px-4 py-2 text-left font-medium text-gray-700">#</th>
-                      <th className="px-4 py-2 text-left font-medium text-gray-700">Hino</th>
-                      <th className="px-4 py-2 text-left font-medium text-gray-700">Tom</th>
-                      <th className="px-4 py-2 text-left font-medium text-gray-700">Cantor</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {getHinosCompletos(modalAberto.hinos)
-                      .filter(h => h !== null && h !== undefined)
-                      .map((hino, idx) => {
-                        if (!hino) return null;
-                        return (
-                        <tr key={hino.id} className="border-b hover:bg-gray-50">
-                          <td className="px-4 py-2 font-bold text-indigo-600">{idx + 1}</td>
-                          <td className="px-4 py-2">
+              <div className="space-y-2">
+                {getHinosCompletos(modalAberto.hinos)
+                  .filter(h => h !== null && h !== undefined)
+                  .map((hino, idx) => {
+                    if (!hino) return null;
+                    return (
+                      <div
+                        key={hino.id}
+                        className="bg-indigo-50/60 rounded-2xl p-3 flex items-center gap-3"
+                      >
+                        <span className="shrink-0 w-8 h-8 rounded-xl bg-indigo-100 text-indigo-700 font-extrabold flex items-center justify-center tabular-nums text-sm">
+                          {idx + 1}
+                        </span>
+                        <div className="flex-1 min-w-0">
+                          <p className="font-bold text-gray-900 text-sm truncate">
                             {hino?.nome || 'Hino desconhecido'}
-                            {hino?.numeroHarpa && (
-                              <span className="text-gray-500 text-xs ml-2">(Harpa nº {hino.numeroHarpa})</span>
-                            )}
-                          </td>
-                          <td className="px-4 py-2">{hino?.tom || '?'}</td>
-                          <td className="px-4 py-2">{hino?.cantor || '?'}</td>
-                        </tr>
-                      );
-                      })}
-                  </tbody>
-                </table>
+                          </p>
+                          <p className="text-xs text-gray-500 truncate mt-0.5">
+                            {hino?.numeroHarpa ? `Harpa nº ${hino.numeroHarpa} • ` : ''}
+                            Tom: {hino?.tom || '?'} • {hino?.cantor || '?'}
+                          </p>
+                        </div>
+                      </div>
+                    );
+                  })}
               </div>
 
-              <div className="mt-6 flex gap-2">
+              <div className="mt-6 grid grid-cols-3 gap-2">
                 <button
                   onClick={() => {
                     handleGerarPdf(modalAberto);
                     setModalAberto(null);
                   }}
-                  className="flex-1 px-4 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700 transition"
+                  className="px-3 py-2.5 bg-orange-50 text-orange-700 rounded-xl hover:bg-orange-100 transition font-semibold text-sm flex items-center justify-center gap-1.5"
                 >
-                  Gerar PDF
+                  <Download size={16} />
+                  PDF
                 </button>
                 <button
                   onClick={() => {
                     handleCompartilharWhatsApp(modalAberto);
                     setModalAberto(null);
                   }}
-                  className="flex-1 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition"
+                  className="px-3 py-2.5 bg-green-50 text-green-700 rounded-xl hover:bg-green-100 transition font-semibold text-sm flex items-center justify-center gap-1.5"
                 >
-                  Compartilhar
+                  <Share2 size={16} />
+                  Enviar
                 </button>
                 <button
                   onClick={() => setModalAberto(null)}
-                  className="flex-1 px-4 py-2 bg-gray-400 text-white rounded-lg hover:bg-gray-500 transition"
+                  className="px-3 py-2.5 bg-gray-100 text-gray-700 rounded-xl hover:bg-gray-200 transition font-semibold text-sm"
                 >
                   Fechar
                 </button>
@@ -604,53 +607,56 @@ export const RepertoriosSalvos: React.FC<RepertoriosSalvosProps> = ({ configurac
 
       {/* Modal de Visualização da Letra do Hino */}
       {hinoSelecionado && hinoSelecionado?.nome && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-lg shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-auto">
-            <div className="sticky top-0 bg-gradient-to-r from-blue-600 to-indigo-600 text-white p-6 flex items-center justify-between">
-              <div>
-                <h2 className="text-2xl font-bold">{hinoSelecionado?.nome || 'Hino desconhecido'}</h2>
-                <p className="text-blue-100 mt-1">
-                  Tom: {hinoSelecionado?.tom || '?'} | Cantor: {hinoSelecionado?.cantor || '?'}
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-3xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-auto">
+            <div className="sticky top-0 bg-gradient-to-r from-blue-600 to-indigo-600 text-white p-5 sm:p-6 flex items-start justify-between gap-3">
+              <div className="min-w-0">
+                <h2 className="text-xl sm:text-2xl font-bold truncate">
+                  {hinoSelecionado?.nome || 'Hino desconhecido'}
+                </h2>
+                <p className="text-blue-100 text-sm mt-1">
+                  Tom: {hinoSelecionado?.tom || '?'} • {hinoSelecionado?.cantor || '?'}
                 </p>
                 {listaLetra.length > 1 && (
-                  <p className="text-blue-200 text-sm mt-1">
+                  <p className="text-blue-200 text-xs mt-1">
                     Hino {indiceLetra + 1} de {listaLetra.length}
                   </p>
                 )}
               </div>
               <button
                 onClick={fecharLetra}
-                className="p-2 hover:bg-white hover:bg-opacity-20 rounded-lg transition text-2xl"
+                className="shrink-0 p-2 hover:bg-white/20 rounded-xl transition"
+                title="Fechar"
               >
-                ✕
+                <X size={20} />
               </button>
             </div>
 
-            <div className="p-6">
+            <div className="p-5 sm:p-6">
               {/* Controle de tamanho da letra */}
               <div className="flex items-center justify-center gap-3 mb-4">
                 <button
                   onClick={() => setTamanhoLetra(t => Math.max(12, t - 2))}
                   title="Diminuir letra"
-                  className="p-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition disabled:opacity-40"
+                  className="p-2 bg-gray-100 text-gray-700 rounded-xl hover:bg-gray-200 transition disabled:opacity-40"
                   disabled={tamanhoLetra <= 12}
                 >
-                  <Minus size={20} />
+                  <Minus size={18} />
                 </button>
-                <span className="text-sm font-medium text-gray-600 select-none">
+                <span className="text-xs font-semibold text-gray-500 select-none uppercase tracking-wide">
                   Tamanho da letra
                 </span>
                 <button
                   onClick={() => setTamanhoLetra(t => Math.min(40, t + 2))}
                   title="Aumentar letra"
-                  className="p-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition disabled:opacity-40"
+                  className="p-2 bg-gray-100 text-gray-700 rounded-xl hover:bg-gray-200 transition disabled:opacity-40"
                   disabled={tamanhoLetra >= 40}
                 >
-                  <Plus size={20} />
+                  <Plus size={18} />
                 </button>
               </div>
 
-              <div className="bg-gray-50 p-6 rounded-lg">
+              <div className="bg-gray-50 border border-gray-100 p-5 sm:p-6 rounded-2xl">
                 <pre
                   className="whitespace-pre-wrap font-sans text-gray-800 leading-relaxed"
                   style={{ fontSize: tamanhoLetra + 'px' }}
@@ -660,41 +666,39 @@ export const RepertoriosSalvos: React.FC<RepertoriosSalvosProps> = ({ configurac
               </div>
 
               {hinoSelecionado?.observacoes && (
-                <div className="mt-6 p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
-                  <h3 className="font-bold text-yellow-900 mb-2">Observações</h3>
-                  <pre className="whitespace-pre-wrap font-sans text-yellow-800">
+                <div className="mt-5 p-4 bg-amber-50 border border-amber-100 rounded-xl">
+                  <h3 className="font-bold text-amber-900 mb-1 text-sm">Observações</h3>
+                  <pre className="whitespace-pre-wrap font-sans text-amber-900 text-sm">
                     {hinoSelecionado.observacoes}
                   </pre>
                 </div>
               )}
 
               {listaLetra.length > 1 && (
-                <div className="mt-6 flex gap-2">
+                <div className="mt-5 flex gap-2">
                   <button
                     onClick={() => irParaLetra(indiceLetra - 1)}
                     disabled={indiceLetra === 0}
-                    className="flex-1 px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition flex items-center justify-center gap-1 disabled:opacity-40 disabled:cursor-not-allowed"
+                    className="flex-1 px-4 py-2.5 bg-indigo-600 text-white rounded-xl hover:bg-indigo-700 transition flex items-center justify-center gap-1 font-semibold disabled:opacity-40 disabled:cursor-not-allowed"
                   >
                     <ChevronLeft size={18} /> Anterior
                   </button>
                   <button
                     onClick={() => irParaLetra(indiceLetra + 1)}
                     disabled={indiceLetra >= listaLetra.length - 1}
-                    className="flex-1 px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition flex items-center justify-center gap-1 disabled:opacity-40 disabled:cursor-not-allowed"
+                    className="flex-1 px-4 py-2.5 bg-indigo-600 text-white rounded-xl hover:bg-indigo-700 transition flex items-center justify-center gap-1 font-semibold disabled:opacity-40 disabled:cursor-not-allowed"
                   >
                     Próxima <ChevronRight size={18} />
                   </button>
                 </div>
               )}
 
-              <div className="mt-3 flex gap-2">
-                <button
-                  onClick={fecharLetra}
-                  className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition"
-                >
-                  Fechar
-                </button>
-              </div>
+              <button
+                onClick={fecharLetra}
+                className="mt-2 w-full px-4 py-2.5 bg-gray-100 text-gray-700 rounded-xl hover:bg-gray-200 transition font-semibold"
+              >
+                Fechar
+              </button>
             </div>
           </div>
         </div>
