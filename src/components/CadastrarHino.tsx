@@ -1,5 +1,19 @@
 import React, { useState, useEffect } from 'react';
-import { Plus, Music } from 'lucide-react';
+import {
+  Plus,
+  Music,
+  Music2,
+  Eye,
+  Pencil,
+  Trash2,
+  Download,
+  Share2,
+  Copy,
+  MoreHorizontal,
+  Search,
+  Check,
+  X
+} from 'lucide-react';
 import { addHino, updateHino, deleteHino, getAllHinos } from '../services/db';
 import { generateHinoPdf, shareViaWhatsApp } from '../services/pdf';
 import { Hino, Configuracoes } from '../types';
@@ -22,6 +36,8 @@ export const CadastrarHino: React.FC<CadastrarHinoProps> = ({ configuracoes }) =
   const [cantores, setCantores] = useState<string[]>(() => lerCantores());
   const [modalLetra, setModalLetra] = useState<Hino | null>(null);
   const [deletePasswordModal, setDeletePasswordModal] = useState<Hino | null>(null);
+  /** Qual hino está com as ações extras abertas (PDF, compartilhar, duplicar). */
+  const [acoesAbertas, setAcoesAbertas] = useState<string | null>(null);
 
   const [formData, setFormData] = useState({
     nome: '',
@@ -45,7 +61,7 @@ export const CadastrarHino: React.FC<CadastrarHinoProps> = ({ configuracoes }) =
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!formData.nome || !formData.cantor) {
       alert('Preencha os campos obrigatórios: Nome e Cantor!');
       return;
@@ -53,7 +69,7 @@ export const CadastrarHino: React.FC<CadastrarHinoProps> = ({ configuracoes }) =
 
     try {
       const agora = new Date().toISOString();
-      
+
       if (editando) {
         const hinoAtualizado: Hino = {
           ...editando,
@@ -71,7 +87,7 @@ export const CadastrarHino: React.FC<CadastrarHinoProps> = ({ configuracoes }) =
         };
         await addHino(novoHino);
       }
-      
+
       setFormData({
         nome: '',
         tom: 'C',
@@ -135,79 +151,132 @@ export const CadastrarHino: React.FC<CadastrarHinoProps> = ({ configuracoes }) =
     return nomeMatch && tomMatch && cantorMatch;
   });
 
+  /** Card branco padrão da tela. */
+  const Painel: React.FC<{ children: React.ReactNode; className?: string }> = ({
+    children,
+    className = ''
+  }) => (
+    <div className={`bg-white rounded-2xl border border-gray-100 shadow-lg ${className}`}>
+      {children}
+    </div>
+  );
+
+  const campo =
+    'w-full px-3.5 py-2.5 border border-gray-200 rounded-xl bg-gray-50 focus:bg-white focus:outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100 transition text-sm';
+
+  /** Botão redondo de ação do hino. */
+  const BotaoAcao = ({ icon: Icon, titulo, cor, onClick }: any) => (
+    <button onClick={onClick} title={titulo} className={`p-2 rounded-xl transition ${cor}`}>
+      <Icon size={17} />
+    </button>
+  );
+
+  /** Botão das ações extras, com nome ao lado. */
+  const AcaoExtra = ({ icon: Icon, texto, cor, onClick }: any) => (
+    <button
+      onClick={onClick}
+      className={`flex-1 px-3 py-2 rounded-xl transition text-xs font-semibold flex items-center justify-center gap-1.5 ${cor}`}
+    >
+      <Icon size={15} />
+      {texto}
+    </button>
+  );
+
   return (
-    <div className="p-4 pb-20">
-      {/* Botão Novo Hino */}
-      <div className="mb-4 flex gap-2">
-        {!showForm && (
-          <button
-            onClick={() => {
-              setEditando(null);
-              setFormData({
-                nome: '',
-                tom: 'C',
-                cantor: '',
-                letra: '',
-                categoria: 'Manancial',
-                observacoes: ''
-              });
-              setShowForm(true);
-            }}
-            className="flex-1 px-4 py-3 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition font-medium flex items-center justify-center gap-2"
-          >
-            <Plus size={20} />
-            Novo Hino
-          </button>
-        )}
+    <div className="max-w-4xl mx-auto pb-20">
+      {/* Cabeçalho */}
+      <div className="flex items-start gap-3 mb-5">
+        <div className="bg-indigo-50 text-indigo-600 p-2.5 rounded-xl shrink-0">
+          <Music2 size={22} />
+        </div>
+        <div className="min-w-0">
+          <h2 className="text-2xl font-bold text-gray-900">Cadastrar Hino</h2>
+          <p className="text-sm text-gray-500">
+            {hinos.length} hino(s) cadastrado(s)
+          </p>
+        </div>
       </div>
+
+      {/* Botão Novo Hino */}
+      {!showForm && (
+        <button
+          onClick={() => {
+            setEditando(null);
+            setFormData({
+              nome: '',
+              tom: 'C',
+              cantor: '',
+              letra: '',
+              categoria: 'Manancial',
+              observacoes: ''
+            });
+            setShowForm(true);
+          }}
+          className="w-full mb-5 px-4 py-3.5 bg-indigo-600 text-white rounded-2xl hover:bg-indigo-700 transition font-semibold flex items-center justify-center gap-2 shadow-lg"
+        >
+          <Plus size={20} />
+          Novo Hino
+        </button>
+      )}
 
       {/* Formulário */}
       {showForm && (
-        <div className="bg-white p-4 rounded-lg shadow-md mb-6 border-t-4 border-indigo-600">
+        <Painel className="p-4 sm:p-6 mb-5">
           <h3 className="text-lg font-bold text-gray-900 mb-4">
             {editando ? 'Editar Hino' : 'Novo Hino'}
           </h3>
-          
+
           <form onSubmit={handleSubmit} className="space-y-3">
-            {/* Nome, Tom, Cantor, Categoria - Responsivo */}
-            <div className="space-y-2">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1.5">
+                Nome do hino *
+              </label>
               <input
                 type="text"
                 value={formData.nome}
                 onChange={(e) => setFormData({ ...formData, nome: e.target.value })}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-indigo-600 text-sm"
-                placeholder="🎵 Nome do hino"
+                className={campo}
+                placeholder="Ex: Poderoso Deus"
               />
+            </div>
 
-              <div className="grid grid-cols-2 gap-2">
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1.5">Tom</label>
                 <select
                   value={formData.tom}
                   onChange={(e) => setFormData({ ...formData, tom: e.target.value })}
-                  className="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-indigo-600 text-sm"
+                  className={campo}
                 >
                   {TONS.map(ton => (
                     <option key={ton} value={ton}>{ton}</option>
                   ))}
                 </select>
+              </div>
 
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1.5">Categoria</label>
                 <select
                   value={formData.categoria}
                   onChange={(e) => setFormData({ ...formData, categoria: e.target.value })}
-                  className="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-indigo-600 text-sm"
+                  className={campo}
                 >
                   {CATEGORIAS.map(cat => (
                     <option key={cat} value={cat}>{cat}</option>
                   ))}
                 </select>
               </div>
+            </div>
 
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1.5">Cantor *</label>
               {/* Cantores vêm do gerenciador em Configurações */}
               <select
                 value={formData.cantor}
                 onChange={(e) => setFormData({ ...formData, cantor: e.target.value })}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-indigo-600 text-sm"
+                className={campo}
               >
-                <option value="">👤 Selecione o cantor</option>
+                <option value="">Selecione o cantor</option>
                 {formData.cantor && !cantores.includes(formData.cantor) && (
                   <option value={formData.cantor}>{formData.cantor}</option>
                 )}
@@ -217,33 +286,34 @@ export const CadastrarHino: React.FC<CadastrarHinoProps> = ({ configuracoes }) =
               </select>
             </div>
 
-            {/* Letra */}
-            <textarea
-              value={formData.letra}
-              onChange={(e) => setFormData({ ...formData, letra: e.target.value })}
-              rows={6}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-indigo-600 text-sm"
-              placeholder="Letra do hino (opcional)"
-            />
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1.5">Letra</label>
+              <textarea
+                value={formData.letra}
+                onChange={(e) => setFormData({ ...formData, letra: e.target.value })}
+                rows={6}
+                className={campo}
+                placeholder="Letra do hino (opcional)"
+              />
+            </div>
 
-            {/* Observações */}
-            <textarea
-              value={formData.observacoes}
-              onChange={(e) => setFormData({ ...formData, observacoes: e.target.value })}
-              rows={2}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-indigo-600 text-sm"
-              placeholder="Observações (opcional)"
-            />
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1.5">Observações</label>
+              <textarea
+                value={formData.observacoes}
+                onChange={(e) => setFormData({ ...formData, observacoes: e.target.value })}
+                rows={2}
+                className={campo}
+                placeholder="Observações (opcional)"
+              />
+            </div>
 
-            {/* Botões */}
-            <div className="grid grid-cols-2 gap-2 pt-2">
+            <div className="grid grid-cols-2 gap-3 pt-2">
               <button
                 type="submit"
-                className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition font-medium text-sm flex items-center justify-center gap-2"
+                className="px-4 py-3 bg-indigo-600 text-white rounded-xl hover:bg-indigo-700 transition font-semibold text-sm flex items-center justify-center gap-2 shadow-md"
               >
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                </svg>
+                <Check size={18} />
                 {editando ? 'Atualizar' : 'Salvar'}
               </button>
               <button
@@ -252,35 +322,39 @@ export const CadastrarHino: React.FC<CadastrarHinoProps> = ({ configuracoes }) =
                   setShowForm(false);
                   setEditando(null);
                 }}
-                className="px-4 py-2 bg-gray-400 text-white rounded-lg hover:bg-gray-500 transition font-medium text-sm flex items-center justify-center gap-2"
+                className="px-4 py-3 bg-gray-100 text-gray-700 rounded-xl hover:bg-gray-200 transition font-semibold text-sm flex items-center justify-center gap-2"
               >
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                </svg>
+                <X size={18} />
                 Cancelar
               </button>
             </div>
           </form>
-        </div>
+        </Painel>
       )}
 
-      {/* Filtros - Compacto para Mobile */}
-      <div className="bg-white p-3 rounded-lg shadow-md mb-4">
-        <input
-          type="text"
-          placeholder="🔍 Pesquisar hino..."
-          value={filtros.nome}
-          onChange={(e) => setFiltros({ ...filtros, nome: e.target.value })}
-          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-indigo-600 text-sm mb-2"
-        />
-        
-        <div className="grid grid-cols-2 gap-2">
+      {/* Filtros */}
+      <Painel className="p-3 sm:p-4 mb-5">
+        <div className="relative mb-3">
+          <Search
+            size={18}
+            className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none"
+          />
+          <input
+            type="text"
+            placeholder="Pesquisar hino..."
+            value={filtros.nome}
+            onChange={(e) => setFiltros({ ...filtros, nome: e.target.value })}
+            className="w-full pl-10 pr-4 py-2.5 border border-gray-200 rounded-xl bg-gray-50 focus:bg-white focus:outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100 transition text-sm"
+          />
+        </div>
+
+        <div className="grid grid-cols-2 gap-3">
           <select
             value={filtros.tom}
             onChange={(e) => setFiltros({ ...filtros, tom: e.target.value })}
-            className="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-indigo-600 text-sm"
+            className={campo}
           >
-            <option value="">🎵 Todos tons</option>
+            <option value="">Todos os tons</option>
             {TONS.map(ton => (
               <option key={ton} value={ton}>{ton}</option>
             ))}
@@ -288,146 +362,110 @@ export const CadastrarHino: React.FC<CadastrarHinoProps> = ({ configuracoes }) =
 
           <input
             type="text"
-            placeholder="👤 Cantor..."
+            placeholder="Cantor..."
             value={filtros.cantor}
             onChange={(e) => setFiltros({ ...filtros, cantor: e.target.value })}
-            className="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-indigo-600 text-sm"
+            className={campo}
           />
         </div>
-      </div>
+      </Painel>
 
-      {/* Lista de Hinos - Mobile Friendly */}
-      <div className="space-y-2">
+      {/* Lista de hinos */}
+      <div className="space-y-3">
         {hinosFiltrados.length === 0 ? (
-          <div className="text-center py-12 bg-white rounded-lg">
-            <Music className="mx-auto text-gray-400 mb-4" size={48} />
-            <p className="text-gray-500 text-base">Nenhum hino cadastrado</p>
-          </div>
+          <Painel className="text-center py-12">
+            <Music className="mx-auto text-gray-300 mb-3" size={40} />
+            <p className="text-gray-500">Nenhum hino encontrado</p>
+          </Painel>
         ) : (
-          hinosFiltrados.map(hino => (
-            <div key={hino.id} className="bg-white p-3 rounded-lg shadow-sm border-l-4 border-indigo-600">
-              <h3 className="text-lg font-bold text-gray-900 mb-2 md:mb-0">{hino.nome}</h3>
-              
-              {/* Linha com informações e botões - Desktop em 1 linha, Mobile em 2 */}
-              <div className="md:flex md:items-center md:justify-between md:gap-4">
-                <div className="text-sm text-gray-600 mt-2 md:mt-0">
-                  <p>🎵 <span className="font-medium">{hino.tom}</span> • 👤 <span className="font-medium">{hino.cantor}</span> • 📂 <span className="font-medium">{hino.categoria}</span></p>
+          hinosFiltrados.map(hino => {
+            const aberto = acoesAbertas === hino.id;
+
+            return (
+              <Painel key={hino.id} className="p-3 sm:p-4">
+                <div className="flex items-center gap-3">
+                  <div className="shrink-0 w-10 h-10 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center">
+                    <Music2 size={18} />
+                  </div>
+
+                  <div className="flex-1 min-w-0">
+                    <h3 className="font-bold text-gray-900 truncate">{hino.nome}</h3>
+                    <div className="flex flex-wrap items-center gap-1.5 mt-1">
+                      <span className="text-[11px] font-semibold px-2 py-0.5 rounded-full bg-indigo-100 text-indigo-700">
+                        {hino.tom}
+                      </span>
+                      <span className="text-[11px] font-semibold px-2 py-0.5 rounded-full bg-gray-100 text-gray-600">
+                        {hino.cantor}
+                      </span>
+                      <span className="text-[11px] font-semibold px-2 py-0.5 rounded-full bg-gray-100 text-gray-600">
+                        {hino.categoria}
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* Ações principais */}
+                  <div className="shrink-0 flex gap-1">
+                    <BotaoAcao
+                      icon={Eye}
+                      titulo="Ver letra"
+                      cor="bg-blue-50 text-blue-600 hover:bg-blue-100"
+                      onClick={() => setModalLetra(hino)}
+                    />
+                    <BotaoAcao
+                      icon={Pencil}
+                      titulo="Editar"
+                      cor="bg-indigo-50 text-indigo-600 hover:bg-indigo-100"
+                      onClick={() => handleEditar(hino)}
+                    />
+                    <BotaoAcao
+                      icon={Trash2}
+                      titulo="Apagar"
+                      cor="bg-red-50 text-red-600 hover:bg-red-100"
+                      onClick={() => setDeletePasswordModal(hino)}
+                    />
+                    <BotaoAcao
+                      icon={MoreHorizontal}
+                      titulo="Mais opções"
+                      cor={
+                        aberto
+                          ? 'bg-gray-700 text-white'
+                          : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                      }
+                      onClick={() => setAcoesAbertas(aberto ? null : hino.id)}
+                    />
+                  </div>
                 </div>
-                
-                {/* Botões */}
-                <div className="md:hidden flex gap-1 mt-3">
-                  <button
-                    onClick={() => setModalLetra(hino)}
-                    className="p-1.5 bg-blue-100 text-blue-600 rounded hover:bg-blue-200 transition flex justify-center text-sm flex-1"
-                    title="Ver letra"
-                  >
-                    👁️
-                  </button>
-                  <button
-                    onClick={() => handleEditar(hino)}
-                    className="p-1.5 bg-yellow-100 text-yellow-600 rounded hover:bg-yellow-200 transition flex justify-center flex-1"
-                    title="Editar"
-                  >
-                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                    </svg>
-                  </button>
-                  <button
-                    onClick={() => generateHinoPdf(hino, configuracoes)}
-                    className="p-1.5 bg-orange-100 text-orange-600 rounded hover:bg-orange-200 transition flex justify-center flex-1"
-                    title="Baixar PDF"
-                  >
-                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
-                    </svg>
-                  </button>
-                  <button
-                    onClick={() => shareViaWhatsApp(`Confira o hino: ${hino.nome} (Tom: ${hino.tom}, Cantor: ${hino.cantor})`)}
-                    className="p-1.5 bg-green-100 text-green-600 rounded hover:bg-green-200 transition flex justify-center flex-1"
-                    title="Compartilhar"
-                  >
-                    <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
-                      <path d="M17.5 2c1.933 0 3.5 1.567 3.5 3.5v4.5h-2V5.5c0-.827-.673-1.5-1.5-1.5h-11c-.827 0-1.5.673-1.5 1.5v11c0 .827.673 1.5 1.5 1.5h4.5v2h-4.5c-1.933 0-3.5-1.567-3.5-3.5v-11c0-1.933 1.567-3.5 3.5-3.5h11zm0 8l-6 6v-4h-6v-4h6v-4l6 6z" />
-                    </svg>
-                  </button>
-                  <button
-                    onClick={() => handleDuplicar(hino)}
-                    className="p-1.5 bg-purple-100 text-purple-600 rounded hover:bg-purple-200 transition flex justify-center flex-1"
-                    title="Duplicar"
-                  >
-                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
-                    </svg>
-                  </button>
-                  <button
-                    onClick={() => setDeletePasswordModal(hino)}
-                    className="p-1.5 bg-red-100 text-red-600 rounded hover:bg-red-200 transition flex justify-center flex-1"
-                    title="Deletar"
-                  >
-                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                    </svg>
-                  </button>
-                </div>
-                
-                {/* Botões Desktop - Na mesma linha com ícones SVG */}
-                <div className="hidden md:flex md:gap-2">
-                  <button
-                    onClick={() => setModalLetra(hino)}
-                    className="p-2 bg-blue-50 text-blue-600 rounded hover:bg-blue-100 transition flex justify-center items-center"
-                    title="Ver letra"
-                  >
-                    👁️
-                  </button>
-                  <button
-                    onClick={() => handleEditar(hino)}
-                    className="p-2 bg-yellow-50 text-yellow-600 rounded hover:bg-yellow-100 transition flex justify-center items-center"
-                    title="Editar"
-                  >
-                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                    </svg>
-                  </button>
-                  <button
-                    onClick={() => generateHinoPdf(hino, configuracoes)}
-                    className="p-2 bg-orange-50 text-orange-600 rounded hover:bg-orange-100 transition flex justify-center items-center"
-                    title="Baixar PDF"
-                  >
-                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
-                    </svg>
-                  </button>
-                  <button
-                    onClick={() => shareViaWhatsApp(`Confira o hino: ${hino.nome} (Tom: ${hino.tom}, Cantor: ${hino.cantor})`)}
-                    className="p-2 bg-green-50 text-green-600 rounded hover:bg-green-100 transition flex justify-center items-center"
-                    title="Compartilhar"
-                  >
-                    <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
-                      <path d="M17.5 2c1.933 0 3.5 1.567 3.5 3.5v4.5h-2V5.5c0-.827-.673-1.5-1.5-1.5h-11c-.827 0-1.5.673-1.5 1.5v11c0 .827.673 1.5 1.5 1.5h4.5v2h-4.5c-1.933 0-3.5-1.567-3.5-3.5v-11c0-1.933 1.567-3.5 3.5-3.5h11zm0 8l-6 6v-4h-6v-4h6v-4l6 6z" />
-                    </svg>
-                  </button>
-                  <button
-                    onClick={() => handleDuplicar(hino)}
-                    className="p-2 bg-purple-50 text-purple-600 rounded hover:bg-purple-100 transition flex justify-center items-center"
-                    title="Duplicar"
-                  >
-                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
-                    </svg>
-                  </button>
-                  <button
-                    onClick={() => setDeletePasswordModal(hino)}
-                    className="p-2 bg-red-50 text-red-600 rounded hover:bg-red-100 transition flex justify-center items-center"
-                    title="Deletar"
-                  >
-                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                    </svg>
-                  </button>
-                </div>
-              </div>
-            </div>
-          ))
+
+                {/* Ações extras */}
+                {aberto && (
+                  <div className="mt-3 pt-3 border-t border-gray-100 flex gap-2">
+                    <AcaoExtra
+                      icon={Download}
+                      texto="PDF"
+                      cor="bg-orange-50 text-orange-700 hover:bg-orange-100"
+                      onClick={() => generateHinoPdf(hino, configuracoes)}
+                    />
+                    <AcaoExtra
+                      icon={Share2}
+                      texto="Compartilhar"
+                      cor="bg-green-50 text-green-700 hover:bg-green-100"
+                      onClick={() =>
+                        shareViaWhatsApp(
+                          `Confira o hino: ${hino.nome} (Tom: ${hino.tom}, Cantor: ${hino.cantor})`
+                        )
+                      }
+                    />
+                    <AcaoExtra
+                      icon={Copy}
+                      texto="Duplicar"
+                      cor="bg-purple-50 text-purple-700 hover:bg-purple-100"
+                      onClick={() => handleDuplicar(hino)}
+                    />
+                  </div>
+                )}
+              </Painel>
+            );
+          })
         )}
       </div>
 
