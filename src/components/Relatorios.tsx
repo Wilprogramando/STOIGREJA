@@ -305,7 +305,7 @@ export const Relatorios: React.FC = () => {
         <Resumo icon={TrendingUp} label="Mais usado" valor={`${topHinos[0]?.usageCount || 0}x`} />
         <Resumo
           icon={Calendar}
-          label="Cultos em 30 dias"
+          label="Quantidade de Cultos tocados em 30 dias"
           valor={repertorios30dias}
           className="col-span-2 sm:col-span-1"
         />
