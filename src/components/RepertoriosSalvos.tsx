@@ -343,9 +343,13 @@ export const RepertoriosSalvos: React.FC<RepertoriosSalvosProps> = ({ configurac
           </h2>
         </div>
 
-        {/* Ilustração decorativa */}
+        {/* Ilustração decorativa: muda junto com a aba escolhida */}
         <img
-          src="/ilustracao-repertorios.svg"
+          src={
+            mostrarPassados
+              ? '/ilustracao-repertorios-passados.svg'
+              : '/ilustracao-repertorios.svg'
+          }
           alt=""
           aria-hidden="true"
           className="shrink-0 w-24 sm:w-32 -mt-3 -mr-1 pointer-events-none select-none"
