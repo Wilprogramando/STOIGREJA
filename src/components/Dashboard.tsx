@@ -152,15 +152,15 @@ export const Dashboard: React.FC<DashboardProps> = ({ onPageChange }) => {
   const StatCard = ({ icon: Icon, label, value, rodape, cor, onClick }: any) => (
     <button
       onClick={onClick}
-      className={`text-left bg-white rounded-2xl border border-gray-100 border-l-4 ${cor.borda} shadow-sm hover:shadow-md transition p-4 w-full`}
+      className={`text-left bg-white rounded-2xl border border-gray-100 border-l-4 ${cor.borda} shadow-sm hover:shadow-md transition p-3 sm:p-4 w-full`}
     >
-      <div className="flex items-start gap-3">
-        <div className={`${cor.fundo} ${cor.icone} p-3 rounded-xl shrink-0`}>
-          <Icon size={22} />
+      <div className="flex items-start gap-2 sm:gap-3">
+        <div className={`${cor.fundo} ${cor.icone} p-2 sm:p-3 rounded-xl shrink-0`}>
+          <Icon size={20} />
         </div>
         <div className="min-w-0">
-          <p className="text-sm font-semibold text-gray-700 truncate">{label}</p>
-          <p className="text-3xl font-extrabold text-gray-900 leading-tight">{value}</p>
+          <p className="text-xs sm:text-sm font-semibold text-gray-700 truncate">{label}</p>
+          <p className="text-2xl sm:text-3xl font-extrabold text-gray-900 leading-tight">{value}</p>
           <p className="text-xs text-gray-500 truncate">{rodape}</p>
         </div>
       </div>
@@ -276,7 +276,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ onPageChange }) => {
       </div>
 
       {/* Números */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+      <div className="grid grid-cols-2 gap-3">
         <StatCard
           icon={Music}
           label="Hinos Comuns"

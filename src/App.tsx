@@ -179,7 +179,7 @@ export default function App() {
   };
 
   return (
-    <div className="flex h-full bg-gray-100 overflow-hidden">
+    <div className="flex h-full bg-slate-300 overflow-hidden">
       <Sidebar
         currentPage={currentPage}
         onPageChange={handlePageChange}
@@ -198,7 +198,7 @@ export default function App() {
 
         <StatusConexao />
 
-        <main className="flex-1 overflow-auto p-4 md:p-8">
+        <main className="flex-1 overflow-auto p-4 md:p-8 bg-slate-300">
           {renderPage()}
         </main>
 
