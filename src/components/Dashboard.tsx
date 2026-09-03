@@ -209,8 +209,8 @@ export const Dashboard: React.FC<DashboardProps> = ({ onPageChange }) => {
     >
       {/* Marca d'água: o próprio ícone do card, grande e bem apagado */}
       <Icon
-        size={110}
-        className={`${cor.icone} opacity-10 absolute -right-4 -bottom-4 pointer-events-none`}
+        size={72}
+        className={`${cor.icone} opacity-10 absolute -right-2 -bottom-2 pointer-events-none`}
         strokeWidth={1.5}
       />
 
@@ -231,10 +231,17 @@ export const Dashboard: React.FC<DashboardProps> = ({ onPageChange }) => {
   const AcaoRapida = ({ icon: Icon, label, cor, onClick }: any) => (
     <button
       onClick={onClick}
-      className={`${cor.fundo} ${cor.texto} rounded-2xl py-5 px-4 font-semibold flex flex-col items-center justify-center gap-2 shadow-lg hover:shadow-xl hover:brightness-95 transition`}
+      className={`relative overflow-hidden ${cor.fundo} ${cor.texto} rounded-2xl py-5 px-4 font-semibold flex flex-col items-center justify-center gap-2 shadow-lg hover:shadow-xl hover:brightness-95 transition`}
     >
-      <Icon size={24} />
-      <span className="text-sm">{label}</span>
+      {/* Marca d'água: o próprio ícone do botão, bem apagado */}
+      <Icon
+        size={64}
+        className="opacity-10 absolute -right-2 -bottom-2 pointer-events-none"
+        strokeWidth={1.5}
+      />
+
+      <Icon size={24} className="relative" />
+      <span className="text-sm relative">{label}</span>
     </button>
   );
 
