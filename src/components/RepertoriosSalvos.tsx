@@ -18,7 +18,8 @@ import {
   X,
   Church,
   FileText,
-  MoreVertical
+  MoreVertical,
+  Check
 } from 'lucide-react';
 import { getAllRepertorios, deleteRepertorio, addRepertorio, getAllHinos } from '../services/db';
 import { generateRepertorioPdf, shareViaWhatsApp } from '../services/pdf';
@@ -71,6 +72,32 @@ export const RepertoriosSalvos: React.FC<RepertoriosSalvosProps> = ({ configurac
   const [mostrarPassados, setMostrarPassados] = useState(false);
   /** Repertório com o painel de ações aberto (só um por vez). */
   const [acoesAbertas, setAcoesAbertas] = useState<string | null>(null);
+
+  /** Hinos marcados como já cantados: chave "idRepertorio|idHino". Fica salvo no aparelho. */
+  const [cantados, setCantados] = useState<Record<string, boolean>>(() => {
+    try {
+      return JSON.parse(localStorage.getItem('hinosCantados') || '{}');
+    } catch {
+      return {};
+    }
+  });
+
+  const chaveCantado = (idRepertorio: string, idHino: string) => `${idRepertorio}|${idHino}`;
+
+  const alternarCantado = (idRepertorio: string, idHino: string) => {
+    setCantados(anterior => {
+      const chave = chaveCantado(idRepertorio, idHino);
+      const novo = { ...anterior };
+      if (novo[chave]) delete novo[chave];
+      else novo[chave] = true;
+      try {
+        localStorage.setItem('hinosCantados', JSON.stringify(novo));
+      } catch {
+        /* armazenamento indisponível: mantém só na tela */
+      }
+      return novo;
+    });
+  };
 
   // Abre a letra guardando a lista do repertório, para navegar entre os hinos
   const abrirLetra = (lista: Hino[], idx: number) => {
@@ -524,17 +551,44 @@ export const RepertoriosSalvos: React.FC<RepertoriosSalvosProps> = ({ configurac
                   {hinosDoRepertorio.map((hino, idx) => {
                     if (!hino) return null;
 
+                    const cantado = !!cantados[chaveCantado(repertorio.id, hino.id)];
+
                     return (
                       <div
                         key={hino.id}
-                        className="bg-gray-50 border border-gray-100 border-l-4 border-l-indigo-500 rounded-2xl p-3 flex items-center gap-3"
+                        className={`border border-gray-100 border-l-4 rounded-2xl p-3 flex items-center gap-3 ${
+                          cantado
+                            ? 'bg-green-50 border-l-green-500'
+                            : 'bg-gray-50 border-l-indigo-500'
+                        }`}
                       >
-                        <span className="shrink-0 w-8 h-8 sm:w-9 sm:h-9 rounded-xl bg-indigo-100 text-indigo-700 font-extrabold flex items-center justify-center tabular-nums text-sm">
+                        <button
+                          onClick={() => alternarCantado(repertorio.id, hino.id)}
+                          title={cantado ? 'Marcar como não cantado' : 'Marcar como já cantado'}
+                          aria-pressed={cantado}
+                          className={`shrink-0 w-7 h-7 rounded-lg border-2 flex items-center justify-center transition ${
+                            cantado
+                              ? 'bg-green-600 border-green-600 text-white'
+                              : 'bg-white border-gray-300 text-transparent hover:border-green-500'
+                          }`}
+                        >
+                          <Check size={16} strokeWidth={3} />
+                        </button>
+
+                        <span
+                          className={`shrink-0 w-8 h-8 sm:w-9 sm:h-9 rounded-xl font-extrabold flex items-center justify-center tabular-nums text-sm ${
+                            cantado ? 'bg-green-100 text-green-700' : 'bg-indigo-100 text-indigo-700'
+                          }`}
+                        >
                           {idx + 1}
                         </span>
 
                         <div className="flex-1 min-w-0">
-                          <p className="font-bold text-gray-900 text-sm break-words">
+                          <p
+                            className={`font-bold text-sm break-words ${
+                              cantado ? 'text-gray-500 line-through' : 'text-gray-900'
+                            }`}
+                          >
                             {hino?.nome || 'Hino desconhecido'}
                           </p>
                           <p className="text-xs text-gray-500 truncate mt-0.5">
@@ -562,6 +616,9 @@ export const RepertoriosSalvos: React.FC<RepertoriosSalvosProps> = ({ configurac
                   <div className="mt-3 py-2.5 rounded-xl bg-indigo-50 text-indigo-700 text-sm font-bold flex items-center justify-center gap-2">
                     <Music size={15} />
                     Total: {hinosDoRepertorio.length} hinos
+                    <span className="text-green-700">
+                      • {hinosDoRepertorio.filter(h => h && cantados[chaveCantado(repertorio.id, h.id)]).length} cantado(s)
+                    </span>
                   </div>
                 )}
               </Painel>
