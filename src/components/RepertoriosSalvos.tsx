@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
   Eye,
   Edit,
@@ -24,6 +24,14 @@ import {
 import { getAllRepertorios, deleteRepertorio, addRepertorio, getAllHinos } from '../services/db';
 import { generateRepertorioPdf, shareViaWhatsApp } from '../services/pdf';
 import { Repertorio, Configuracoes, Hino } from '../types';
+import {
+  carregarCantados,
+  carregarCantadosLocal,
+  alternarCantado,
+  chaveCantado,
+  limparCantadosDoRepertorio,
+  MapaCantados
+} from '../services/hinosCantados';
 
 // Tamanho inicial da letra (px). Ao fechar e abrir a letra, volta para este valor.
 const TAMANHO_LETRA_PADRAO = 18;
@@ -73,30 +81,22 @@ export const RepertoriosSalvos: React.FC<RepertoriosSalvosProps> = ({ configurac
   /** Repertório com o painel de ações aberto (só um por vez). */
   const [acoesAbertas, setAcoesAbertas] = useState<string | null>(null);
 
-  /** Hinos marcados como já cantados: chave "idRepertorio|idHino". Fica salvo no aparelho. */
-  const [cantados, setCantados] = useState<Record<string, boolean>>(() => {
-    try {
-      return JSON.parse(localStorage.getItem('hinosCantados') || '{}');
-    } catch {
-      return {};
-    }
-  });
+  /**
+   * Hinos marcados como já cantados: chave "idRepertorio|idHino".
+   * Ficam no Supabase, então todos os aparelhos veem a mesma marcação.
+   * Começa com a cópia local para a tela abrir na hora.
+   */
+  const [cantados, setCantados] = useState<MapaCantados>(() => carregarCantadosLocal());
 
-  const chaveCantado = (idRepertorio: string, idHino: string) => `${idRepertorio}|${idHino}`;
+  const cantadosRef = useRef<MapaCantados>(cantados);
+  useEffect(() => {
+    cantadosRef.current = cantados;
+  }, [cantados]);
 
-  const alternarCantado = (idRepertorio: string, idHino: string) => {
-    setCantados(anterior => {
-      const chave = chaveCantado(idRepertorio, idHino);
-      const novo = { ...anterior };
-      if (novo[chave]) delete novo[chave];
-      else novo[chave] = true;
-      try {
-        localStorage.setItem('hinosCantados', JSON.stringify(novo));
-      } catch {
-        /* armazenamento indisponível: mantém só na tela */
-      }
-      return novo;
-    });
+  const marcarCantado = async (idRepertorio: string, idHino: string) => {
+    const atualizado = await alternarCantado(idRepertorio, idHino, cantadosRef.current);
+    cantadosRef.current = atualizado;
+    setCantados(atualizado);
   };
 
   // Abre a letra guardando a lista do repertório, para navegar entre os hinos
@@ -134,6 +134,11 @@ export const RepertoriosSalvos: React.FC<RepertoriosSalvosProps> = ({ configurac
 
   useEffect(() => {
     loadRepertorios();
+    // Busca as marcações de "já cantado" compartilhadas entre todos os aparelhos
+    carregarCantados().then(mapa => {
+      cantadosRef.current = mapa;
+      setCantados(mapa);
+    });
   }, []);
 
   // ✅ NOVA FUNÇÃO ROBUSTA: Converter IDs em objetos de hinos
@@ -237,6 +242,13 @@ export const RepertoriosSalvos: React.FC<RepertoriosSalvosProps> = ({ configurac
       
       try {
         await deleteRepertorio(id);
+        await limparCantadosDoRepertorio(id);
+        const semOExcluido = { ...cantadosRef.current };
+        Object.keys(semOExcluido)
+          .filter(chave => chave.startsWith(`${id}|`))
+          .forEach(chave => delete semOExcluido[chave]);
+        cantadosRef.current = semOExcluido;
+        setCantados(semOExcluido);
         alert('Repertório deletado com sucesso!');
         loadRepertorios();
       } catch (error) {
@@ -563,7 +575,7 @@ export const RepertoriosSalvos: React.FC<RepertoriosSalvosProps> = ({ configurac
                         }`}
                       >
                         <button
-                          onClick={() => alternarCantado(repertorio.id, hino.id)}
+                          onClick={() => marcarCantado(repertorio.id, hino.id)}
                           title={cantado ? 'Marcar como não cantado' : 'Marcar como já cantado'}
                           aria-pressed={cantado}
                           className={`shrink-0 w-7 h-7 rounded-lg border-2 flex items-center justify-center transition ${
