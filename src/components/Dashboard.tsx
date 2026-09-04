@@ -200,6 +200,30 @@ export const Dashboard: React.FC<DashboardProps> = ({ onPageChange }) => {
     return data === hoje.getFullYear() + '-' + mm + '-' + dd;
   };
 
+  // Data/hora de início do repertório
+  const inicioDoRepertorio = (rep: Repertorio) => {
+    const [ano, mes, dia] = (rep.data || '').split('-').map(Number);
+    if (!ano || !mes || !dia) return null;
+    const [hora, minuto] = (rep.horario || '00:00').split(':').map(Number);
+    return new Date(ano, mes - 1, dia, hora || 0, minuto || 0, 0, 0);
+  };
+
+  // Já passou: a data/horário do repertório ficou para trás
+  const jaPassou = (rep: Repertorio) => {
+    const inicio = inicioDoRepertorio(rep);
+    return inicio !== null && inicio.getTime() <= Date.now();
+  };
+
+  // Mostra "Ontem" quando a data é a do dia anterior
+  const ehOntem = (data?: string) => {
+    if (!data) return false;
+    const ontem = new Date();
+    ontem.setDate(ontem.getDate() - 1);
+    const mm = String(ontem.getMonth() + 1).padStart(2, '0');
+    const dd = String(ontem.getDate()).padStart(2, '0');
+    return data === ontem.getFullYear() + '-' + mm + '-' + dd;
+  };
+
   const loadStats = async () => {
     try {
       const hinos = await getAllHinos();
@@ -277,7 +301,10 @@ export const Dashboard: React.FC<DashboardProps> = ({ onPageChange }) => {
           <div className="space-y-3">
             {proximos.map((rep, index) => {
               const [, mes, dia] = (rep.data || '').split('-');
-              const hoje = ehHoje(rep.data);
+              const passou = jaPassou(rep);
+              const hoje = ehHoje(rep.data) && !passou;
+              const ontem = ehOntem(rep.data);
+              const indiceProximo = proximos.findIndex(r => !jaPassou(r));
 
               return (
                 <button
@@ -286,10 +313,10 @@ export const Dashboard: React.FC<DashboardProps> = ({ onPageChange }) => {
                   className="w-full text-left bg-white rounded-2xl border border-gray-100 shadow-lg hover:shadow-xl transition p-4 flex items-center gap-4"
                 >
                   <div className={`w-16 shrink-0 rounded-xl border py-2 text-center ${
-                    hoje ? 'border-green-300 bg-green-50' : 'border-gray-200'
+                    passou ? 'border-gray-200 bg-gray-100' : hoje ? 'border-green-300 bg-green-50' : 'border-gray-200'
                   }`}>
                     <p className={`text-2xl font-extrabold leading-none ${
-                      hoje ? 'text-green-600' : 'text-indigo-600'
+                      passou ? 'text-gray-400' : hoje ? 'text-green-600' : 'text-indigo-600'
                     }`}>
                       {dia || '--'}
                     </p>
@@ -301,11 +328,15 @@ export const Dashboard: React.FC<DashboardProps> = ({ onPageChange }) => {
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2">
                       <h4 className="font-bold text-gray-900 break-words">{rep.nome}</h4>
-                      {hoje ? (
+                      {passou ? (
+                        <span className="shrink-0 text-[10px] font-bold text-gray-600 bg-gray-200 px-2 py-0.5 rounded-full">
+                          JÁ PASSOU
+                        </span>
+                      ) : hoje ? (
                         <span className="shrink-0 text-[10px] font-bold text-green-700 bg-green-100 px-2 py-0.5 rounded-full">
                           HOJE
                         </span>
-                      ) : index === 0 ? (
+                      ) : index === indiceProximo ? (
                         <span className="shrink-0 text-[10px] font-bold text-indigo-700 bg-indigo-100 px-2 py-0.5 rounded-full">
                           PRÓXIMO
                         </span>
@@ -314,9 +345,11 @@ export const Dashboard: React.FC<DashboardProps> = ({ onPageChange }) => {
                     <p className="text-sm text-gray-600 mt-1">
                       📅 {hoje
                         ? 'Hoje'
-                        : rep.data
-                          ? rep.data.split('-').reverse().join('/')
-                          : 'Data não definida'}
+                        : ontem
+                          ? 'Ontem'
+                          : rep.data
+                            ? rep.data.split('-').reverse().join('/')
+                            : 'Data não definida'}
                       {rep.horario && ` às ${rep.horario}`}
                     </p>
                     <p className="text-sm text-gray-500">🎵 {rep.hinos.length} hino(s)</p>
