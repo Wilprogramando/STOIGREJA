@@ -19,7 +19,8 @@ import {
   Church,
   FileText,
   MoreVertical,
-  Check
+  Check,
+  ChevronDown
 } from 'lucide-react';
 import { getAllRepertorios, deleteRepertorio, addRepertorio, getAllHinos } from '../services/db';
 import { generateRepertorioPdf, shareViaWhatsApp } from '../services/pdf';
@@ -72,6 +73,11 @@ export const RepertoriosSalvos: React.FC<RepertoriosSalvosProps> = ({ configurac
   const [mostrarPassados, setMostrarPassados] = useState(false);
   /** Repertório com o painel de ações aberto (só um por vez). */
   const [acoesAbertas, setAcoesAbertas] = useState<string | null>(null);
+  /**
+   * Repertórios com a lista de hinos aberta/fechada pelo usuário.
+   * Sem marcação, os passados ficam fechados (página menor) e os próximos abertos.
+   */
+  const [hinosAbertos, setHinosAbertos] = useState<Record<string, boolean>>({});
 
   /** Hinos marcados como já cantados: chave "idRepertorio|idHino". Fica salvo no aparelho. */
   const [cantados, setCantados] = useState<Record<string, boolean>>(() => {
@@ -443,11 +449,18 @@ export const RepertoriosSalvos: React.FC<RepertoriosSalvosProps> = ({ configurac
             );
             const hoje = ehHoje(repertorio.data);
             const acoesVisiveis = acoesAbertas === repertorio.id;
+            const hinosVisiveis = hinosAbertos[repertorio.id] ?? !mostrarPassados;
 
             return (
               <Painel key={repertorio.id} className="p-4 sm:p-6">
                 {/* Título e data */}
-                <div className="flex items-start gap-3 mb-4">
+                <div
+                  onClick={() =>
+                    setHinosAbertos(a => ({ ...a, [repertorio.id]: !hinosVisiveis }))
+                  }
+                  title={hinosVisiveis ? 'Esconder hinos' : 'Mostrar hinos'}
+                  className="flex items-start gap-3 mb-4 cursor-pointer"
+                >
                   <div className="shrink-0 w-14 h-14 sm:w-16 sm:h-16 rounded-2xl bg-gradient-to-br from-indigo-500 to-violet-700 text-white flex items-center justify-center shadow-md">
                     <Church size={26} />
                   </div>
@@ -481,8 +494,18 @@ export const RepertoriosSalvos: React.FC<RepertoriosSalvosProps> = ({ configurac
                     </div>
                   </div>
 
+                  <ChevronDown
+                    size={20}
+                    className={`shrink-0 mt-2 text-gray-400 transition-transform ${
+                      hinosVisiveis ? 'rotate-180' : ''
+                    }`}
+                  />
+
                   <button
-                    onClick={() => setAcoesAbertas(acoesVisiveis ? null : repertorio.id)}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setAcoesAbertas(acoesVisiveis ? null : repertorio.id);
+                    }}
                     title={acoesVisiveis ? 'Esconder ações' : 'Mostrar ações'}
                     className={`shrink-0 p-2 rounded-xl border transition ${
                       acoesVisiveis
@@ -546,7 +569,8 @@ export const RepertoriosSalvos: React.FC<RepertoriosSalvosProps> = ({ configurac
                   </div>
                 )}
 
-                {/* Hinos do repertório */}
+                {/* Hinos do repertório (abre/fecha ao clicar no cabeçalho) */}
+                {hinosVisiveis && (
                 <div className="space-y-2">
                   {hinosDoRepertorio.map((hino, idx) => {
                     if (!hino) return null;
@@ -611,8 +635,10 @@ export const RepertoriosSalvos: React.FC<RepertoriosSalvosProps> = ({ configurac
                   })}
                 </div>
 
+                )}
+
                 {/* Total de hinos */}
-                {hinosDoRepertorio.length > 0 && (
+                {hinosVisiveis && hinosDoRepertorio.length > 0 && (
                   <div className="mt-3 py-2.5 rounded-xl bg-indigo-50 text-indigo-700 text-sm font-bold flex items-center justify-center gap-2">
                     <Music size={15} />
                     Total: {hinosDoRepertorio.length} hinos
