@@ -666,6 +666,100 @@ export async function deleteCantor(nome: string, listaAtualizada: string[]): Pro
   if (supabase) await gravar('cantor.delete', nome);
 }
 
+// ==================== ACESSOS POR APARELHO ====================
+
+/** Uma linha da tabela de acessos: um aparelho em um dia. */
+export interface AcessoAparelho {
+  aparelhoId: string;
+  nome: string;
+  dia: string;
+  contagem: number;
+  atualizadoEm: string;
+}
+
+/**
+ * Soma uma abertura de tela do aparelho no dia de hoje.
+ * Fica na tabela "acessos_aparelhos" do Supabase, para as Configurações
+ * mostrarem os acessos de todos os aparelhos, não só deste.
+ */
+export async function registrarAcessoAparelho(
+  aparelhoId: string,
+  nome: string
+): Promise<void> {
+  if (!supabase || !estaOnline()) return;
+
+  try {
+    const hoje = new Date().toISOString().split('T')[0];
+
+    const { data } = await supabase
+      .from('acessos_aparelhos')
+      .select('contagem')
+      .eq('aparelho_id', aparelhoId)
+      .eq('dia', hoje)
+      .maybeSingle();
+
+    const { error } = await supabase.from('acessos_aparelhos').upsert(
+      {
+        aparelho_id: aparelhoId,
+        dia: hoje,
+        nome,
+        contagem: (data?.contagem || 0) + 1,
+        atualizado_em: new Date().toISOString(),
+      },
+      { onConflict: 'aparelho_id,dia' }
+    );
+
+    if (error) throw error;
+  } catch (error) {
+    console.error('❌ Erro ao registrar acesso do aparelho:', error);
+  }
+}
+
+/** Troca o nome do aparelho em todos os dias já registrados. */
+export async function renomearAparelho(aparelhoId: string, nome: string): Promise<void> {
+  if (!supabase || !estaOnline()) return;
+
+  try {
+    const { error } = await supabase
+      .from('acessos_aparelhos')
+      .update({ nome })
+      .eq('aparelho_id', aparelhoId);
+
+    if (error) throw error;
+  } catch (error) {
+    console.error('❌ Erro ao renomear aparelho:', error);
+  }
+}
+
+/** Acessos dos últimos "dias" dias, de todos os aparelhos. */
+export async function getAcessosAparelhos(dias = 30): Promise<AcessoAparelho[]> {
+  if (!supabase) return [];
+
+  try {
+    const inicio = new Date();
+    inicio.setDate(inicio.getDate() - (dias - 1));
+
+    const { data, error } = await supabase
+      .from('acessos_aparelhos')
+      .select('*')
+      .gte('dia', inicio.toISOString().split('T')[0])
+      .order('dia', { ascending: false });
+
+    if (error) throw error;
+
+    return (data || []).map((linha: any) => ({
+      aparelhoId: linha.aparelho_id,
+      nome: linha.nome || 'Aparelho',
+      dia: linha.dia,
+      contagem: linha.contagem || 0,
+      atualizadoEm: linha.atualizado_em || '',
+    }));
+  } catch (error) {
+    console.error('❌ Erro ao carregar acessos dos aparelhos:', error);
+    return [];
+  }
+}
+
 // ==================== HARPA ====================
 
 export async function getAllHarpa(): Promise<HarpaItem[]> {

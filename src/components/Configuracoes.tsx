@@ -1,11 +1,17 @@
 import React, { useState, useEffect } from 'react';
-import { Save, Download, Upload, Trash2, AlertCircle, Eye, EyeOff, BarChart3, Mic2, UserPlus, Pencil, BookOpen } from 'lucide-react';
+import { Save, Download, Upload, Trash2, AlertCircle, Eye, EyeOff, BarChart3, Mic2, UserPlus, Pencil, BookOpen, Smartphone } from 'lucide-react';
 import { getConfiguracoes, saveConfiguracoes, exportData, importData, clearAllData } from '../services/db';
 import { Configuracoes } from '../types';
 import { LogoUploader } from './LogoUploader';
 import { ImportCSVModal } from './ImportCSVModal';
 import { MENUS, lerMenusOcultos, salvarMenusOcultos } from '../services/menus';
 import { lerAcessos, zerarAcessos, RegistroAcessos } from '../services/acessos';
+import {
+  carregarAparelhos,
+  nomeDesteAparelho,
+  salvarNomeDesteAparelho,
+  ResumoAparelho,
+} from '../services/aparelhos';
 import {
   lerCantores,
   adicionarCantor,
@@ -34,11 +40,18 @@ export const ConfiguracoesView: React.FC<ConfiguracoesProps> = ({ onConfigChange
   const [cantores, setCantores] = useState<string[]>(() => lerCantores());
   const [novoCantor, setNovoCantor] = useState('');
   const [showCSVModal, setShowCSVModal] = useState(false);
+  const [aparelhos, setAparelhos] = useState<ResumoAparelho[]>([]);
+  const [carregandoAparelhos, setCarregandoAparelhos] = useState(true);
+  const [nomeAparelho, setNomeAparelho] = useState<string>(() => nomeDesteAparelho());
 
   useEffect(() => {
     loadConfiguracoes();
     // Traz para a lista quem já está gravado como cantor nos hinos cadastrados.
     sincronizarCantoresDosHinos().then(setCantores);
+    // Acessos do último mês de todos os aparelhos.
+    carregarAparelhos(30)
+      .then(setAparelhos)
+      .finally(() => setCarregandoAparelhos(false));
   }, []);
 
   const handleAdicionarCantor = () => {
@@ -107,6 +120,13 @@ Os hinos já cadastrados com esse cantor não mudam.`)) return;
     setMenusOcultos(novos);
     salvarMenusOcultos(novos);
     onConfigChange?.();
+  };
+
+  /** Salva o apelido deste aparelho e atualiza a lista na tela. */
+  const handleSalvarNomeAparelho = async () => {
+    const salvo = await salvarNomeDesteAparelho(nomeAparelho);
+    setNomeAparelho(salvo);
+    setAparelhos(await carregarAparelhos(30));
   };
 
   const handleZerarAcessos = () => {
@@ -577,6 +597,96 @@ Os hinos já cadastrados com esse cantor não mudam.`)) return;
                   );
                 })}
             </div>
+          )}
+        </div>
+
+        {/* Aparelhos que acessaram o sistema */}
+        <div className="bg-white p-6 rounded-lg shadow-md">
+          <h3 className="text-xl font-bold text-gray-900 flex items-center gap-2 mb-1">
+            <Smartphone size={20} className="text-indigo-600" />
+            Aparelhos (últimos 30 dias)
+          </h3>
+          <p className="text-sm text-gray-500 mb-4">
+            Acessos de todos os celulares e computadores que abriram o sistema no último mês.
+          </p>
+
+          <div className="mb-4 p-3 rounded-lg bg-gray-50 border border-gray-200">
+            <label className="block text-xs font-medium text-gray-600 mb-1">
+              Nome deste aparelho
+            </label>
+            <div className="flex gap-2">
+              <input
+                type="text"
+                value={nomeAparelho}
+                onChange={e => setNomeAparelho(e.target.value)}
+                className="flex-1 px-3 py-2 border border-gray-300 rounded-lg text-sm"
+                placeholder="Ex.: Celular do Daniel"
+              />
+              <button
+                onClick={handleSalvarNomeAparelho}
+                className="px-4 py-2 bg-indigo-600 text-white rounded-lg text-sm font-medium hover:bg-indigo-700"
+              >
+                Salvar
+              </button>
+            </div>
+          </div>
+
+          {carregandoAparelhos ? (
+            <p className="text-sm text-gray-500">Carregando aparelhos...</p>
+          ) : aparelhos.length === 0 ? (
+            <p className="text-sm text-gray-500">
+              Nenhum acesso registrado no último mês.
+            </p>
+          ) : (
+            <>
+              <div className="grid grid-cols-2 gap-3 mb-4">
+                <div className="p-3 rounded-lg bg-indigo-50 border border-indigo-100">
+                  <p className="text-2xl font-extrabold text-indigo-700">
+                    {aparelhos.reduce((soma, ap) => soma + ap.acessos, 0)}
+                  </p>
+                  <p className="text-xs text-indigo-900">Acessos no mês</p>
+                </div>
+                <div className="p-3 rounded-lg bg-green-50 border border-green-100">
+                  <p className="text-2xl font-extrabold text-green-700">{aparelhos.length}</p>
+                  <p className="text-xs text-green-900">Aparelhos diferentes</p>
+                </div>
+              </div>
+
+              <div className="space-y-1">
+                {aparelhos.map(ap => {
+                  const maior = Math.max(...aparelhos.map(a => a.acessos), 1);
+
+                  return (
+                    <div key={ap.aparelhoId} className="py-1.5">
+                      <div className="flex items-center justify-between text-sm gap-2">
+                        <span className="text-gray-700 truncate">
+                          {ap.nome}
+                          {ap.esteAparelho && (
+                            <span className="ml-2 text-[10px] px-1.5 py-0.5 rounded bg-indigo-100 text-indigo-700 align-middle">
+                              este aparelho
+                            </span>
+                          )}
+                        </span>
+                        <span className="font-bold text-gray-900">{ap.acessos}</span>
+                      </div>
+
+                      <div className="h-1.5 bg-gray-100 rounded-full mt-1 overflow-hidden">
+                        <div
+                          className="h-full bg-indigo-500 rounded-full"
+                          style={{ width: `${(ap.acessos / maior) * 100}%` }}
+                        />
+                      </div>
+
+                      <p className="text-[11px] text-gray-400 mt-0.5">
+                        {ap.dias} {ap.dias === 1 ? 'dia de uso' : 'dias de uso'}
+                        {ap.ultimoAcesso &&
+                          ` · último acesso: ${new Date(ap.ultimoAcesso).toLocaleString('pt-BR')}`}
+                      </p>
+                    </div>
+                  );
+                })}
+              </div>
+            </>
           )}
         </div>
 

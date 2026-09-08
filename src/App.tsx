@@ -16,6 +16,7 @@ import { BarraInferior } from './components/BarraInferior';
 
 import { initializeHarpaBase, getConfiguracoes } from './services/db';
 import { registrarAcesso } from './services/acessos';
+import { registrarAcessoDesteAparelho } from './services/aparelhos';
 import { menuVisivel, lerMenusOcultos } from './services/menus';
 import { sincronizarCantoresDosHinos } from './services/cantores';
 import { Configuracoes, Repertorio } from './types';
@@ -34,6 +35,7 @@ export default function App() {
   // Contagem de acessos por tela, mostrada nas configurações.
   useEffect(() => {
     registrarAcesso(currentPage);
+    registrarAcessoDesteAparelho();
   }, [currentPage]);
 
   // Botão "voltar" do celular/navegador: volta para a tela anterior do sistema
