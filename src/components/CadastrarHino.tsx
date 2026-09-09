@@ -16,6 +16,8 @@ import {
   Music4,
   Mic2,
   Users,
+  Sparkles,
+  Loader2,
 } from "lucide-react";
 import { addHino, updateHino, deleteHino, getAllHinos } from "../services/db";
 import { generateHinoPdf, shareViaWhatsApp } from "../services/pdf";
@@ -23,6 +25,11 @@ import { Hino, Configuracoes } from "../types";
 import { ModalVisualizaLetra } from "./ModalVisualizaLetra";
 import { lerCantores, sincronizarCantoresDosHinos } from "../services/cantores";
 import { DeletePasswordModal } from "./DeletePasswordModal";
+import {
+  procurarHino,
+  buscarLetraDaSugestao,
+  SugestaoLetra,
+} from "../services/letras";
 
 interface CadastrarHinoProps {
   configuracoes: Configuracoes | null;
@@ -79,6 +86,11 @@ export const CadastrarHino: React.FC<CadastrarHinoProps> = ({
   );
   /** Qual hino está com as ações extras abertas (PDF, compartilhar, duplicar). */
   const [acoesAbertas, setAcoesAbertas] = useState<string | null>(null);
+
+  /** Busca automatica da letra no Letras.mus.br. */
+  const [buscandoLetra, setBuscandoLetra] = useState(false);
+  const [sugestoesLetra, setSugestoesLetra] = useState<SugestaoLetra[]>([]);
+  const [avisoBusca, setAvisoBusca] = useState("");
 
   const [formData, setFormData] = useState({
     nome: "",
@@ -143,6 +155,68 @@ export const CadastrarHino: React.FC<CadastrarHinoProps> = ({
     } catch (error) {
       console.error("Erro ao salvar hino:", error);
       alert("Erro ao salvar hino");
+    }
+  };
+
+  /** Preenche nome, cantor e letra a partir do que veio do Letras.mus.br. */
+  const aplicarLetra = (achado: {
+    nome: string;
+    cantor: string;
+    letra: string;
+  }) => {
+    setFormData((atual) => ({
+      ...atual,
+      nome: achado.nome || atual.nome,
+      // So troca o cantor se ele ja existir na lista das Configuracoes.
+      cantor: cantores.includes(achado.cantor) ? achado.cantor : atual.cantor,
+      letra: achado.letra,
+    }));
+    setSugestoesLetra([]);
+    setAvisoBusca(
+      achado.cantor && !cantores.includes(achado.cantor)
+        ? `Letra de ${achado.cantor} carregada. Selecione o cantor abaixo.`
+        : "Letra carregada! Confira antes de salvar.",
+    );
+  };
+
+  const handleBuscarLetra = async () => {
+    const termo = formData.nome.trim();
+    if (!termo) {
+      setAvisoBusca("Digite o nome do hino primeiro.");
+      return;
+    }
+
+    setBuscandoLetra(true);
+    setAvisoBusca("");
+    setSugestoesLetra([]);
+
+    try {
+      const { letra, resultados } = await procurarHino(termo);
+
+      if (letra) {
+        aplicarLetra(letra);
+      } else if (resultados.length > 0) {
+        setSugestoesLetra(resultados);
+        setAvisoBusca("Escolha o hino certo na lista abaixo:");
+      } else {
+        setAvisoBusca("Nenhum hino encontrado com esse nome.");
+      }
+    } catch (erro: any) {
+      setAvisoBusca(erro?.message || "Erro ao buscar a letra.");
+    } finally {
+      setBuscandoLetra(false);
+    }
+  };
+
+  const handleEscolherSugestao = async (sugestao: SugestaoLetra) => {
+    setBuscandoLetra(true);
+    setAvisoBusca("");
+    try {
+      aplicarLetra(await buscarLetraDaSugestao(sugestao));
+    } catch (erro: any) {
+      setAvisoBusca(erro?.message || "Erro ao buscar a letra.");
+    } finally {
+      setBuscandoLetra(false);
     }
   };
 
@@ -257,6 +331,45 @@ export const CadastrarHino: React.FC<CadastrarHinoProps> = ({
                 className={campo}
                 placeholder="Ex: Poderoso Deus"
               />
+
+              {/* Puxa a letra pronta do Letras.mus.br */}
+              <button
+                type="button"
+                onClick={handleBuscarLetra}
+                disabled={buscandoLetra}
+                className="mt-2 w-full px-4 py-2.5 rounded-xl bg-violet-50 text-violet-700 hover:bg-violet-100 disabled:opacity-60 transition font-semibold text-sm flex items-center justify-center gap-2"
+              >
+                {buscandoLetra ? (
+                  <Loader2 size={16} className="animate-spin" />
+                ) : (
+                  <Sparkles size={16} />
+                )}
+                {buscandoLetra ? "Buscando..." : "Buscar letra automaticamente"}
+              </button>
+
+              {avisoBusca && (
+                <p className="mt-2 text-xs text-gray-600">{avisoBusca}</p>
+              )}
+
+              {sugestoesLetra.length > 0 && (
+                <div className="mt-2 border border-gray-200 rounded-xl divide-y divide-gray-100 overflow-hidden">
+                  {sugestoesLetra.map((sug) => (
+                    <button
+                      key={sug.dns + "-" + sug.url}
+                      type="button"
+                      onClick={() => handleEscolherSugestao(sug)}
+                      className="w-full text-left px-3 py-2.5 hover:bg-violet-50 transition"
+                    >
+                      <span className="block text-sm font-semibold text-gray-900 truncate">
+                        {sug.nome}
+                      </span>
+                      <span className="block text-xs text-gray-500 truncate">
+                        {sug.cantor}
+                      </span>
+                    </button>
+                  ))}
+                </div>
+              )}
             </div>
 
             <div className="grid grid-cols-2 gap-3">
