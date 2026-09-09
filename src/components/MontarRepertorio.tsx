@@ -12,9 +12,12 @@ import {
   ListMusic,
   BookOpen,
   Music2,
-  Search
+  Search,
+  Star
 } from 'lucide-react';
 import { getAllHinos, addRepertorio, updateRepertorio } from '../services/db';
+import { carregarFavoritosSupabase } from '../services/supabase';
+import { createClient } from '@supabase/supabase-js';
 import { generateRepertorioPdf, shareViaWhatsApp } from '../services/pdf';
 import { EditarHinoModal } from './EditarHinoModal';
 import { Hino, HinoNoRepertorio, Repertorio, Configuracoes } from '../types';
@@ -26,6 +29,13 @@ interface MontarRepertorioProps {
 }
 
 /** Card branco padrão da tela. */
+/** Mesmo id anonimo usado na tela da Harpa para guardar favoritos. */
+const USUARIO_ANONIMO_ID = 'anonimo-user';
+const supabaseFavoritos = createClient(
+  import.meta.env.VITE_SUPABASE_URL || '',
+  import.meta.env.VITE_SUPABASE_KEY || ''
+);
+
 const Painel: React.FC<{ children: React.ReactNode; className?: string }> = ({
   children,
   className = ''
@@ -54,9 +64,12 @@ export const MontarRepertorio: React.FC<MontarRepertorioProps> = ({
   const [tipoSelecionado, setTipoSelecionado] = useState<'comum' | 'harpa' | null>(null);
   const [repertorioCarregado, setRepertorioCarregado] = useState(false);
   const [hinoEditando, setHinoEditando] = useState<Hino | null>(null);
+  /** Ids dos hinos marcados como favoritos na tela da Harpa. */
+  const [favoritos, setFavoritos] = useState<Set<string>>(new Set());
 
   useEffect(() => {
     loadHinos();
+    carregarFavoritos();
   }, []);
 
   useEffect(() => {
@@ -129,6 +142,19 @@ export const MontarRepertorio: React.FC<MontarRepertorioProps> = ({
     setHinos(todos);
   };
 
+  /** Busca os favoritos igual a tela da Harpa (usuario logado ou anonimo). */
+  const carregarFavoritos = async () => {
+    try {
+      let idParaCarregar = USUARIO_ANONIMO_ID;
+      const { data, error } = await supabaseFavoritos.auth.getUser();
+      if (data?.user && !error) idParaCarregar = data.user.id;
+      const favoritosIds = await carregarFavoritosSupabase(idParaCarregar);
+      setFavoritos(new Set(favoritosIds));
+    } catch (error) {
+      console.error('Erro ao carregar favoritos:', error);
+    }
+  };
+
   const hinosFiltrados = hinos
     .filter(h => {
       // Se tipo selecionado, filtrar por tipo
@@ -140,8 +166,11 @@ export const MontarRepertorio: React.FC<MontarRepertorioProps> = ({
       // Se nenhum tipo selecionado, mostrar todos
       return h.nome.toLowerCase().includes(hinoFiltrado.toLowerCase()) || h.numeroHarpa?.toString().includes(hinoFiltrado);
     })
-    // Harpa em ordem de numero; os comuns em ordem alfabetica.
+    // Favoritos primeiro; depois harpa por numero e os comuns em ordem alfabetica.
     .sort((a, b) => {
+      const aFav = favoritos.has(a.id);
+      const bFav = favoritos.has(b.id);
+      if (aFav !== bFav) return aFav ? -1 : 1;
       if (a.numeroHarpa && b.numeroHarpa) return a.numeroHarpa - b.numeroHarpa;
       return a.nome.localeCompare(b.nome, 'pt-BR');
     });
@@ -518,6 +547,7 @@ export const MontarRepertorio: React.FC<MontarRepertorioProps> = ({
                   ) : (
                     hinosFiltrados.map(h => {
                       const jaAdicionado = idsJaAdicionados.has(h.id);
+                      const ehFavorito = favoritos.has(h.id);
 
                       return (
                         <button
@@ -530,9 +560,14 @@ export const MontarRepertorio: React.FC<MontarRepertorioProps> = ({
                           }`}
                         >
                           <div className="flex items-center justify-between gap-2">
-                            <div className="font-semibold text-gray-900 break-words">
-                              {h.numeroHarpa && `Harpa nº ${h.numeroHarpa} - `}
-                              {h.nome}
+                            <div className="font-semibold text-gray-900 break-words flex items-center gap-1.5">
+                              {ehFavorito && (
+                                <Star size={14} className="shrink-0 text-amber-500 fill-amber-400" />
+                              )}
+                              <span>
+                                {h.numeroHarpa && `Harpa nº ${h.numeroHarpa} - `}
+                                {h.nome}
+                              </span>
                             </div>
                             {jaAdicionado && (
                               <span className="shrink-0 text-[10px] font-bold text-indigo-700 bg-indigo-100 px-2 py-0.5 rounded-full">
@@ -579,11 +614,20 @@ export const MontarRepertorio: React.FC<MontarRepertorioProps> = ({
                         <p className="font-bold text-gray-900 text-sm sm:text-base break-words">
                           {hinoRep.nome}
                         </p>
-                        <p className="text-xs text-gray-500 truncate mt-0.5">
-                          {hinoRep.numeroHarpa ? `Harpa nº ${hinoRep.numeroHarpa} • ` : ''}
-                          Tom: {hinoRep.tom}
-                          {hinoRep.cantor && ` • ${hinoRep.cantor}`}
-                        </p>
+                        {/* Sem truncate: no celular a linha quebra em vez de cortar o tom. */}
+                        <div className="mt-1 flex flex-wrap items-center gap-1.5 text-xs">
+                          {hinoRep.numeroHarpa ? (
+                            <span className="font-bold text-indigo-700 bg-indigo-100 px-2 py-0.5 rounded-full">
+                              Harpa nº {hinoRep.numeroHarpa}
+                            </span>
+                          ) : null}
+                          <span className="font-bold text-emerald-700 bg-emerald-100 px-2 py-0.5 rounded-full">
+                            Tom: {hinoRep.tom || '?'}
+                          </span>
+                          {hinoRep.cantor && (
+                            <span className="text-gray-500 break-words">{hinoRep.cantor}</span>
+                          )}
+                        </div>
                       </div>
 
                       <div className="shrink-0 flex gap-0.5">

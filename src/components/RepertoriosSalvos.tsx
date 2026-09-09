@@ -615,10 +615,18 @@ export const RepertoriosSalvos: React.FC<RepertoriosSalvosProps> = ({ configurac
                           >
                             {hino?.nome || 'Hino desconhecido'}
                           </p>
-                          <p className="text-xs text-gray-500 truncate mt-0.5">
-                            {hino?.numeroHarpa ? `Harpa nº ${hino.numeroHarpa} • ` : ''}
-                            Tom: {hino?.tom || '?'} • {hino?.cantor || '?'}
-                          </p>
+                          {/* Sem truncate: no celular a linha quebra em vez de cortar o tom. */}
+                          <div className="mt-1 flex flex-wrap items-center gap-1.5 text-xs">
+                            {hino?.numeroHarpa ? (
+                              <span className="font-bold text-indigo-700 bg-indigo-100 px-2 py-0.5 rounded-full">
+                                Harpa nº {hino.numeroHarpa}
+                              </span>
+                            ) : null}
+                            <span className="font-bold text-emerald-700 bg-emerald-100 px-2 py-0.5 rounded-full">
+                              Tom: {hino?.tom || '?'}
+                            </span>
+                            <span className="text-gray-500 break-words">{hino?.cantor || '?'}</span>
+                          </div>
                         </div>
 
                         {hino?.letra && (
@@ -699,10 +707,18 @@ export const RepertoriosSalvos: React.FC<RepertoriosSalvosProps> = ({ configurac
                           <p className="font-bold text-gray-900 text-sm break-words">
                             {hino?.nome || 'Hino desconhecido'}
                           </p>
-                          <p className="text-xs text-gray-500 truncate mt-0.5">
-                            {hino?.numeroHarpa ? `Harpa nº ${hino.numeroHarpa} • ` : ''}
-                            Tom: {hino?.tom || '?'} • {hino?.cantor || '?'}
-                          </p>
+                          {/* Sem truncate: no celular a linha quebra em vez de cortar o tom. */}
+                          <div className="mt-1 flex flex-wrap items-center gap-1.5 text-xs">
+                            {hino?.numeroHarpa ? (
+                              <span className="font-bold text-indigo-700 bg-indigo-100 px-2 py-0.5 rounded-full">
+                                Harpa nº {hino.numeroHarpa}
+                              </span>
+                            ) : null}
+                            <span className="font-bold text-emerald-700 bg-emerald-100 px-2 py-0.5 rounded-full">
+                              Tom: {hino?.tom || '?'}
+                            </span>
+                            <span className="text-gray-500 break-words">{hino?.cantor || '?'}</span>
+                          </div>
                         </div>
                       </div>
                     );
