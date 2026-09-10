@@ -279,7 +279,7 @@ export const Anotacoes: React.FC = () => {
 
     setFormHino({
       nome: anotacao.hino,
-      tom: anotacao.tom || 'C',
+      tom: anotacao.tom || '',
       cantor: cantores.includes(anotacao.cantor) ? anotacao.cantor : '',
       letra: anotacao.letra || '',
       categoria: 'Manancial',
@@ -293,8 +293,8 @@ export const Anotacoes: React.FC = () => {
   const confirmarTransferencia = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (!formHino.nome.trim() || !formHino.cantor.trim()) {
-      setErroHino('Escreva o nome do hino e escolha o cantor que vai cantar.');
+    if (!formHino.nome.trim() || !formHino.cantor.trim() || !formHino.tom.trim()) {
+      setErroHino('Escreva o nome do hino e escolha o tom e o cantor que vai cantar.');
       return;
     }
 
@@ -793,12 +793,13 @@ export const Anotacoes: React.FC = () => {
 
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Tom</label>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Tom *</label>
                   <select
                     value={formHino.tom}
                     onChange={e => setFormHino({ ...formHino, tom: e.target.value })}
                     className={campo}
                   >
+                    <option value="">Selecione o tom</option>
                     {TONS_HINO.map(t => (
                       <option key={t} value={t}>
                         {t}
