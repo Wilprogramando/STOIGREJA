@@ -269,13 +269,21 @@ export const Anotacoes: React.FC = () => {
   // ==================== TRANSFERIR PARA HINOS COMUNS ====================
 
   const abrirTransferencia = (anotacao: Anotacao) => {
+    // O artista da musica nao serve como cantor do hino: aqui o cantor e quem
+    // vai cantar na igreja, escolhido na lista das Configuracoes. O nome do
+    // artista original fica guardado nas observacoes.
+    const original = anotacao.cantor?.trim()
+      ? `Original: ${anotacao.cantor.trim()}`
+      : '';
+    const anotado = anotacao.observacoes?.trim() || '';
+
     setFormHino({
       nome: anotacao.hino,
       tom: anotacao.tom || 'C',
-      cantor: anotacao.cantor || '',
+      cantor: cantores.includes(anotacao.cantor) ? anotacao.cantor : '',
       letra: anotacao.letra || '',
       categoria: 'Manancial',
-      observacoes: anotacao.observacoes || '',
+      observacoes: [original, anotado].filter(Boolean).join(' | '),
     });
     setErroHino('');
     setRecado('');
@@ -286,7 +294,7 @@ export const Anotacoes: React.FC = () => {
     e.preventDefault();
 
     if (!formHino.nome.trim() || !formHino.cantor.trim()) {
-      setErroHino('Preencha o nome do hino e o cantor.');
+      setErroHino('Escreva o nome do hino e escolha o cantor que vai cantar.');
       return;
     }
 
@@ -817,18 +825,22 @@ export const Anotacoes: React.FC = () => {
 
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Cantor *</label>
-                <input
-                  list="cantores-anotacoes"
+                <select
                   value={formHino.cantor}
                   onChange={e => setFormHino({ ...formHino, cantor: e.target.value })}
-                  placeholder="Quem vai cantar"
                   className={campo}
-                />
-                <datalist id="cantores-anotacoes">
+                >
+                  <option value="">Selecione o cantor</option>
                   {cantores.map(nome => (
-                    <option key={nome} value={nome} />
+                    <option key={nome} value={nome}>
+                      {nome}
+                    </option>
                   ))}
-                </datalist>
+                </select>
+                <p className="text-xs text-gray-500 mt-1">
+                  Quem vai cantar na igreja. Para incluir alguém na lista, use
+                  Configurações {'>'} Cantores.
+                </p>
               </div>
 
               <div>
