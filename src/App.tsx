@@ -3,6 +3,7 @@ import { Header } from './components/Header';
 import { Sidebar } from './components/Sidebar';
 import { Dashboard } from './components/Dashboard';
 import { CadastrarHino } from './components/CadastrarHino';
+import { HinosComuns } from './components/HinosComuns';
 import { Harpa } from './components/Harpa';
 import { BuscarMusica } from './components/BuscarMusica';
 import { MontarRepertorio } from './components/MontarRepertorio';
@@ -21,13 +22,17 @@ import { registrarAcessoDesteAparelho } from './services/aparelhos';
 import { menuVisivel, lerMenusOcultos, lerOrdemMenus, lerNomesMenus } from './services/menus';
 import { lerTema, Tema } from './services/tema';
 import { sincronizarCantoresDosHinos } from './services/cantores';
-import { Configuracoes, Repertorio } from './types';
+import { Configuracoes, Repertorio, Hino } from './types';
 
 export default function App() {
   const [currentPage, setCurrentPage] = useState('dashboard');
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [configuracoes, setConfiguracoes] = useState<Configuracoes | null>(null);
   const [repertorioEditar, setRepertorioEditar] = useState<Repertorio | null>(null);
+  /** Hino carregado no formulário de cadastro (editar ou duplicar). */
+  const [hinoEditar, setHinoEditar] = useState<Hino | null>(null);
+  /** Hino recém-salvo, mostrado em destaque na lista de hinos comuns. */
+  const [hinoDestaque, setHinoDestaque] = useState<string | null>(null);
   const [menusOcultos, setMenusOcultos] = useState<string[]>(() => lerMenusOcultos());
   const [ordemMenus, setOrdemMenus] = useState<string[]>(() => lerOrdemMenus());
   const [tema, setTema] = useState<Tema>(() => lerTema());
@@ -105,7 +110,35 @@ export default function App() {
       setRepertorioEditar(null);
     }
 
+    // Entrar pelo menu abre o cadastro em branco e tira o destaque da lista.
+    if (page === 'cadastrar-hino') setHinoEditar(null);
+    if (page !== 'hinos-comuns') setHinoDestaque(null);
+
     setSidebarOpen(false);
+  };
+
+  /** Da lista de hinos comuns para o formulário, com o hino carregado. */
+  const handleEditarHino = (hino: Hino) => {
+    setHinoEditar(hino);
+    irPara('cadastrar-hino');
+  };
+
+  /** Duplicar: o formulário abre preenchido, mas salva como hino novo. */
+  const handleDuplicarHino = (hino: Hino) => {
+    setHinoEditar({ ...hino, id: '', nome: `${hino.nome} (Cópia)` });
+    irPara('cadastrar-hino');
+  };
+
+  const handleNovoHino = () => {
+    setHinoEditar(null);
+    irPara('cadastrar-hino');
+  };
+
+  /** Salvou: volta para a lista com o hino em destaque. */
+  const handleHinoSalvo = (hino: Hino) => {
+    setHinoEditar(null);
+    setHinoDestaque(hino.id);
+    irPara('hinos-comuns');
   };
 
   const handleEditRepertorio = (repertorio: Repertorio) => {
@@ -147,7 +180,25 @@ export default function App() {
         return <Dashboard onPageChange={handlePageChange} />;
 
       case 'cadastrar-hino':
-        return <CadastrarHino configuracoes={configuracoes} />;
+        return (
+          <CadastrarHino
+            key={hinoEditar ? `${hinoEditar.id}-${hinoEditar.nome}` : 'novo'}
+            configuracoes={configuracoes}
+            hinoInicial={hinoEditar}
+            onSalvo={handleHinoSalvo}
+          />
+        );
+
+      case 'hinos-comuns':
+        return (
+          <HinosComuns
+            configuracoes={configuracoes}
+            hinoDestaque={hinoDestaque}
+            onEditar={handleEditarHino}
+            onDuplicar={handleDuplicarHino}
+            onNovo={handleNovoHino}
+          />
+        );
 
       case 'harpa':
         return <Harpa configuracoes={configuracoes} />;

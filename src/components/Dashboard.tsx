@@ -380,14 +380,14 @@ export const Dashboard: React.FC<DashboardProps> = ({ onPageChange }) => {
       <div className="grid grid-cols-2 gap-3">
         <StatCard
           icon={Music}
-          label="Hinos Comuns"
+          label={rotuloDoMenu('hinos-comuns')}
           value={stats.totalHinos}
           cor={{ borda: 'border-l-indigo-500', fundo: 'bg-indigo-50', icone: 'text-indigo-600' }}
-          onClick={() => onPageChange('cadastrar-hino')}
+          onClick={() => onPageChange('hinos-comuns')}
         />
         <StatCard
           icon={BookOpen}
-          label="Hinos da Harpa"
+          label={rotuloDoMenu('harpa')}
           value={stats.totalHarpa}
           cor={{ borda: 'border-l-purple-500', fundo: 'bg-purple-50', icone: 'text-purple-600' }}
           onClick={() => onPageChange('harpa')}
