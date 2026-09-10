@@ -459,36 +459,42 @@ export const RepertoriosSalvos: React.FC<RepertoriosSalvosProps> = ({ configurac
                     setHinosAbertos(a => ({ ...a, [repertorio.id]: !hinosVisiveis }))
                   }
                   title={hinosVisiveis ? 'Esconder hinos' : 'Mostrar hinos'}
-                  className="flex items-start gap-3 mb-4 cursor-pointer"
+                  className={`flex items-start gap-3 mb-4 cursor-pointer -mx-4 -mt-4 sm:-mx-6 sm:-mt-6 p-4 sm:p-5 rounded-t-2xl border-b ${
+                    hoje
+                      ? 'bg-green-50 border-green-200'
+                      : mostrarPassados
+                        ? 'bg-purple-50 border-purple-200'
+                        : 'bg-indigo-50 border-indigo-200'
+                  }`}
                 >
                   <div className="shrink-0 w-14 h-14 sm:w-16 sm:h-16 rounded-2xl bg-gradient-to-br from-indigo-500 to-violet-700 text-white flex items-center justify-center shadow-md">
                     <Church size={26} />
                   </div>
 
                   <div className="min-w-0 flex-1">
-                    <h3 className="text-lg sm:text-xl font-bold text-gray-900 break-words">
+                    <h3 className="text-xl sm:text-2xl font-extrabold text-gray-900 break-words leading-tight">
                       {repertorio.nome}
                     </h3>
 
-                    <div className="flex flex-wrap items-center gap-2 mt-2">
+                    <div className="flex flex-wrap items-center gap-2 mt-2.5">
                       <span
-                        className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold ${
-                          hoje ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-600'
+                        className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-sm font-bold shadow-sm ${
+                          hoje ? 'bg-green-600 text-white' : 'bg-white text-gray-800'
                         }`}
                       >
-                        <Calendar size={13} />
+                        <Calendar size={15} />
                         {hoje ? 'Hoje' : formatarData(repertorio.data)}
                       </span>
 
                       {repertorio.horario && (
-                        <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-gray-100 text-gray-600">
-                          <Clock size={13} />
+                        <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-sm font-bold bg-white text-gray-800 shadow-sm">
+                          <Clock size={15} />
                           {repertorio.horario}
                         </span>
                       )}
 
-                      <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-indigo-100 text-indigo-700">
-                        <Music size={13} />
+                      <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-sm font-bold bg-indigo-600 text-white shadow-sm">
+                        <Music size={15} />
                         {repertorio.hinos.length} hino(s)
                       </span>
                     </div>
@@ -507,10 +513,10 @@ export const RepertoriosSalvos: React.FC<RepertoriosSalvosProps> = ({ configurac
                       setAcoesAbertas(acoesVisiveis ? null : repertorio.id);
                     }}
                     title={acoesVisiveis ? 'Esconder ações' : 'Mostrar ações'}
-                    className={`shrink-0 p-2 rounded-xl border transition ${
+                    className={`shrink-0 p-2 rounded-xl border transition shadow-sm ${
                       acoesVisiveis
                         ? 'bg-gray-700 border-gray-700 text-white'
-                        : 'border-gray-200 text-gray-500 hover:bg-gray-50'
+                        : 'bg-white border-gray-200 text-gray-600 hover:bg-gray-50'
                     }`}
                   >
                     <MoreVertical size={18} />
