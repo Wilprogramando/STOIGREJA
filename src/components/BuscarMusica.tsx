@@ -8,10 +8,12 @@ import {
   ExternalLink,
   Check,
   Globe,
+  StickyNote,
 } from 'lucide-react';
 import { addHino, getAllHinos } from '../services/db';
 import { lerCantores, sincronizarCantoresDosHinos } from '../services/cantores';
 import { buscarMusicas, obterLetra, MusicaEncontrada } from '../services/musicas';
+import { salvarAnotacao } from '../services/anotacoes';
 import { Hino } from '../types';
 
 const TONS = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'];
@@ -65,6 +67,8 @@ export const BuscarMusica: React.FC = () => {
   });
   const [salvando, setSalvando] = useState(false);
   const [salvo, setSalvo] = useState('');
+  /** Qual música está sendo guardada nas anotações. */
+  const [guardando, setGuardando] = useState<string | null>(null);
 
   useEffect(() => {
     sincronizarCantoresDosHinos().then(setCantores);
@@ -149,6 +153,39 @@ export const BuscarMusica: React.FC = () => {
     setSalvo('');
     setVerLetra(null);
     setCadastrando(carregada);
+  };
+
+  /**
+   * Guarda o achado apenas nas Anotações, com a letra junto.
+   * De lá o usuário decide depois se transfere para os hinos comuns.
+   */
+  const guardarNasAnotacoes = async (carregada: MusicaComLetra) => {
+    setGuardando(carregada.musica.id);
+    setAviso('');
+
+    try {
+      await salvarAnotacao({
+        hino: carregada.nome,
+        cantor: carregada.cantor || '',
+        tom: '',
+        observacoes: carregada.fonte ? `Letra encontrada em: ${carregada.fonte}` : '',
+        letra: carregada.letra,
+        criadoEm: new Date().toISOString(),
+      });
+
+      setVerLetra(null);
+      setSalvo(`anotado:"${carregada.nome}" foi guardado nas Anotações com a letra.`);
+    } catch (erro) {
+      console.error('Erro ao guardar nas anotações:', erro);
+      setAviso('Não foi possível guardar nas anotações. Tente de novo.');
+    } finally {
+      setGuardando(null);
+    }
+  };
+
+  const handleGuardar = async (musica: MusicaEncontrada) => {
+    const carregada = await carregarLetra(musica);
+    if (carregada) await guardarNasAnotacoes(carregada);
   };
 
   const handleCadastrar = async (musica: MusicaEncontrada) => {
@@ -253,6 +290,14 @@ export const BuscarMusica: React.FC = () => {
         </div>
       )}
 
+      {salvo.startsWith('anotado:') && (
+        <div className="mb-4 p-3 bg-green-50 border border-green-200 rounded-xl text-sm text-green-800 flex items-center gap-2">
+          <Check size={16} className="shrink-0" />
+          {salvo.slice(8)} Ele aparece agora em <strong>Anotações</strong>, onde dá para
+          transferir para os hinos comuns quando você quiser.
+        </div>
+      )}
+
       {aviso && (
         <div className="mb-4 p-3 bg-amber-50 border border-amber-200 rounded-xl text-sm text-amber-800">
           {aviso}
@@ -297,7 +342,7 @@ export const BuscarMusica: React.FC = () => {
                   </p>
                 )}
 
-                <div className="mt-3 flex flex-col sm:flex-row gap-2">
+                <div className="mt-3 grid grid-cols-1 sm:grid-cols-3 gap-2">
                   <button
                     onClick={() => handleVerLetra(musica)}
                     disabled={ocupado}
@@ -308,9 +353,22 @@ export const BuscarMusica: React.FC = () => {
                   </button>
 
                   <button
+                    onClick={() => handleGuardar(musica)}
+                    disabled={ocupado}
+                    className="px-3 py-2.5 rounded-xl bg-amber-500 text-white hover:bg-amber-600 transition text-sm font-semibold flex items-center justify-center gap-2 shadow-sm disabled:opacity-60"
+                  >
+                    {guardando === musica.id ? (
+                      <Loader2 size={16} className="animate-spin" />
+                    ) : (
+                      <StickyNote size={16} />
+                    )}
+                    Guardar em anotações
+                  </button>
+
+                  <button
                     onClick={() => handleCadastrar(musica)}
                     disabled={ocupado}
-                    className="flex-1 px-3 py-2.5 rounded-xl bg-indigo-600 text-white hover:bg-indigo-700 transition text-sm font-semibold flex items-center justify-center gap-2 shadow-sm disabled:opacity-60"
+                    className="px-3 py-2.5 rounded-xl bg-indigo-600 text-white hover:bg-indigo-700 transition text-sm font-semibold flex items-center justify-center gap-2 shadow-sm disabled:opacity-60"
                   >
                     {ocupado ? <Loader2 size={16} className="animate-spin" /> : <Plus size={16} />}
                     Cadastrar hino
@@ -369,6 +427,18 @@ export const BuscarMusica: React.FC = () => {
                 className="flex-1 px-4 py-2.5 bg-gray-100 text-gray-700 rounded-xl hover:bg-gray-200 transition font-semibold text-sm"
               >
                 Fechar
+              </button>
+              <button
+                onClick={() => guardarNasAnotacoes(verLetra)}
+                disabled={guardando === verLetra.musica.id}
+                className="flex-1 px-4 py-2.5 bg-amber-500 text-white rounded-xl hover:bg-amber-600 transition font-semibold text-sm flex items-center justify-center gap-2 disabled:opacity-60"
+              >
+                {guardando === verLetra.musica.id ? (
+                  <Loader2 size={16} className="animate-spin" />
+                ) : (
+                  <StickyNote size={16} />
+                )}
+                Guardar em anotações
               </button>
               <button
                 onClick={() => abrirCadastro(verLetra)}
