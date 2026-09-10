@@ -55,6 +55,8 @@ export async function obterLetra(musica: MusicaEncontrada): Promise<LetraDaMusic
     path: musica.path || '',
     nome: musica.nome || '',
     cantor: musica.cantor || '',
+    // Serve de último recurso no servidor (embed do Genius).
+    gid: musica.id || '',
   });
 
   return {

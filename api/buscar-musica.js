@@ -157,18 +157,50 @@ async function buscarNoLetras(termo) {
   return Array.from(encontrados.values());
 }
 
+/**
+ * Acha o bloco da letra na pagina do Letras.mus.br.
+ *
+ * O site ja trocou o nome dessa div algumas vezes e as vezes coloca outras
+ * divs dentro dela - por isso a procura passa por varios nomes e conta
+ * abre/fecha, em vez de parar no primeiro </div> que aparecer.
+ */
+function extrairLetraDoLetras(html) {
+  const marcadores = [
+    /<div[^>]*class="[^"]*lyric-original[^"]*"[^>]*>/i,
+    /<div[^>]*class="[^"]*cnt-letra[^"]*"[^>]*>/i,
+    /<div[^>]*class="[^"]*letra-l[^"]*"[^>]*>/i,
+    /<div[^>]*id="[^"]*lyric[^"]*"[^>]*>/i,
+    /<div[^>]*class="[^"]*lyric[^"]*"[^>]*>/i,
+  ];
+
+  for (const marcador of marcadores) {
+    const achado = marcador.exec(html);
+    if (!achado) continue;
+
+    const { texto } = conteudoDaDiv(html, achado.index);
+    const letra = htmlParaLetra(texto);
+    // Bloco curto demais costuma ser aviso ou propaganda, e nao a letra.
+    if (letra && letra.length > 40) return letra;
+  }
+
+  return '';
+}
+
 /** Abre a pagina do Letras.mus.br e extrai a letra. */
 async function letraDoLetras(dns, url) {
   const pagina = `https://www.letras.mus.br/${encodeURIComponent(dns)}/${encodeURIComponent(url)}/`;
-  const resposta = await fetch(pagina, { headers: CABECALHOS });
+
+  let resposta;
+  try {
+    resposta = await fetch(pagina, { headers: CABECALHOS });
+  } catch {
+    return null;
+  }
   if (!resposta.ok) return null;
 
   const html = await resposta.text();
 
-  const bloco = /<div[^>]*class="[^"]*lyric-original[^"]*"[^>]*>([\s\S]*?)<\/div>/i.exec(html);
-  if (!bloco) return null;
-
-  const letra = htmlParaLetra(bloco[1]);
+  const letra = extrairLetraDoLetras(html);
   if (!letra) return null;
 
   const tituloTag = /<h1[^>]*>([\s\S]*?)<\/h1>/i.exec(html);
@@ -290,6 +322,58 @@ async function letraDoGenius(caminho) {
   };
 }
 
+/**
+ * Plano B do Genius: o "embed" da musica traz a letra dentro de um
+ * document.write(...). Serve quando a pagina normal responde bloqueada.
+ */
+async function letraDoGeniusEmbed(id) {
+  if (!id) return null;
+
+  let resposta;
+  try {
+    resposta = await fetch(`https://genius.com/songs/${encodeURIComponent(id)}/embed.js`, {
+      headers: CABECALHOS,
+    });
+  } catch {
+    return null;
+  }
+  if (!resposta.ok) return null;
+
+  const script = await resposta.text();
+
+  // O trecho util e um document.write(JSON.parse('...')): o HTML vem escapado
+  // duas vezes, uma para a string do JavaScript e outra para o JSON.
+  const bloco = /document\.write\(\s*JSON\.parse\(\s*'([\s\S]*?)'\s*\)\s*\)/.exec(script);
+  if (!bloco) return null;
+
+  let html;
+  try {
+    html = JSON.parse(bloco[1].replace(/\\(.)/g, '$1'));
+  } catch {
+    return null;
+  }
+
+  const corpo = /<div[^>]*class="[^"]*rg_embed_body[^"]*"[^>]*>/i.exec(html);
+  if (!corpo) return null;
+
+  // No embed cada verso vem com <br> E com quebra de linha do proprio HTML;
+  // sem tirar uma delas a letra sai com uma linha em branco entre cada verso.
+  const bruto = conteudoDaDiv(html, corpo.index).texto.replace(/\s*\n\s*/g, ' ');
+
+  const letra = limparCabecalhoGenius(htmlParaLetra(bruto));
+  if (!letra || letra.length < 40) return null;
+
+  // O rodape do embed traz o nome da musica e o do artista.
+  const titulo = /<div[^>]*class="[^"]*song_title[^"]*"[^>]*>([\s\S]*?)<\/div>([\s\S]*?)<\/a>/i.exec(html);
+
+  return {
+    nome: titulo ? decodificar(titulo[1].replace(/<[^>]+>/g, '').trim()) : '',
+    cantor: titulo ? decodificar(titulo[2].replace(/<[^>]+>/g, '').trim()) : '',
+    letra,
+    fonte: `https://genius.com/songs/${id}`,
+  };
+}
+
 // ----------------------------------------------------------------------- rotas
 
 /**
@@ -327,56 +411,89 @@ function juntarResultados(doLetras, doGenius) {
 async function tentarNoLetras(nome, cantor) {
   if (!nome) return null;
 
-  const opcoes = await buscarNoLetras(`${nome} ${cantor || ''}`.trim());
-  const igual = opcoes.find((o) => normalizar(o.nome) === normalizar(nome));
-  if (!igual) return null;
+  // Primeiro com o cantor junto (mais preciso); depois so pelo nome, porque
+  // o mesmo hino aparece gravado por varios cantores.
+  const termos = [`${nome} ${cantor || ''}`.trim(), nome];
 
-  return letraDoLetras(igual.dns, igual.url);
+  for (const termo of termos) {
+    const opcoes = await buscarNoLetras(termo);
+    const iguais = opcoes.filter((o) => normalizar(o.nome) === normalizar(nome));
+
+    for (const opcao of iguais.slice(0, 3)) {
+      const achado = await letraDoLetras(opcao.dns, opcao.url);
+      if (achado) return achado;
+    }
+  }
+
+  return null;
+}
+
+/** Procura a mesma musica no Genius, quando o Letras.mus.br nao abriu. */
+async function tentarNoGenius(nome, cantor) {
+  if (!nome) return null;
+
+  const opcoes = await buscarNoGenius(`${nome} ${cantor || ''}`.trim());
+  const iguais = opcoes.filter((o) => normalizar(o.nome) === normalizar(nome));
+  const candidatas = (iguais.length ? iguais : opcoes).slice(0, 3);
+
+  for (const opcao of candidatas) {
+    const achado = await letraDoGenius(opcao.path);
+    if (achado) return achado;
+
+    const porEmbed = await letraDoGeniusEmbed(String(opcao.id).replace('genius:', ''));
+    if (porEmbed) return porEmbed;
+  }
+
+  return null;
 }
 
 export default async function handler(req, res) {
   const {
-    q = '', letra = '', dns = '', url = '', path = '', nome = '', cantor = '',
+    q = '', letra = '', dns = '', url = '', path = '', nome = '', cantor = '', gid = '',
   } = req.query || {};
 
   res.setHeader('Cache-Control', 's-maxage=86400, stale-while-revalidate');
 
   try {
     // ---- Letra completa de uma musica ja escolhida na lista.
+    //
+    // As tentativas sao encadeadas: se a fonte de origem nao abrir, o servidor
+    // procura a mesma musica na outra fonte antes de desistir. Assim uma pagina
+    // fora do ar (ou com o desenho trocado) nao deixa o hino sem letra.
     if (letra) {
-      if (dns && url) {
-        const achado = await letraDoLetras(dns, url);
-        if (achado) {
-          return res.status(200).json({
-            ...achado,
-            nome: achado.nome || nome,
-            cantor: achado.cantor || cantor,
-          });
+      const responder = (achado) =>
+        res.status(200).json({
+          ...achado,
+          nome: achado.nome || nome,
+          cantor: achado.cantor || cantor,
+        });
+
+      const idGenius = String(gid || '').replace('genius:', '');
+
+      const tentativas = [
+        // 1. A pagina exata que veio da busca.
+        () => (dns && url ? letraDoLetras(dns, url) : null),
+        () => (path ? letraDoGenius(path) : null),
+        // 2. A mesma musica procurada de novo, pelo nome, nas duas fontes.
+        () => tentarNoLetras(nome, cantor),
+        () => tentarNoGenius(nome, cantor),
+        // 3. Ultimo recurso: o embed do Genius, que costuma passar quando a
+        //    pagina normal e bloqueada.
+        () => letraDoGeniusEmbed(idGenius),
+      ];
+
+      for (const tentar of tentativas) {
+        try {
+          const achado = await tentar();
+          if (achado && achado.letra) return responder(achado);
+        } catch (erro) {
+          console.warn('Tentativa de letra falhou:', erro && erro.message);
         }
       }
 
-      if (path) {
-        // Primeiro o Letras (letra em portugues, sem marcacoes); depois o Genius.
-        const noLetras = await tentarNoLetras(nome, cantor);
-        if (noLetras) {
-          return res.status(200).json({
-            ...noLetras,
-            nome: noLetras.nome || nome,
-            cantor: noLetras.cantor || cantor,
-          });
-        }
-
-        const noGenius = await letraDoGenius(path);
-        if (noGenius) {
-          return res.status(200).json({
-            ...noGenius,
-            nome: noGenius.nome || nome,
-            cantor: noGenius.cantor || cantor,
-          });
-        }
-      }
-
-      return res.status(404).json({ erro: 'Nao foi possivel abrir a letra desta musica' });
+      return res.status(404).json({
+        erro: 'Nao foi possivel abrir a letra desta musica. Tente outra opcao da lista.',
+      });
     }
 
     // ---- Busca por trecho da letra ou por nome.
