@@ -16,6 +16,7 @@ export const MENUS: MenuDoSistema[] = [
   { id: 'dashboard', label: 'Dashboard', fixo: true },
   { id: 'cadastrar-hino', label: 'Cadastrar Hino' },
   { id: 'harpa', label: 'Hinos da Harpa' },
+  { id: 'buscar-musica', label: 'Buscar Música' },
   { id: 'montar-repertorio', label: 'Montar Repertório' },
   { id: 'repertorios', label: 'Repertórios Salvos' },
   { id: 'campo-harmonico', label: 'Dicas' },

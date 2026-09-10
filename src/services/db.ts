@@ -99,8 +99,8 @@ function payloadConfig(config: Configuracoes) {
   };
 }
 
-function payloadAnotacao(anotacao: Anotacao) {
-  return {
+function payloadAnotacao(anotacao: Anotacao, comLetra = true) {
+  const dados: Record<string, any> = {
     id: anotacao.id,
     hino: anotacao.hino,
     cantor: anotacao.cantor || '',
@@ -108,6 +108,19 @@ function payloadAnotacao(anotacao: Anotacao) {
     observacoes: anotacao.observacoes || '',
     criado_em: anotacao.criadoEm || new Date().toISOString()
   };
+
+  if (comLetra) dados.letra = anotacao.letra || '';
+  return dados;
+}
+
+/**
+ * A coluna 'letra' foi criada depois (supabase_anotacoes.sql). Se o banco ainda
+ * não tiver rodado o script, o Supabase reclama da coluna: nesse caso salvamos
+ * o resto da anotação do mesmo jeito, sem perder o que o usuário digitou.
+ */
+function faltaColunaLetra(error: any): boolean {
+  const texto = `${error?.message || ''} ${error?.details || ''}`.toLowerCase();
+  return texto.includes('letra') && (texto.includes('column') || texto.includes('coluna'));
 }
 
 /** Executa no Supabase uma operação da fila (ou uma recém-criada). */
@@ -162,15 +175,26 @@ async function executarNoSupabase(op: OperacaoPendente): Promise<void> {
         ).error
       );
       return;
-    case 'anotacao.upsert':
-      falhar(
-        (
-          await supabase
-            .from('anotacoes_hinos')
-            .upsert([payloadAnotacao(op.dados)], { onConflict: 'id' })
-        ).error
-      );
+    case 'anotacao.upsert': {
+      const { error } = await supabase
+        .from('anotacoes_hinos')
+        .upsert([payloadAnotacao(op.dados)], { onConflict: 'id' });
+
+      if (error && faltaColunaLetra(error)) {
+        console.warn('⚠️ Coluna letra ainda não existe em anotacoes_hinos. Rode o supabase_anotacoes.sql.');
+        falhar(
+          (
+            await supabase
+              .from('anotacoes_hinos')
+              .upsert([payloadAnotacao(op.dados, false)], { onConflict: 'id' })
+          ).error
+        );
+        return;
+      }
+
+      falhar(error);
       return;
+    }
     case 'cantor.add':
       falhar(
         (
@@ -845,6 +869,7 @@ function mapearAnotacaoSupabase(dados: any): Anotacao {
     cantor: dados.cantor || '',
     tom: dados.tom || '',
     observacoes: dados.observacoes || '',
+    letra: dados.letra || '',
     criadoEm: dados.criado_em || new Date().toISOString()
   };
 }

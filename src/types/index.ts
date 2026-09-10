@@ -57,5 +57,7 @@ export interface Anotacao {
   cantor: string;
   tom: string;
   observacoes: string;
+  /** Letra achada na busca da internet (fica guardada aqui até ser transferida). */
+  letra?: string;
   criadoEm: string;
 }

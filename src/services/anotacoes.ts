@@ -21,6 +21,7 @@ export function salvarAnotacao(dados: Partial<Anotacao>): Promise<Anotacao> {
     cantor: dados.cantor || '',
     tom: dados.tom || '',
     observacoes: dados.observacoes || '',
+    letra: dados.letra || '',
     criadoEm: dados.criadoEm || new Date().toISOString()
   };
 

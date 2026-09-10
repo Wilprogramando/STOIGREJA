@@ -4,6 +4,7 @@ import { Sidebar } from './components/Sidebar';
 import { Dashboard } from './components/Dashboard';
 import { CadastrarHino } from './components/CadastrarHino';
 import { Harpa } from './components/Harpa';
+import { BuscarMusica } from './components/BuscarMusica';
 import { MontarRepertorio } from './components/MontarRepertorio';
 import { RepertoriosSalvos } from './components/RepertoriosSalvos';
 import { ConfiguracoesView } from './components/Configuracoes';
@@ -137,6 +138,9 @@ export default function App() {
 
       case 'harpa':
         return <Harpa configuracoes={configuracoes} />;
+
+      case 'buscar-musica':
+        return <BuscarMusica />;
 
       case 'montar-repertorio':
         return (

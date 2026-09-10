@@ -10,7 +10,8 @@ import {
   Settings,
   BarChart3,
   Guitar,
-  StickyNote
+  StickyNote,
+  Globe
 } from 'lucide-react';
 
 interface SidebarProps {
@@ -34,6 +35,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
     { id: 'dashboard', label: 'Dashboard', icon: Home },
     { id: 'cadastrar-hino', label: 'Cadastrar Hino', icon: Plus },
     { id: 'harpa', label: 'Hinos da Harpa', icon: BookOpen },
+    { id: 'buscar-musica', label: 'Buscar Música', icon: Globe },
     { id: 'montar-repertorio', label: 'Montar Repertório', icon: Music },
 
     { id: 'repertorios', label: 'Repertórios Salvos', icon: List },

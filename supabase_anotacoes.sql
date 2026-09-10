@@ -15,8 +15,13 @@ create table if not exists public.anotacoes_hinos (
   cantor      text default '',
   tom         text default '',
   observacoes text default '',
+  letra       text default '',
   criado_em   timestamptz not null default now()
 );
+
+-- Coluna da letra (para quem já tinha a tabela criada antes desta versão)
+alter table public.anotacoes_hinos
+  add column if not exists letra text default '';
 
 -- Busca das mais recentes primeiro
 create index if not exists anotacoes_hinos_criado_em_idx

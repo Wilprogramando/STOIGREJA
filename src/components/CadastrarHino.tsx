@@ -570,12 +570,18 @@ export const CadastrarHino: React.FC<CadastrarHinoProps> = ({
 
                     <div className="flex items-end justify-between gap-3 mt-1.5">
                       <div className="min-w-0">
-                        <div className="flex items-center gap-1.5 min-w-0">
-                          <span className="shrink-0 text-[11px] font-bold px-2.5 py-0.5 rounded-full bg-indigo-50 text-indigo-700">
-                            {hino.tom}
+                        {/* Mesmo destaque dos repertorios salvos: tom em verde, cantor em azul. */}
+                        <div className="flex flex-wrap items-center gap-1.5 min-w-0">
+                          {hino.numeroHarpa ? (
+                            <span className="shrink-0 text-[11px] font-bold px-2.5 py-0.5 rounded-full bg-indigo-100 text-indigo-700">
+                              Harpa nº {hino.numeroHarpa}
+                            </span>
+                          ) : null}
+                          <span className="shrink-0 text-[11px] font-bold px-2.5 py-0.5 rounded-full bg-emerald-100 text-emerald-700">
+                            Tom: {hino.tom || '?'}
                           </span>
-                          <span className="text-[11px] font-semibold px-2.5 py-0.5 rounded-full bg-indigo-50 text-gray-700 truncate">
-                            {hino.cantor}
+                          <span className="text-[11px] font-bold px-2.5 py-0.5 rounded-full bg-indigo-100 text-indigo-700 break-words">
+                            {hino.cantor || '?'}
                           </span>
                         </div>
 
