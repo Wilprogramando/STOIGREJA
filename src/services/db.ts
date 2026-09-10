@@ -13,6 +13,7 @@ import {
   cacheLimpar,
   estaOnline,
   filaAdicionar,
+  filaLer,
   filaProcessar,
   filaTamanho
 } from './offline';
@@ -120,7 +121,11 @@ function payloadAnotacao(anotacao: Anotacao, comLetra = true) {
  */
 function faltaColunaLetra(error: any): boolean {
   const texto = `${error?.message || ''} ${error?.details || ''}`.toLowerCase();
-  return texto.includes('letra') && (texto.includes('column') || texto.includes('coluna'));
+  if (error?.code === 'PGRST204') return true;
+  return (
+    texto.includes('letra') &&
+    (texto.includes('column') || texto.includes('coluna') || texto.includes('schema cache'))
+  );
 }
 
 /** Executa no Supabase uma operação da fila (ou uma recém-criada). */
@@ -877,6 +882,29 @@ function mapearAnotacaoSupabase(dados: any): Anotacao {
 const ordenarAnotacoes = (lista: Anotacao[]) =>
   [...lista].sort((a, b) => (b.criadoEm || '').localeCompare(a.criadoEm || ''));
 
+/**
+ * Junta o que veio do Supabase com o que ainda esta na fila de sincronizacao.
+ *
+ * Sem isso, uma anotacao que o servidor recusou (ou feita sem internet) sumia
+ * da tela no proximo carregamento, mesmo continuando salva no aparelho.
+ */
+function juntarAnotacoesPendentes(doServidor: Anotacao[]): Anotacao[] {
+  const fila = filaLer();
+  if (fila.length === 0) return ordenarAnotacoes(doServidor);
+
+  const porId = new Map<string, Anotacao>(doServidor.map(a => [a.id, a]));
+
+  for (const op of fila) {
+    if (op.tipo === 'anotacao.upsert' && op.dados?.id) {
+      porId.set(op.dados.id, op.dados as Anotacao);
+    } else if (op.tipo === 'anotacao.delete') {
+      porId.delete(op.dados);
+    }
+  }
+
+  return ordenarAnotacoes([...porId.values()]);
+}
+
 export async function getAllAnotacoes(): Promise<Anotacao[]> {
   try {
     if (supabase) {
@@ -894,7 +922,7 @@ export async function getAllAnotacoes(): Promise<Anotacao[]> {
 
       if (error) throw error;
 
-      const anotacoes = (data || []).map(mapearAnotacaoSupabase);
+      const anotacoes = juntarAnotacoesPendentes((data || []).map(mapearAnotacaoSupabase));
       cacheSalvar(CACHE_ANOTACOES, anotacoes);
       console.log('✅ Anotações carregadas:', anotacoes.length);
       return anotacoes;
