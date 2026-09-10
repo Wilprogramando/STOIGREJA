@@ -813,7 +813,6 @@ Os hinos já cadastrados com esse cantor não mudam.`)) return;
           <ul className="text-sm text-indigo-800 space-y-2">
             <li>☁️ <strong>Backup:</strong> Supabase</li>
             <li>🌐 <strong>Hospedagem:</strong> Vercel</li>
-            <li>🗂️ <strong>Versão 1.0.0</strong> - Repertório da Igreja</li>
           </ul>
         </div>
       </div>
