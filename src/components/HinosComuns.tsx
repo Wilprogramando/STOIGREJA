@@ -130,13 +130,30 @@ export const HinosComuns: React.FC<HinosComunsProps> = ({
   return (
     <div className="max-w-4xl mx-auto pb-20">
       {/* Cabeçalho */}
-      <div className="flex items-start gap-3 mb-5">
-        <div className="bg-indigo-50 text-indigo-600 p-2.5 rounded-xl shrink-0">
-          <Music2 size={22} />
-        </div>
-        <div className="min-w-0">
-          <h2 className="text-2xl font-bold text-gray-900">{rotuloDoMenu("hinos-comuns")}</h2>
-          <p className="text-sm text-gray-500">{hinos.length} hino(s) cadastrado(s)</p>
+      <div className="mb-5 rounded-2xl bg-gradient-to-r from-indigo-600 to-purple-600 text-white shadow-lg p-4 sm:p-5">
+        <div className="flex items-center gap-4">
+          <div className="shrink-0 w-14 h-14 sm:w-16 sm:h-16 rounded-2xl bg-white bg-opacity-20 flex items-center justify-center">
+            <Music2 size={30} />
+          </div>
+
+          <div className="flex-1 min-w-0">
+            <h2 className="text-2xl sm:text-3xl font-extrabold leading-tight break-words">
+              {rotuloDoMenu("hinos-comuns")}
+            </h2>
+            <p className="text-sm text-indigo-100">
+              Todos os hinos cadastrados pela equipe
+            </p>
+          </div>
+
+          {/* O total vira o número em destaque do cabeçalho. */}
+          <div className="shrink-0 text-center px-3 py-2 rounded-2xl bg-white bg-opacity-20">
+            <p className="text-2xl sm:text-3xl font-extrabold leading-none tabular-nums">
+              {hinos.length}
+            </p>
+            <p className="text-[10px] sm:text-xs font-semibold uppercase tracking-wide text-indigo-100 mt-1">
+              hinos
+            </p>
+          </div>
         </div>
       </div>
 
