@@ -1,11 +1,18 @@
 import React, { useState, useEffect } from 'react';
-import { Save, Download, Upload, Trash2, AlertCircle, Eye, EyeOff, BarChart3, Mic2, UserPlus, Pencil, BookOpen, Smartphone } from 'lucide-react';
+import {
+  Save, Download, Upload, Trash2, AlertCircle, Eye, EyeOff, BarChart3, Mic2,
+  UserPlus, Pencil, BookOpen, Smartphone, Building2, Type, Image, ListChecks,
+  ListOrdered, Database, Palette, Tag,
+} from 'lucide-react';
 import { getConfiguracoes, saveConfiguracoes, exportData, importData, clearAllData } from '../services/db';
 import { Configuracoes } from '../types';
 import { LogoUploader } from './LogoUploader';
 import { ImportCSVModal } from './ImportCSVModal';
 import { MENUS, lerMenusOcultos, salvarMenusOcultos } from '../services/menus';
 import { OrdemMenus } from './OrdemMenus';
+import { SecaoConfig } from './SecaoConfig';
+import { Aparencia } from './Aparencia';
+import { CategoriasConfig } from './CategoriasConfig';
 import { lerAcessos, zerarAcessos, RegistroAcessos } from '../services/acessos';
 import {
   carregarAparelhos,
@@ -44,6 +51,8 @@ export const ConfiguracoesView: React.FC<ConfiguracoesProps> = ({ onConfigChange
   const [aparelhos, setAparelhos] = useState<ResumoAparelho[]>([]);
   const [carregandoAparelhos, setCarregandoAparelhos] = useState(true);
   const [nomeAparelho, setNomeAparelho] = useState<string>(() => nomeDesteAparelho());
+  /** Qual cartao esta aberto: a tela mostra so um por vez. */
+  const [secaoAberta, setSecaoAberta] = useState<string | null>(null);
 
   useEffect(() => {
     loadConfiguracoes();
@@ -261,11 +270,45 @@ Os hinos já cadastrados com esse cantor não mudam.`)) return;
     <div className="max-w-2xl mx-auto">
       <h2 className="text-3xl font-bold text-gray-900 mb-8">Configurações</h2>
 
-      <div className="space-y-6">
-        {/* Configurações Gerais */}
-        <div className="bg-white p-6 rounded-lg shadow-md">
-          <h3 className="text-xl font-bold text-gray-900 mb-4">Informações da Igreja</h3>
+      <p className="text-sm text-gray-500 -mt-6 mb-5">
+        Toque no assunto que voce quer mexer para abrir.
+      </p>
 
+      <div className="space-y-3">
+        <SecaoConfig
+          id="aparencia"
+          titulo="Aparencia do Sistema"
+          descricao="Cor, modo noturno, lado da logo e layout"
+          icone={Palette}
+          aberta={secaoAberta}
+          onAbrir={setSecaoAberta}
+        >
+          <Aparencia
+            tituloSistema={config.tituloSistema}
+            logoSistema={config.logoSistema}
+            subtitulo={config.subtitulo}
+          />
+        </SecaoConfig>
+
+        <SecaoConfig
+          id="categorias"
+          titulo="Categorias dos Hinos"
+          descricao="Manancial, Alfa, Louvor..."
+          icone={Tag}
+          aberta={secaoAberta}
+          onAbrir={setSecaoAberta}
+        >
+          <CategoriasConfig />
+        </SecaoConfig>
+
+        <SecaoConfig
+          id="igreja"
+          titulo="Informações da Igreja"
+          descricao="Nome, responsável e rodapé do PDF"
+          icone={Building2}
+          aberta={secaoAberta}
+          onAbrir={setSecaoAberta}
+        >
           <div className="space-y-4">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -333,12 +376,16 @@ Os hinos já cadastrados com esse cantor não mudam.`)) return;
               </div>
             )}
           </div>
-        </div>
+        </SecaoConfig>
 
-        {/* Personalização do Sistema */}
-        <div className="bg-white p-6 rounded-lg shadow-md">
-          <h3 className="text-xl font-bold text-gray-900 mb-4">Personalizar Sistema</h3>
-
+        <SecaoConfig
+          id="identidade"
+          titulo="Identidade do Sistema"
+          descricao="Título, subtítulo e logo do cabeçalho"
+          icone={Type}
+          aberta={secaoAberta}
+          onAbrir={setSecaoAberta}
+        >
           <div className="space-y-4">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -373,11 +420,16 @@ Os hinos já cadastrados com esse cantor não mudam.`)) return;
               Salvar Personalização
             </button>
           </div>
-        </div>
+        </SecaoConfig>
 
-        {/* Logo */}
-        <div className="bg-white p-6 rounded-lg shadow-md">
-          <h3 className="text-xl font-bold text-gray-900 mb-4">Logo da Igreja</h3>
+        <SecaoConfig
+          id="logo"
+          titulo="Logo da Igreja"
+          descricao="Imagem usada nos PDFs"
+          icone={Image}
+          aberta={secaoAberta}
+          onAbrir={setSecaoAberta}
+        >
           <LogoUploader
             logoUrl={config.logo}
             onLogoChange={(logo) => setConfig({ ...config, logo })}
@@ -385,14 +437,16 @@ Os hinos já cadastrados com esse cantor não mudam.`)) return;
           <div className="mt-4 p-3 bg-blue-50 border border-blue-200 rounded-lg text-sm text-blue-800">
             💡 A logo será exibida no topo dos PDFs gerados (hinos e repertórios).
           </div>
-        </div>
+        </SecaoConfig>
 
-        {/* Importar hinos da Harpa */}
-        <div className="bg-white p-6 rounded-lg shadow-md">
-          <h3 className="text-xl font-bold text-gray-900 mb-1 flex items-center gap-2">
-            <BookOpen size={20} className="text-indigo-600" />
-            Importar Hinos da Harpa
-          </h3>
+        <SecaoConfig
+          id="harpa"
+          titulo="Importar Hinos da Harpa"
+          descricao="Cadastro em massa por planilha CSV"
+          icone={BookOpen}
+          aberta={secaoAberta}
+          onAbrir={setSecaoAberta}
+        >
           <p className="text-sm text-gray-500 mb-4">
             Cadastre vários hinos da Harpa Cristã de uma vez, a partir de uma planilha em CSV.
             Dá para baixar um modelo pronto na própria janela de importação.
@@ -405,14 +459,16 @@ Os hinos já cadastrados com esse cantor não mudam.`)) return;
             <Upload size={20} />
             Importar CSV da Harpa
           </button>
-        </div>
+        </SecaoConfig>
 
-        {/* Cantores */}
-        <div className="bg-white p-6 rounded-lg shadow-md">
-          <h3 className="text-xl font-bold text-gray-900 mb-1 flex items-center gap-2">
-            <Mic2 size={20} className="text-indigo-600" />
-            Cantores
-          </h3>
+        <SecaoConfig
+          id="cantores"
+          titulo="Cantores"
+          descricao="Quem aparece para escolher ao cadastrar um hino"
+          icone={Mic2}
+          aberta={secaoAberta}
+          onAbrir={setSecaoAberta}
+        >
           <p className="text-sm text-gray-500 mb-4">
             Quem estiver nesta lista aparece para escolher no campo "Cantor" ao cadastrar
             ou editar um hino.
@@ -473,11 +529,16 @@ Os hinos já cadastrados com esse cantor não mudam.`)) return;
               ))}
             </div>
           )}
-        </div>
+        </SecaoConfig>
 
-        {/* Menus liberados */}
-        <div className="bg-white p-6 rounded-lg shadow-md">
-          <h3 className="text-xl font-bold text-gray-900 mb-1">Menus do Sistema</h3>
+        <SecaoConfig
+          id="menus"
+          titulo="Menus do Sistema"
+          descricao="Ligue e desligue as telas"
+          icone={ListChecks}
+          aberta={secaoAberta}
+          onAbrir={setSecaoAberta}
+        >
           <p className="text-sm text-gray-500 mb-4">
             Desligue o que a equipe não usa. A tela some do menu e dos atalhos, e os dados
             continuam guardados.
@@ -533,18 +594,28 @@ Os hinos já cadastrados com esse cantor não mudam.`)) return;
               );
             })}
           </div>
-        </div>
+        </SecaoConfig>
 
-        {/* Ordem do menu (arrastando) */}
-        <OrdemMenus onOrdemChange={() => onConfigChange?.()} />
+        <SecaoConfig
+          id="ordem"
+          titulo="Ordem do Menu"
+          descricao="Arraste para reorganizar as telas"
+          icone={ListOrdered}
+          aberta={secaoAberta}
+          onAbrir={setSecaoAberta}
+        >
+          <OrdemMenus onOrdemChange={() => onConfigChange?.()} />
+        </SecaoConfig>
 
-        {/* Acessos */}
-        <div className="bg-white p-6 rounded-lg shadow-md">
+        <SecaoConfig
+          id="acessos"
+          titulo="Acessos ao Sistema"
+          descricao="Quantas vezes cada tela foi aberta"
+          icone={BarChart3}
+          aberta={secaoAberta}
+          onAbrir={setSecaoAberta}
+        >
           <div className="flex items-center justify-between gap-3 mb-1">
-            <h3 className="text-xl font-bold text-gray-900 flex items-center gap-2">
-              <BarChart3 size={20} className="text-indigo-600" />
-              Acessos ao Sistema
-            </h3>
             <button
               onClick={handleZerarAcessos}
               className="text-sm text-gray-500 hover:text-red-600 underline"
@@ -602,14 +673,16 @@ Os hinos já cadastrados com esse cantor não mudam.`)) return;
                 })}
             </div>
           )}
-        </div>
+        </SecaoConfig>
 
-        {/* Aparelhos que acessaram o sistema */}
-        <div className="bg-white p-6 rounded-lg shadow-md">
-          <h3 className="text-xl font-bold text-gray-900 flex items-center gap-2 mb-1">
-            <Smartphone size={20} className="text-indigo-600" />
-            Aparelhos (últimos 30 dias)
-          </h3>
+        <SecaoConfig
+          id="aparelhos"
+          titulo="Aparelhos"
+          descricao="Celulares e computadores do último mês"
+          icone={Smartphone}
+          aberta={secaoAberta}
+          onAbrir={setSecaoAberta}
+        >
           <p className="text-sm text-gray-500 mb-4">
             Acessos de todos os celulares e computadores que abriram o sistema no último mês.
           </p>
@@ -692,12 +765,16 @@ Os hinos já cadastrados com esse cantor não mudam.`)) return;
               </div>
             </>
           )}
-        </div>
+        </SecaoConfig>
 
-        {/* Backup */}
-        <div className="bg-white p-6 rounded-lg shadow-md">
-          <h3 className="text-xl font-bold text-gray-900 mb-4">Backup e Restauração</h3>
-
+        <SecaoConfig
+          id="backup"
+          titulo="Backup e Restauração"
+          descricao="Exportar, importar e apagar dados"
+          icone={Database}
+          aberta={secaoAberta}
+          onAbrir={setSecaoAberta}
+        >
           <div className="space-y-3">
             <button
               onClick={handleExportar}
@@ -728,7 +805,7 @@ Os hinos já cadastrados com esse cantor não mudam.`)) return;
               💡 Exporte regularmente seus dados como backup. Você pode restaurar a qualquer momento importando o arquivo JSON.
             </p>
           </div>
-        </div>
+        </SecaoConfig>
 
         {/* Informações */}
         <div className="bg-indigo-50 p-6 rounded-lg border border-indigo-200">

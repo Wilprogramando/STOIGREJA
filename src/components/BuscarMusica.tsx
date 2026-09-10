@@ -12,12 +12,13 @@ import {
 } from 'lucide-react';
 import { addHino, getAllHinos } from '../services/db';
 import { lerCantores, sincronizarCantoresDosHinos } from '../services/cantores';
+import { lerCategorias } from '../services/categorias';
 import { buscarMusicas, obterLetra, MusicaEncontrada } from '../services/musicas';
 import { salvarAnotacao } from '../services/anotacoes';
 import { Hino } from '../types';
 
 const TONS = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'];
-const CATEGORIAS = ['Alfa', 'Manancial', 'Louvor', 'Consagração', 'Outro'];
+
 
 const campo =
   'w-full px-3.5 py-2.5 border border-gray-200 rounded-xl bg-gray-50 focus:bg-white focus:outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100 transition text-sm';
@@ -231,6 +232,13 @@ export const BuscarMusica: React.FC = () => {
       setSalvando(false);
     }
   };
+
+  // Categorias cadastradas em Configuracoes; a atual entra na lista mesmo
+  // que tenha sido apagada de la, para o hino nao perder a categoria.
+  const cadastradas = lerCategorias();
+  const categorias = cadastradas.includes(formulario.categoria)
+    ? cadastradas
+    : [formulario.categoria, ...cadastradas].filter(Boolean);
 
   return (
     <div className="max-w-3xl mx-auto pb-20">
@@ -521,7 +529,7 @@ export const BuscarMusica: React.FC = () => {
                     }
                     className={campo}
                   >
-                    {CATEGORIAS.map((categoria) => (
+                    {categorias.map((categoria) => (
                       <option key={categoria} value={categoria}>
                         {categoria}
                       </option>

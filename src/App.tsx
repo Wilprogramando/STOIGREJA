@@ -19,6 +19,7 @@ import { initializeHarpaBase, getConfiguracoes } from './services/db';
 import { registrarAcesso } from './services/acessos';
 import { registrarAcessoDesteAparelho } from './services/aparelhos';
 import { menuVisivel, lerMenusOcultos, lerOrdemMenus } from './services/menus';
+import { lerTema, Tema } from './services/tema';
 import { sincronizarCantoresDosHinos } from './services/cantores';
 import { Configuracoes, Repertorio } from './types';
 
@@ -29,9 +30,17 @@ export default function App() {
   const [repertorioEditar, setRepertorioEditar] = useState<Repertorio | null>(null);
   const [menusOcultos, setMenusOcultos] = useState<string[]>(() => lerMenusOcultos());
   const [ordemMenus, setOrdemMenus] = useState<string[]>(() => lerOrdemMenus());
+  const [tema, setTema] = useState<Tema>(() => lerTema());
 
   useEffect(() => {
     initializeApp();
+  }, []);
+
+  // Aparência escolhida nas configurações (cor, lado da logo, modo noturno).
+  useEffect(() => {
+    const aoMudar = () => setTema(lerTema());
+    window.addEventListener('repertorio-tema-mudou', aoMudar);
+    return () => window.removeEventListener('repertorio-tema-mudou', aoMudar);
   }, []);
 
   // Contagem de acessos por tela, mostrada nas configurações.
@@ -203,6 +212,7 @@ export default function App() {
           tituloSistema={configuracoes?.tituloSistema}
           logoSistema={configuracoes?.logoSistema}
           subtitulo={configuracoes?.subtitulo}
+          logoADireita={tema.posicaoLogo === 'direita'}
         />
 
         <StatusConexao />

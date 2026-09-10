@@ -24,6 +24,7 @@ import { generateHinoPdf, shareViaWhatsApp } from "../services/pdf";
 import { Hino, Configuracoes } from "../types";
 import { ModalVisualizaLetra } from "./ModalVisualizaLetra";
 import { lerCantores, sincronizarCantoresDosHinos } from "../services/cantores";
+import { lerCategorias } from '../services/categorias';
 import { DeletePasswordModal } from "./DeletePasswordModal";
 import {
   procurarHino,
@@ -36,7 +37,7 @@ interface CadastrarHinoProps {
 }
 
 const TONS = ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"];
-const CATEGORIAS = ["Alfa", "Manancial", "Louvor", "Consagração", "Outro"];
+
 
 /** Card branco padrão da tela. */
 const Painel: React.FC<{ children: React.ReactNode; className?: string }> = ({
@@ -273,6 +274,13 @@ export const CadastrarHino: React.FC<CadastrarHinoProps> = ({
   const campo =
     "w-full px-3.5 py-2.5 border border-gray-200 rounded-xl bg-gray-50 focus:bg-white focus:outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100 transition text-sm";
 
+  // Categorias cadastradas em Configuracoes; a atual entra na lista mesmo
+  // que tenha sido apagada de la, para o hino nao perder a categoria.
+  const cadastradas = lerCategorias();
+  const categorias = cadastradas.includes(formData.categoria)
+    ? cadastradas
+    : [formData.categoria, ...cadastradas].filter(Boolean);
+
   return (
     <div className="max-w-4xl mx-auto pb-20">
       {/* Cabeçalho */}
@@ -403,7 +411,7 @@ export const CadastrarHino: React.FC<CadastrarHinoProps> = ({
                   }
                   className={campo}
                 >
-                  {CATEGORIAS.map((cat) => (
+                  {categorias.map((cat) => (
                     <option key={cat} value={cat}>
                       {cat}
                     </option>

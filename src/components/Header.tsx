@@ -6,13 +6,16 @@ interface HeaderProps {
   tituloSistema?: string;
   logoSistema?: string;
   subtitulo?: string;
+  /** Escolhido em Configurações > Aparência. */
+  logoADireita?: boolean;
 }
 
 export const Header: React.FC<HeaderProps> = ({ 
   onToggleSidebar,
   tituloSistema,
   logoSistema,
-  subtitulo
+  subtitulo,
+  logoADireita
 }) => {
   const [atualizando, setAtualizando] = useState(false);
 
@@ -38,34 +41,35 @@ export const Header: React.FC<HeaderProps> = ({
     window.location.reload();
   };
 
+  const logo = logoSistema ? (
+    <img src={logoSistema} alt="Logo" style={{ height: '40px', borderRadius: '4px' }} />
+  ) : (
+    <Music size={32} className="text-white" />
+  );
+
   return (
-    <header className="relative bg-gradient-to-r from-indigo-600 to-purple-600 text-white">
+    <header className="cabecalho-sistema relative bg-gradient-to-r from-indigo-600 to-purple-600 text-white">
       <div className="max-w-7xl mx-auto px-4 pt-4 pb-6 flex items-center justify-between">
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-3 min-w-0">
           <button
             onClick={onToggleSidebar}
             className="md:hidden p-2 hover:bg-white hover:bg-opacity-20 rounded-lg transition"
           >
             <Menu size={24} />
           </button>
-          <div className="flex items-center gap-2">
-            {logoSistema ? (
-              <img 
-                src={logoSistema} 
-                alt="Logo" 
-                style={{ height: '40px', borderRadius: '4px' }}
-              />
-            ) : (
-              <Music size={32} className="text-white" />
-            )}
-            <div>
-              <h1 className="text-2xl font-bold">{tituloSistema || 'Repertório da Igreja'}</h1>
-              <p className="text-sm text-indigo-100">{subtitulo || 'Gerenciador de hinos e cultos'}</p>
+          {/* Com a logo à direita, o texto vem primeiro e ela fica na ponta. */}
+          <div className="flex items-center gap-2 min-w-0">
+            {logoADireita ? null : logo}
+            <div className="min-w-0">
+              <h1 className="text-2xl font-bold truncate">{tituloSistema || 'Repertório da Igreja'}</h1>
+              <p className="text-sm text-indigo-100 truncate">{subtitulo || 'Gerenciador de hinos e cultos'}</p>
             </div>
           </div>
         </div>
-        
-        <div className="flex items-center gap-1">
+
+        <div className="flex items-center gap-2 shrink-0">
+          {logoADireita && logo}
+
           <button
             onClick={atualizarPagina}
             disabled={atualizando}
@@ -80,7 +84,7 @@ export const Header: React.FC<HeaderProps> = ({
 
       {/* Onda na base: tira o corte reto do cabeçalho. */}
       <svg
-        className="absolute inset-x-0 bottom-0 w-full h-4 text-gray-100"
+        className="cabecalho-onda absolute inset-x-0 bottom-0 w-full h-4 text-gray-100"
         viewBox="0 0 1440 60"
         preserveAspectRatio="none"
         aria-hidden="true"

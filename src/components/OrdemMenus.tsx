@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { GripVertical, ListOrdered, RotateCcw, Check } from 'lucide-react';
+import { GripVertical, RotateCcw, Check } from 'lucide-react';
 import {
   MenuDoSistema,
   menusOrdenados,
@@ -133,13 +133,8 @@ export const OrdemMenus: React.FC<OrdemMenusProps> = ({ onOrdemChange }) => {
   };
 
   return (
-    <div className="bg-white p-6 rounded-lg shadow-md">
-      <div className="flex items-start justify-between gap-3 mb-1">
-        <h3 className="text-xl font-bold text-gray-900 flex items-center gap-2">
-          <ListOrdered size={20} className="text-indigo-600" />
-          Ordem do Menu
-        </h3>
-
+    <div>
+      <div className="flex items-start justify-end gap-3 mb-1 h-6">
         {salvo && (
           <span className="shrink-0 text-xs font-semibold text-green-700 bg-green-50 border border-green-200 px-2 py-1 rounded-lg flex items-center gap-1">
             <Check size={13} />
@@ -148,7 +143,7 @@ export const OrdemMenus: React.FC<OrdemMenusProps> = ({ onOrdemChange }) => {
         )}
       </div>
 
-      <p className="text-sm text-gray-500 mb-4">
+      <p className="text-sm text-gray-500 mb-3">
         Arraste pela alcinha <GripVertical size={14} className="inline align-text-bottom" /> para
         deixar as telas mais usadas no topo do menu lateral. A ordem salva sozinha.
       </p>

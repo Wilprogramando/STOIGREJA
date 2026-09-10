@@ -18,11 +18,12 @@ import { Anotacao, listarAnotacoes, salvarAnotacao, excluirAnotacao } from '../s
 import { buscarMusicas, obterLetra, MusicaEncontrada } from '../services/musicas';
 import { addHino, getAllHinos } from '../services/db';
 import { lerCantores, sincronizarCantoresDosHinos } from '../services/cantores';
+import { lerCategorias } from '../services/categorias';
 import { Hino } from '../types';
 
 const TONS = ['', 'C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'];
 const TONS_HINO = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'];
-const CATEGORIAS = ['Alfa', 'Manancial', 'Louvor', 'Consagração', 'Outro'];
+
 
 const VAZIO = { id: '', hino: '', cantor: '', tom: '', observacoes: '', letra: '' };
 
@@ -348,6 +349,13 @@ export const Anotacoes: React.FC = () => {
 
   const campo =
     'w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-indigo-500 focus:outline-none';
+
+  // Categorias cadastradas em Configuracoes; a atual entra na lista mesmo
+  // que tenha sido apagada de la, para o hino nao perder a categoria.
+  const cadastradas = lerCategorias();
+  const categorias = cadastradas.includes(formHino.categoria)
+    ? cadastradas
+    : [formHino.categoria, ...cadastradas].filter(Boolean);
 
   return (
     <div className="max-w-4xl mx-auto pb-20">
@@ -815,7 +823,7 @@ export const Anotacoes: React.FC = () => {
                     onChange={e => setFormHino({ ...formHino, categoria: e.target.value })}
                     className={campo}
                   >
-                    {CATEGORIAS.map(c => (
+                    {categorias.map(c => (
                       <option key={c} value={c}>
                         {c}
                       </option>
