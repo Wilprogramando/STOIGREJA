@@ -477,24 +477,28 @@ export const RepertoriosSalvos: React.FC<RepertoriosSalvosProps> = ({ configurac
                     </h3>
 
                     <div className="flex flex-wrap items-center gap-2 mt-2.5">
-                      <span
-                        className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-sm font-bold shadow-sm ${
-                          hoje ? 'bg-green-600 text-white' : 'bg-white text-gray-800'
-                        }`}
-                      >
-                        <Calendar size={15} />
-                        {hoje ? 'Hoje' : formatarData(repertorio.data)}
-                      </span>
-
-                      {repertorio.horario && (
-                        <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-sm font-bold bg-white text-gray-800 shadow-sm">
-                          <Clock size={15} />
-                          {repertorio.horario}
+                      {/* Data e horário andam juntos: no celular ficam na mesma
+                          linha, e só a quantidade de hinos cai para baixo. */}
+                      <div className="flex items-center gap-2 flex-nowrap">
+                        <span
+                          className={`inline-flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-xl text-xs sm:text-sm font-bold shadow-sm whitespace-nowrap ${
+                            hoje ? 'bg-green-600 text-white' : 'bg-white text-gray-800'
+                          }`}
+                        >
+                          <Calendar size={14} className="shrink-0" />
+                          {hoje ? 'Hoje' : formatarData(repertorio.data)}
                         </span>
-                      )}
 
-                      <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-sm font-bold bg-indigo-600 text-white shadow-sm">
-                        <Music size={15} />
+                        {repertorio.horario && (
+                          <span className="inline-flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-xl text-xs sm:text-sm font-bold bg-white text-gray-800 shadow-sm whitespace-nowrap">
+                            <Clock size={14} className="shrink-0" />
+                            {repertorio.horario}
+                          </span>
+                        )}
+                      </div>
+
+                      <span className="inline-flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-xl text-xs sm:text-sm font-bold bg-indigo-600 text-white shadow-sm whitespace-nowrap">
+                        <Music size={14} className="shrink-0" />
                         {repertorio.hinos.length} hino(s)
                       </span>
                     </div>
