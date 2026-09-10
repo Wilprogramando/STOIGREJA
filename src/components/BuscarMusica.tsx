@@ -542,19 +542,24 @@ export const BuscarMusica: React.FC = () => {
                 <label className="block text-sm font-medium text-gray-700 mb-1.5">
                   Cantor *
                 </label>
-                <input
-                  type="text"
-                  list="cantores-da-igreja"
+                {/* Lista, e nao campo com sugestoes: no celular a sugestao do
+                    datalist nao abre, e o cantor tem de ser escolhido. */}
+                <select
                   value={formulario.cantor}
                   onChange={(e) => setFormulario({ ...formulario, cantor: e.target.value })}
-                  placeholder="Quem vai cantar"
                   className={campo}
-                />
-                <datalist id="cantores-da-igreja">
+                >
+                  <option value="">Selecione o cantor</option>
                   {cantores.map((nome) => (
-                    <option key={nome} value={nome} />
+                    <option key={nome} value={nome}>
+                      {nome}
+                    </option>
                   ))}
-                </datalist>
+                </select>
+                <p className="text-xs text-gray-500 mt-1">
+                  Quem vai cantar na igreja. Para incluir alguém na lista, use
+                  Configurações {'>'} Cantores.
+                </p>
               </div>
 
               <div>
