@@ -407,19 +407,51 @@ function juntarResultados(doLetras, doGenius) {
     .map(({ peso, ...resto }) => resto);
 }
 
-/** Procura no Letras.mus.br uma musica com o mesmo nome, para pegar a letra em portugues. */
+/** Tira o que vem entre parenteses ("Ao Vivo", "2020") antes de comparar titulos. */
+function tituloBase(texto) {
+  return normalizar(String(texto || '').replace(/\([^)]*\)/g, ' '));
+}
+
+/**
+ * O candidato e mesmo a musica pedida?
+ *
+ * O titulo tem de bater E, quando o cantor foi informado, o cantor tambem -
+ * varios hinos diferentes tem o mesmo nome ("Deus da Minha Vida" do Thalles
+ * e da Dalvinha sao letras diferentes). Sem essa conferencia o resgate
+ * devolvia a letra de outro cantor como se fosse a pedida.
+ */
+function ehAMesmaMusica(candidato, nome, cantor) {
+  if (tituloBase(candidato.nome) !== tituloBase(nome)) return false;
+  if (!cantor || !String(cantor).trim()) return true;
+
+  const pedido = normalizar(cantor);
+  const achado = normalizar(candidato.cantor);
+  if (!achado) return false;
+
+  // "Thalles Roberto" casa com "Thalles Roberto e Banda".
+  return achado === pedido || achado.includes(pedido) || pedido.includes(achado);
+}
+
+/** Procura no Letras.mus.br a mesma musica, para pegar a letra em portugues. */
 async function tentarNoLetras(nome, cantor) {
   if (!nome) return null;
 
-  // Primeiro com o cantor junto (mais preciso); depois so pelo nome, porque
-  // o mesmo hino aparece gravado por varios cantores.
-  const termos = [`${nome} ${cantor || ''}`.trim(), nome];
+  // Do mais preciso para o mais aberto. O titulo sem os parenteses entra
+  // porque o indice do Letras nao acha "Deus da Minha Vida (Ao Vivo)" - la
+  // a musica esta cadastrada so como "Deus da Minha Vida".
+  const semParenteses = String(nome).replace(/\([^)]*\)/g, ' ').replace(/\s+/g, ' ').trim();
+
+  const termos = [
+    `${nome} ${cantor || ''}`.trim(),
+    `${semParenteses} ${cantor || ''}`.trim(),
+    nome,
+    semParenteses,
+  ].filter((termo, posicao, lista) => termo && lista.indexOf(termo) === posicao);
 
   for (const termo of termos) {
     const opcoes = await buscarNoLetras(termo);
-    const iguais = opcoes.filter((o) => normalizar(o.nome) === normalizar(nome));
 
-    for (const opcao of iguais.slice(0, 3)) {
+    for (const opcao of opcoes.filter((o) => ehAMesmaMusica(o, nome, cantor)).slice(0, 3)) {
       const achado = await letraDoLetras(opcao.dns, opcao.url);
       if (achado) return achado;
     }
@@ -433,8 +465,9 @@ async function tentarNoGenius(nome, cantor) {
   if (!nome) return null;
 
   const opcoes = await buscarNoGenius(`${nome} ${cantor || ''}`.trim());
-  const iguais = opcoes.filter((o) => normalizar(o.nome) === normalizar(nome));
-  const candidatas = (iguais.length ? iguais : opcoes).slice(0, 3);
+  // Sem candidata confiavel e melhor nao devolver nada do que devolver a
+  // letra de outra musica.
+  const candidatas = opcoes.filter((o) => ehAMesmaMusica(o, nome, cantor)).slice(0, 3);
 
   for (const opcao of candidatas) {
     const achado = await letraDoGenius(opcao.path);
@@ -471,13 +504,17 @@ export default async function handler(req, res) {
       const idGenius = String(gid || '').replace('genius:', '');
 
       const tentativas = [
-        // 1. A pagina exata que veio da busca.
+        // 1. A pagina exata do Letras.mus.br, quando a escolha veio de la.
         () => (dns && url ? letraDoLetras(dns, url) : null),
-        () => (path ? letraDoGenius(path) : null),
-        // 2. A mesma musica procurada de novo, pelo nome, nas duas fontes.
+        // 2. O Letras.mus.br pelo nome. Vem antes da pagina do Genius de
+        //    proposito: no Genius as versoes "Ao Vivo" trazem a fala de palco
+        //    misturada com a letra ("batam palma comigo"), e o que serve para
+        //    o repertorio e a letra limpa.
         () => tentarNoLetras(nome, cantor),
+        // 3. O Genius, quando a musica so existe la.
+        () => (path ? letraDoGenius(path) : null),
         () => tentarNoGenius(nome, cantor),
-        // 3. Ultimo recurso: o embed do Genius, que costuma passar quando a
+        // 4. Ultimo recurso: o embed do Genius, que costuma passar quando a
         //    pagina normal e bloqueada.
         () => letraDoGeniusEmbed(idGenius),
       ];
