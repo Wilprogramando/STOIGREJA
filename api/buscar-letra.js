@@ -118,7 +118,7 @@ async function buscarLetra(dns, url) {
 export default async function handler(req, res) {
   const { q = '', dns = '', url = '' } = req.query || {};
 
-  res.setHeader('Cache-Control', 's-maxage=86400, stale-while-revalidate');
+  res.setHeader('Cache-Control', 's-maxage=3600, stale-while-revalidate');
 
   try {
     // Modo 2: ja sei qual musica quero, so trago a letra.

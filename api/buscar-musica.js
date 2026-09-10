@@ -547,7 +547,7 @@ export default async function handler(req, res) {
     q = '', letra = '', dns = '', url = '', path = '', nome = '', cantor = '', gid = '',
   } = req.query || {};
 
-  res.setHeader('Cache-Control', 's-maxage=86400, stale-while-revalidate');
+  res.setHeader('Cache-Control', 's-maxage=3600, stale-while-revalidate');
 
   try {
     // ---- Letra completa de uma musica ja escolhida na lista.
