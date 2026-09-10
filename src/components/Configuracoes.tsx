@@ -5,6 +5,7 @@ import { Configuracoes } from '../types';
 import { LogoUploader } from './LogoUploader';
 import { ImportCSVModal } from './ImportCSVModal';
 import { MENUS, lerMenusOcultos, salvarMenusOcultos } from '../services/menus';
+import { OrdemMenus } from './OrdemMenus';
 import { lerAcessos, zerarAcessos, RegistroAcessos } from '../services/acessos';
 import {
   carregarAparelhos,
@@ -533,6 +534,9 @@ Os hinos já cadastrados com esse cantor não mudam.`)) return;
             })}
           </div>
         </div>
+
+        {/* Ordem do menu (arrastando) */}
+        <OrdemMenus onOrdemChange={() => onConfigChange?.()} />
 
         {/* Acessos */}
         <div className="bg-white p-6 rounded-lg shadow-md">

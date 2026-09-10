@@ -1,5 +1,5 @@
 import React from 'react';
-import { menuVisivel } from '../services/menus';
+import { menuVisivel, ordenarPorMenu } from '../services/menus';
 import {
   Home,
   Plus,
@@ -21,6 +21,8 @@ interface SidebarProps {
   onClose: () => void;
   /** Telas desligadas nas configurações. */
   menusOcultos?: string[];
+  /** Ordem escolhida nas configurações (arrastando). */
+  ordemMenus?: string[];
 }
 
 export const Sidebar: React.FC<SidebarProps> = ({
@@ -28,7 +30,8 @@ export const Sidebar: React.FC<SidebarProps> = ({
   onPageChange,
   isOpen,
   onClose,
-  menusOcultos
+  menusOcultos,
+  ordemMenus
 }) => {
 
   const menuItems = [
@@ -48,7 +51,10 @@ export const Sidebar: React.FC<SidebarProps> = ({
     { id: 'configuracoes', label: 'Configurações', icon: Settings },
   ];
 
-  const itensVisiveis = menuItems.filter(item => menuVisivel(item.id, menusOcultos));
+  const itensVisiveis = ordenarPorMenu(
+    menuItems.filter(item => menuVisivel(item.id, menusOcultos)),
+    ordemMenus
+  );
 
   const handleItemClick = (id: string) => {
     onPageChange(id);
