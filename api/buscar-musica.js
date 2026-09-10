@@ -165,12 +165,14 @@ async function buscarNoLetras(termo) {
  * abre/fecha, em vez de parar no primeiro </div> que aparecer.
  */
 function extrairLetraDoLetras(html) {
+  // Só nomes que o site usa para a letra da PROPRIA pagina. Um marcador
+  // generico (qualquer classe com "lyric") pegava tambem os blocos de
+  // "mais tocadas" da barra lateral, que sao de outras musicas.
   const marcadores = [
     /<div[^>]*class="[^"]*lyric-original[^"]*"[^>]*>/i,
     /<div[^>]*class="[^"]*cnt-letra[^"]*"[^>]*>/i,
     /<div[^>]*class="[^"]*letra-l[^"]*"[^>]*>/i,
-    /<div[^>]*id="[^"]*lyric[^"]*"[^>]*>/i,
-    /<div[^>]*class="[^"]*lyric[^"]*"[^>]*>/i,
+    /<div[^>]*id="[^"]*lyric-original[^"]*"[^>]*>/i,
   ];
 
   for (const marcador of marcadores) {
@@ -203,15 +205,42 @@ async function letraDoLetras(dns, url) {
   const letra = extrairLetraDoLetras(html);
   if (!letra) return null;
 
+  const { nome, cantor } = identificarPaginaDoLetras(html);
+
+  return { nome, cantor, letra, fonte: pagina };
+}
+
+/**
+ * De quem e a pagina que acabou de ser aberta?
+ *
+ * Sem isso nao da para conferir se a letra e mesmo da musica pedida. O <h2>
+ * do cantor nem sempre vem no formato esperado, entao o <title> - que e
+ * sempre "Musica - Cantor - LETRAS.MUS.BR" - serve de garantia.
+ */
+function identificarPaginaDoLetras(html) {
+  const limpar = (t) => decodificar(String(t || '').replace(/<[^>]+>/g, '')).trim();
+
   const tituloTag = /<h1[^>]*>([\s\S]*?)<\/h1>/i.exec(html);
   const cantorTag = /<h2[^>]*>[\s\S]*?<span[^>]*>([\s\S]*?)<\/span>/i.exec(html);
 
-  return {
-    nome: tituloTag ? decodificar(tituloTag[1].replace(/<[^>]+>/g, '').trim()) : '',
-    cantor: cantorTag ? decodificar(cantorTag[1].replace(/<[^>]+>/g, '').trim()) : '',
-    letra,
-    fonte: pagina,
-  };
+  let nome = tituloTag ? limpar(tituloTag[1]) : '';
+  let cantor = cantorTag ? limpar(cantorTag[1]) : '';
+
+  if (!nome || !cantor) {
+    const titulo = /<title>([\s\S]*?)<\/title>/i.exec(html);
+    const partes = titulo
+      ? limpar(titulo[1])
+          .replace(/\s*-\s*LETRAS\.MUS\.BR\s*$/i, '')
+          .split(' - ')
+      : [];
+
+    if (partes.length >= 2) {
+      if (!nome) nome = partes.slice(0, -1).join(' - ').trim();
+      if (!cantor) cantor = partes[partes.length - 1].trim();
+    }
+  }
+
+  return { nome, cantor };
 }
 
 // ---------------------------------------------------------------------- Genius
@@ -412,6 +441,39 @@ function tituloBase(texto) {
   return normalizar(String(texto || '').replace(/\([^)]*\)/g, ' '));
 }
 
+/** "Thalles Roberto" e "Thalles Roberto e Banda" sao o mesmo cantor. */
+function mesmoCantor(a, b) {
+  const um = normalizar(a);
+  const outro = normalizar(b);
+  if (!um || !outro) return false;
+  return um === outro || um.includes(outro) || outro.includes(um);
+}
+
+/**
+ * CONFERENCIA FINAL, antes de devolver a letra.
+ *
+ * A pagina de letra diz o nome da musica e o do cantor. Se qualquer um dos
+ * dois nao bater com o que foi pedido, a letra e de outra musica e nao pode
+ * ser devolvida - o servidor segue para a proxima tentativa.
+ *
+ * exigirIdentificacao: quando a letra veio de uma procura por nome (e nao da
+ * pagina exata que o usuario escolheu), a pagina precisa se identificar; sem
+ * nome nem cantor nao da para ter certeza de que e a musica certa.
+ */
+function letraConfere(achado, nome, cantor, exigirIdentificacao) {
+  if (!achado || !achado.letra) return false;
+
+  const temNome = Boolean(achado.nome);
+  const temCantor = Boolean(achado.cantor);
+
+  if (exigirIdentificacao && !temNome && !temCantor) return false;
+
+  if (nome && temNome && tituloBase(achado.nome) !== tituloBase(nome)) return false;
+  if (cantor && temCantor && !mesmoCantor(achado.cantor, cantor)) return false;
+
+  return true;
+}
+
 /**
  * O candidato e mesmo a musica pedida?
  *
@@ -503,33 +565,47 @@ export default async function handler(req, res) {
 
       const idGenius = String(gid || '').replace('genius:', '');
 
+      // "exata" = a pagina que o usuario escolheu na lista; as outras sao
+      // procuras por nome, que precisam se identificar (ver letraConfere).
       const tentativas = [
         // 1. A pagina exata do Letras.mus.br, quando a escolha veio de la.
-        () => (dns && url ? letraDoLetras(dns, url) : null),
+        { exata: true, buscar: () => (dns && url ? letraDoLetras(dns, url) : null) },
         // 2. O Letras.mus.br pelo nome. Vem antes da pagina do Genius de
         //    proposito: no Genius as versoes "Ao Vivo" trazem a fala de palco
         //    misturada com a letra ("batam palma comigo"), e o que serve para
         //    o repertorio e a letra limpa.
-        () => tentarNoLetras(nome, cantor),
+        { exata: false, buscar: () => tentarNoLetras(nome, cantor) },
         // 3. O Genius, quando a musica so existe la.
-        () => (path ? letraDoGenius(path) : null),
-        () => tentarNoGenius(nome, cantor),
+        { exata: true, buscar: () => (path ? letraDoGenius(path) : null) },
+        { exata: false, buscar: () => tentarNoGenius(nome, cantor) },
         // 4. Ultimo recurso: o embed do Genius, que costuma passar quando a
-        //    pagina normal e bloqueada.
-        () => letraDoGeniusEmbed(idGenius),
+        //    pagina normal e bloqueada. O id e o da musica escolhida.
+        { exata: true, buscar: () => letraDoGeniusEmbed(idGenius) },
       ];
 
-      for (const tentar of tentativas) {
+      for (const { exata, buscar } of tentativas) {
         try {
-          const achado = await tentar();
-          if (achado && achado.letra) return responder(achado);
+          const achado = await buscar();
+          if (!achado || !achado.letra) continue;
+
+          if (!letraConfere(achado, nome, cantor, !exata)) {
+            console.warn(
+              `Letra descartada: pedi "${nome}" - "${cantor}", ` +
+                `a pagina e de "${achado.nome}" - "${achado.cantor}" (${achado.fonte})`
+            );
+            continue;
+          }
+
+          return responder(achado);
         } catch (erro) {
           console.warn('Tentativa de letra falhou:', erro && erro.message);
         }
       }
 
       return res.status(404).json({
-        erro: 'Nao foi possivel abrir a letra desta musica. Tente outra opcao da lista.',
+        erro:
+          'Nao encontrei a letra desta musica com o mesmo cantor. ' +
+          'Tente outra opcao da lista.',
       });
     }
 
