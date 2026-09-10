@@ -612,32 +612,34 @@ export const Anotacoes: React.FC = () => {
 
                   <div className="mt-2 flex flex-wrap gap-2">
                     {anotacao.letra ? (
-                      <button
-                        onClick={() =>
-                          setLetraAberta({
-                            nome: anotacao.hino,
-                            cantor: anotacao.cantor,
-                            letra: anotacao.letra || '',
-                          })
-                        }
-                        className="px-3 py-1.5 rounded-lg bg-gray-100 text-gray-700 hover:bg-gray-200 text-xs font-semibold flex items-center gap-1.5"
-                      >
-                        <FileText size={14} />
-                        Ver letra
-                      </button>
+                      <>
+                        <button
+                          onClick={() =>
+                            setLetraAberta({
+                              nome: anotacao.hino,
+                              cantor: anotacao.cantor,
+                              letra: anotacao.letra || '',
+                            })
+                          }
+                          className="px-3 py-1.5 rounded-lg bg-gray-100 text-gray-700 hover:bg-gray-200 text-xs font-semibold flex items-center gap-1.5"
+                        >
+                          <FileText size={14} />
+                          Ver letra
+                        </button>
+
+                        <button
+                          onClick={() => abrirTransferencia(anotacao)}
+                          className="px-3 py-1.5 rounded-lg bg-emerald-600 text-white hover:bg-emerald-700 text-xs font-semibold flex items-center gap-1.5"
+                        >
+                          <ArrowRightLeft size={14} />
+                          Transferir para hinos comuns
+                        </button>
+                      </>
                     ) : (
                       <span className="px-3 py-1.5 rounded-lg bg-gray-50 text-gray-400 text-xs font-semibold">
                         Sem letra guardada
                       </span>
                     )}
-
-                    <button
-                      onClick={() => abrirTransferencia(anotacao)}
-                      className="px-3 py-1.5 rounded-lg bg-emerald-600 text-white hover:bg-emerald-700 text-xs font-semibold flex items-center gap-1.5"
-                    >
-                      <ArrowRightLeft size={14} />
-                      Transferir para hinos comuns
-                    </button>
                   </div>
 
                   <p className="text-xs text-gray-400 mt-2">
