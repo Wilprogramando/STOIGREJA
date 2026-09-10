@@ -459,7 +459,7 @@ export const RepertoriosSalvos: React.FC<RepertoriosSalvosProps> = ({ configurac
                     setHinosAbertos(a => ({ ...a, [repertorio.id]: !hinosVisiveis }))
                   }
                   title={hinosVisiveis ? 'Esconder hinos' : 'Mostrar hinos'}
-                  className={`flex items-start gap-3 mb-4 cursor-pointer -mx-4 -mt-4 sm:-mx-6 sm:-mt-6 p-4 sm:p-5 rounded-t-2xl border-b ${
+                  className={`mb-4 cursor-pointer -mx-4 -mt-4 sm:-mx-6 sm:-mt-6 p-4 sm:p-5 rounded-t-2xl border-b ${
                     hoje
                       ? 'bg-green-50 border-green-200'
                       : mostrarPassados
@@ -467,64 +467,64 @@ export const RepertoriosSalvos: React.FC<RepertoriosSalvosProps> = ({ configurac
                         : 'bg-indigo-50 border-indigo-200'
                   }`}
                 >
-                  <div className="shrink-0 w-14 h-14 sm:w-16 sm:h-16 rounded-2xl bg-gradient-to-br from-indigo-500 to-violet-700 text-white flex items-center justify-center shadow-md">
-                    <Church size={26} />
-                  </div>
+                  {/* Fileira de cima: nome e botões */}
+                  <div className="flex items-start gap-3">
+                    <div className="shrink-0 w-12 h-12 sm:w-16 sm:h-16 rounded-2xl bg-gradient-to-br from-indigo-500 to-violet-700 text-white flex items-center justify-center shadow-md">
+                      <Church size={24} />
+                    </div>
 
-                  <div className="min-w-0 flex-1">
-                    <h3 className="text-xl sm:text-2xl font-extrabold text-gray-900 break-words leading-tight">
+                    <h3 className="flex-1 min-w-0 text-xl sm:text-2xl font-extrabold text-gray-900 break-words leading-tight">
                       {repertorio.nome}
                     </h3>
 
-                    <div className="flex flex-wrap items-center gap-2 mt-2.5">
-                      {/* Data e horário andam juntos: no celular ficam na mesma
-                          linha, e só a quantidade de hinos cai para baixo. */}
-                      <div className="flex items-center gap-2 flex-nowrap">
-                        <span
-                          className={`inline-flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-xl text-xs sm:text-sm font-bold shadow-sm whitespace-nowrap ${
-                            hoje ? 'bg-green-600 text-white' : 'bg-white text-gray-800'
-                          }`}
-                        >
-                          <Calendar size={14} className="shrink-0" />
-                          {hoje ? 'Hoje' : formatarData(repertorio.data)}
-                        </span>
+                    <ChevronDown
+                      size={20}
+                      className={`shrink-0 mt-1 text-gray-400 transition-transform ${
+                        hinosVisiveis ? 'rotate-180' : ''
+                      }`}
+                    />
 
-                        {repertorio.horario && (
-                          <span className="inline-flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-xl text-xs sm:text-sm font-bold bg-white text-gray-800 shadow-sm whitespace-nowrap">
-                            <Clock size={14} className="shrink-0" />
-                            {repertorio.horario}
-                          </span>
-                        )}
-                      </div>
-
-                      <span className="inline-flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-xl text-xs sm:text-sm font-bold bg-indigo-600 text-white shadow-sm whitespace-nowrap">
-                        <Music size={14} className="shrink-0" />
-                        {repertorio.hinos.length} hino(s)
-                      </span>
-                    </div>
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setAcoesAbertas(acoesVisiveis ? null : repertorio.id);
+                      }}
+                      title={acoesVisiveis ? 'Esconder ações' : 'Mostrar ações'}
+                      className={`shrink-0 p-2 rounded-xl border transition shadow-sm ${
+                        acoesVisiveis
+                          ? 'bg-gray-700 border-gray-700 text-white'
+                          : 'bg-white border-gray-200 text-gray-600 hover:bg-gray-50'
+                      }`}
+                    >
+                      <MoreVertical size={18} />
+                    </button>
                   </div>
 
-                  <ChevronDown
-                    size={20}
-                    className={`shrink-0 mt-2 text-gray-400 transition-transform ${
-                      hinosVisiveis ? 'rotate-180' : ''
-                    }`}
-                  />
+                  {/* Fileira de baixo: ocupa a largura toda do cartão, então
+                      data, horário e quantidade de hinos cabem lado a lado
+                      mesmo na tela do celular. */}
+                  <div className="flex items-center gap-1.5 sm:gap-2 mt-3">
+                    <span
+                      className={`inline-flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-xl text-xs sm:text-sm font-bold shadow-sm whitespace-nowrap ${
+                        hoje ? 'bg-green-600 text-white' : 'bg-white text-gray-800'
+                      }`}
+                    >
+                      <Calendar size={14} className="shrink-0" />
+                      {hoje ? 'Hoje' : formatarData(repertorio.data)}
+                    </span>
 
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      setAcoesAbertas(acoesVisiveis ? null : repertorio.id);
-                    }}
-                    title={acoesVisiveis ? 'Esconder ações' : 'Mostrar ações'}
-                    className={`shrink-0 p-2 rounded-xl border transition shadow-sm ${
-                      acoesVisiveis
-                        ? 'bg-gray-700 border-gray-700 text-white'
-                        : 'bg-white border-gray-200 text-gray-600 hover:bg-gray-50'
-                    }`}
-                  >
-                    <MoreVertical size={18} />
-                  </button>
+                    {repertorio.horario && (
+                      <span className="inline-flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-xl text-xs sm:text-sm font-bold bg-white text-gray-800 shadow-sm whitespace-nowrap">
+                        <Clock size={14} className="shrink-0" />
+                        {repertorio.horario}
+                      </span>
+                    )}
+
+                    <span className="inline-flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-xl text-xs sm:text-sm font-bold bg-indigo-600 text-white shadow-sm whitespace-nowrap">
+                      <Music size={14} className="shrink-0" />
+                      {repertorio.hinos.length} hino(s)
+                    </span>
+                  </div>
                 </div>
 
                 {/* Botões */}
