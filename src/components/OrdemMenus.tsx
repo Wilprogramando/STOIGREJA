@@ -5,6 +5,7 @@ import {
   menusOrdenados,
   salvarOrdemMenus,
   limparOrdemMenus,
+  rotuloDoMenu,
 } from '../services/menus';
 
 interface OrdemMenusProps {
@@ -175,7 +176,9 @@ export const OrdemMenus: React.FC<OrdemMenusProps> = ({ onOrdemChange }) => {
                 {indice + 1}
               </span>
 
-              <p className="flex-1 min-w-0 font-medium text-gray-800 truncate">{menu.label}</p>
+              <p className="flex-1 min-w-0 font-medium text-gray-800 truncate">
+                {rotuloDoMenu(menu.id)}
+              </p>
 
               <div className="shrink-0 flex gap-1">
                 <button

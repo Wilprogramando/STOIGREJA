@@ -2,17 +2,18 @@ import React, { useState, useEffect } from 'react';
 import {
   Save, Download, Upload, Trash2, AlertCircle, Eye, EyeOff, BarChart3, Mic2,
   UserPlus, Pencil, BookOpen, Smartphone, Building2, Type, Image, ListChecks,
-  ListOrdered, Database, Palette, Tag,
+  ListOrdered, Database, Palette, Tag, TextCursorInput,
 } from 'lucide-react';
 import { getConfiguracoes, saveConfiguracoes, exportData, importData, clearAllData } from '../services/db';
 import { Configuracoes } from '../types';
 import { LogoUploader } from './LogoUploader';
 import { ImportCSVModal } from './ImportCSVModal';
-import { MENUS, lerMenusOcultos, salvarMenusOcultos } from '../services/menus';
+import { MENUS, lerMenusOcultos, salvarMenusOcultos, rotuloDoMenu } from '../services/menus';
 import { OrdemMenus } from './OrdemMenus';
 import { SecaoConfig } from './SecaoConfig';
 import { Aparencia } from './Aparencia';
 import { CategoriasConfig } from './CategoriasConfig';
+import { NomesMenus } from './NomesMenus';
 import { lerAcessos, zerarAcessos, RegistroAcessos } from '../services/acessos';
 import {
   carregarAparelhos,
@@ -568,7 +569,7 @@ Os hinos já cadastrados com esse cantor não mudam.`)) return;
                           ligado ? 'text-gray-800' : 'text-gray-400'
                         }`}
                       >
-                        {menu.label}
+                        {rotuloDoMenu(menu.id)}
                       </p>
                       {menu.fixo && (
                         <p className="text-xs text-gray-400">Sempre disponível</p>
@@ -594,6 +595,17 @@ Os hinos já cadastrados com esse cantor não mudam.`)) return;
               );
             })}
           </div>
+        </SecaoConfig>
+
+        <SecaoConfig
+          id="nomes"
+          titulo="Nomes dos Menus"
+          descricao="Troque como cada tela se chama"
+          icone={TextCursorInput}
+          aberta={secaoAberta}
+          onAbrir={setSecaoAberta}
+        >
+          <NomesMenus onNomesChange={() => onConfigChange?.()} />
         </SecaoConfig>
 
         <SecaoConfig

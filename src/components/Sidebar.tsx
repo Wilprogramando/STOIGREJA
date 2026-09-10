@@ -1,5 +1,5 @@
 import React from 'react';
-import { menuVisivel, ordenarPorMenu } from '../services/menus';
+import { menuVisivel, ordenarPorMenu, rotuloDoMenu } from '../services/menus';
 import {
   Home,
   Plus,
@@ -23,6 +23,8 @@ interface SidebarProps {
   menusOcultos?: string[];
   /** Ordem escolhida nas configurações (arrastando). */
   ordemMenus?: string[];
+  /** Nomes trocados nas configurações. */
+  nomesMenus?: Record<string, string>;
 }
 
 export const Sidebar: React.FC<SidebarProps> = ({
@@ -31,7 +33,8 @@ export const Sidebar: React.FC<SidebarProps> = ({
   isOpen,
   onClose,
   menusOcultos,
-  ordemMenus
+  ordemMenus,
+  nomesMenus
 }) => {
 
   const menuItems = [
@@ -98,7 +101,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
                 `}
               >
                 <Icon size={20} />
-                <span className="font-medium">{item.label}</span>
+                <span className="font-medium">{rotuloDoMenu(item.id, nomesMenus)}</span>
               </button>
             );
           })}

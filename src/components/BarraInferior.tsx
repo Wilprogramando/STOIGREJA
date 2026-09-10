@@ -1,12 +1,14 @@
 import React from 'react';
 import { Home, PlusCircle, List } from 'lucide-react';
-import { menuVisivel } from '../services/menus';
+import { menuVisivel, rotuloDoMenu } from '../services/menus';
 
 interface BarraInferiorProps {
   currentPage: string;
   onPageChange: (page: string) => void;
   /** Telas desligadas nas configurações. */
   menusOcultos?: string[];
+  /** Nomes trocados nas configurações. */
+  nomesMenus?: Record<string, string>;
 }
 
 /**
@@ -16,7 +18,8 @@ interface BarraInferiorProps {
 export const BarraInferior: React.FC<BarraInferiorProps> = ({
   currentPage,
   onPageChange,
-  menusOcultos
+  menusOcultos,
+  nomesMenus
 }) => {
   const Atalho = ({ id, label, icon: Icon }: { id: string; label: string; icon: any }) => {
     const ativo = currentPage === id;
@@ -61,7 +64,7 @@ export const BarraInferior: React.FC<BarraInferiorProps> = ({
           }`}
         >
           <List size={17} />
-          <span className="text-xs">Repertórios</span>
+          <span className="text-xs truncate">{rotuloDoMenu('repertorios', nomesMenus)}</span>
         </button>
         )}
 

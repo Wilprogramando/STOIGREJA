@@ -18,7 +18,7 @@ import { BarraInferior } from './components/BarraInferior';
 import { initializeHarpaBase, getConfiguracoes } from './services/db';
 import { registrarAcesso } from './services/acessos';
 import { registrarAcessoDesteAparelho } from './services/aparelhos';
-import { menuVisivel, lerMenusOcultos, lerOrdemMenus } from './services/menus';
+import { menuVisivel, lerMenusOcultos, lerOrdemMenus, lerNomesMenus } from './services/menus';
 import { lerTema, Tema } from './services/tema';
 import { sincronizarCantoresDosHinos } from './services/cantores';
 import { Configuracoes, Repertorio } from './types';
@@ -31,6 +31,7 @@ export default function App() {
   const [menusOcultos, setMenusOcultos] = useState<string[]>(() => lerMenusOcultos());
   const [ordemMenus, setOrdemMenus] = useState<string[]>(() => lerOrdemMenus());
   const [tema, setTema] = useState<Tema>(() => lerTema());
+  const [nomesMenus, setNomesMenus] = useState<Record<string, string>>(() => lerNomesMenus());
 
   useEffect(() => {
     initializeApp();
@@ -122,6 +123,7 @@ export default function App() {
   const handleConfigChange = async () => {
     setMenusOcultos(lerMenusOcultos());
     setOrdemMenus(lerOrdemMenus());
+    setNomesMenus(lerNomesMenus());
 
     const cfg = await getConfiguracoes();
 
@@ -204,6 +206,7 @@ export default function App() {
         onClose={() => setSidebarOpen(false)}
         menusOcultos={menusOcultos}
         ordemMenus={ordemMenus}
+        nomesMenus={nomesMenus}
       />
 
       <div className="flex-1 flex flex-col overflow-hidden">
@@ -225,6 +228,7 @@ export default function App() {
           currentPage={currentPage}
           onPageChange={handlePageChange}
           menusOcultos={menusOcultos}
+          nomesMenus={nomesMenus}
         />
       </div>
     </div>

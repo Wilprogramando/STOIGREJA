@@ -50,6 +50,63 @@ export function salvarMenusOcultos(ocultos: string[]): void {
   }
 }
 
+// ==================== NOMES DOS MENUS ====================
+
+const CHAVE_NOMES = 'repertorio:nomesMenus';
+
+/**
+ * Nomes trocados pelo usuário (Configurações > Nomes dos Menus).
+ * Guardado como { id: "nome novo" }; quem não foi trocado usa o nome de fábrica.
+ */
+export function lerNomesMenus(): Record<string, string> {
+  try {
+    const bruto = localStorage.getItem(CHAVE_NOMES);
+    const dados = bruto ? JSON.parse(bruto) : {};
+    return dados && typeof dados === 'object' && !Array.isArray(dados) ? dados : {};
+  } catch {
+    return {};
+  }
+}
+
+export function salvarNomesMenus(nomes: Record<string, string>): void {
+  try {
+    localStorage.setItem(CHAVE_NOMES, JSON.stringify(nomes));
+  } catch (erro) {
+    console.error('Não foi possível salvar os nomes dos menus:', erro);
+  }
+}
+
+/** Troca o nome de uma tela. Nome vazio volta para o de fábrica. */
+export function salvarNomeMenu(id: string, nome: string): Record<string, string> {
+  const nomes = lerNomesMenus();
+  const limpo = (nome || '').trim();
+  const padrao = MENUS.find(m => m.id === id)?.label || '';
+
+  if (!limpo || limpo === padrao) {
+    delete nomes[id];
+  } else {
+    nomes[id] = limpo;
+  }
+
+  salvarNomesMenus(nomes);
+  return nomes;
+}
+
+export function limparNomesMenus(): void {
+  try {
+    localStorage.removeItem(CHAVE_NOMES);
+  } catch (erro) {
+    console.error('Não foi possível restaurar os nomes dos menus:', erro);
+  }
+}
+
+/** Nome que deve aparecer na tela para esta seção do menu. */
+export function rotuloDoMenu(id: string, nomes?: Record<string, string>): string {
+  const escolhidos = nomes || lerNomesMenus();
+  const padrao = MENUS.find(m => m.id === id)?.label || '';
+  return (escolhidos[id] || '').trim() || padrao;
+}
+
 // ==================== ORDEM DO MENU ====================
 
 const CHAVE_ORDEM = 'repertorio:ordemMenus';

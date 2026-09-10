@@ -11,6 +11,7 @@ import {
   Music2
 } from 'lucide-react';
 import { getAllHinos, getAllRepertorios, getHinosByType } from '../services/db';
+import { rotuloDoMenu } from '../services/menus';
 import { Repertorio, Hino } from '../types';
 
 interface DashboardProps {
@@ -464,25 +465,25 @@ export const Dashboard: React.FC<DashboardProps> = ({ onPageChange }) => {
         <div className="grid grid-cols-2 gap-3">
           <AcaoRapida
             icon={Plus}
-            label="Cadastrar Hino"
+            label={rotuloDoMenu('cadastrar-hino')}
             cor={{ fundo: 'bg-indigo-50', texto: 'text-indigo-700' }}
             onClick={() => onPageChange('cadastrar-hino')}
           />
           <AcaoRapida
             icon={Music}
-            label="Montar Repertório"
+            label={rotuloDoMenu('montar-repertorio')}
             cor={{ fundo: 'bg-green-50', texto: 'text-green-700' }}
             onClick={() => onPageChange('montar-repertorio')}
           />
           <AcaoRapida
             icon={FileText}
-            label="Ver Repertórios"
+            label={rotuloDoMenu('repertorios')}
             cor={{ fundo: 'bg-orange-50', texto: 'text-orange-700' }}
             onClick={() => onPageChange('repertorios')}
           />
           <AcaoRapida
             icon={BarChart3}
-            label="Relatórios"
+            label={rotuloDoMenu('relatorios')}
             cor={{ fundo: 'bg-blue-50', texto: 'text-blue-700' }}
             onClick={() => onPageChange('relatorios')}
           />
