@@ -22,6 +22,14 @@ import { lerCategorias } from '../services/categorias';
 import { Hino } from '../types';
 import { ModalVisualizaLetra } from './ModalVisualizaLetra';
 
+/** Esconde a linha tecnica "Letra encontrada em: <link>" das observacoes. */
+const observacoesVisiveis = (texto?: string) =>
+  (texto || '')
+    .split(/\r?\n/)
+    .filter(linha => !/^\s*Letra encontrada em:/i.test(linha))
+    .join('\n')
+    .trim();
+
 const TONS = ['', 'C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'];
 const TONS_HINO = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'];
 
@@ -621,9 +629,9 @@ export const Anotacoes: React.FC = () => {
                     {anotacao.tom && <>🎵 Tom {anotacao.tom}</>}
                   </p>
 
-                  {anotacao.observacoes && (
+                  {observacoesVisiveis(anotacao.observacoes) && (
                     <p className="text-sm text-gray-700 mt-2 whitespace-pre-wrap">
-                      {anotacao.observacoes}
+                      {observacoesVisiveis(anotacao.observacoes)}
                     </p>
                   )}
 
@@ -638,9 +646,9 @@ export const Anotacoes: React.FC = () => {
                               letra: anotacao.letra || '',
                             })
                           }
-                          className="px-3 py-1.5 rounded-lg bg-gray-100 text-gray-700 hover:bg-gray-200 text-xs font-semibold flex items-center gap-1.5"
+                          className="px-4 py-2 rounded-lg bg-indigo-600 text-white hover:bg-indigo-700 shadow-sm text-sm font-bold flex items-center gap-1.5"
                         >
-                          <FileText size={14} />
+                          <FileText size={16} />
                           Ver letra
                         </button>
 
