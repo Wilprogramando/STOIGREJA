@@ -1,7 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import {
   Search, Loader2, Play, Pause, Youtube, Music, Volume2, Upload, Link2,
-  Trash2, Plus, SkipBack, SkipForward, Rewind, FastForward, Globe, ListMusic, Mic, Square,
+  Trash2, Plus, SkipBack, SkipForward, Rewind, FastForward, Globe, ListMusic, Mic, Square, Copy, Check,
 } from 'lucide-react';
 import { procurarParaOuvir, acharVideoNoYoutube, MusicaParaOuvir } from '../services/audio';
 import {
@@ -60,6 +60,9 @@ export const OuvirMusica: React.FC = () => {
   const [previaTocando, setPreviaTocando] = useState<string | null>(null);
   /** Qual resultado está procurando o vídeo no YouTube. */
   const [abrindoYoutube, setAbrindoYoutube] = useState<string | null>(null);
+  /** Qual resultado está copiando o link, e qual acabou de ser copiado. */
+  const [copiando, setCopiando] = useState<string | null>(null);
+  const [copiado, setCopiado] = useState<string | null>(null);
   const previaRef = useRef<HTMLAudioElement | null>(null);
 
   useEffect(() => {
@@ -293,6 +296,38 @@ export const OuvirMusica: React.FC = () => {
    * Se nada abrir em um segundo - aparelho sem o app, ou computador -,
    * seguimos para o site normal.
    */
+  /** Copia o link do vídeo (o mesmo que o botão vermelho abre). */
+  const copiarLinkYoutube = async (musica: MusicaParaOuvir) => {
+    setCopiando(musica.id);
+
+    const video = await acharVideoNoYoutube(musica.nome, musica.cantor);
+    const link = video?.url || musica.youtube;
+
+    try {
+      await navigator.clipboard.writeText(link);
+      setCopiado(musica.id);
+      setTimeout(() => setCopiado(null), 2000);
+    } catch {
+      // Navegador antigo ou sem permissão: faz do jeito tradicional.
+      const campo = document.createElement('textarea');
+      campo.value = link;
+      campo.style.position = 'fixed';
+      campo.style.opacity = '0';
+      document.body.appendChild(campo);
+      campo.select();
+      try {
+        document.execCommand('copy');
+        setCopiado(musica.id);
+        setTimeout(() => setCopiado(null), 2000);
+      } catch {
+        setAviso('Não consegui copiar o link neste navegador.');
+      }
+      document.body.removeChild(campo);
+    } finally {
+      setCopiando(null);
+    }
+  };
+
   const abrirNoYoutube = async (musica: MusicaParaOuvir) => {
     const busca = `${musica.nome} ${musica.cantor}`.trim();
     const noCelular = /Android|iPhone|iPad/i.test(navigator.userAgent);
@@ -720,6 +755,25 @@ export const OuvirMusica: React.FC = () => {
                           <Loader2 size={20} className="animate-spin" />
                         ) : (
                           <Youtube size={20} />
+                        )}
+                      </button>
+
+                      <button
+                        onClick={() => copiarLinkYoutube(musica)}
+                        disabled={copiando === musica.id}
+                        title="Copiar o link do YouTube"
+                        className={`w-11 h-11 rounded-full flex items-center justify-center transition disabled:opacity-60 ${
+                          copiado === musica.id
+                            ? 'bg-green-600 text-white'
+                            : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                        }`}
+                      >
+                        {copiando === musica.id ? (
+                          <Loader2 size={20} className="animate-spin" />
+                        ) : copiado === musica.id ? (
+                          <Check size={20} />
+                        ) : (
+                          <Copy size={20} />
                         )}
                       </button>
 
