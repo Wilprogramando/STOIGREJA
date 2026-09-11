@@ -16,6 +16,7 @@ import { lerCategorias } from '../services/categorias';
 import { buscarMusicas, obterLetra, MusicaEncontrada } from '../services/musicas';
 import { salvarAnotacao } from '../services/anotacoes';
 import { Hino } from '../types';
+import { ModalVisualizaLetra } from './ModalVisualizaLetra';
 
 const TONS = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'];
 
@@ -396,68 +397,44 @@ export const BuscarMusica: React.FC = () => {
 
       {/* Modal: letra completa */}
       {verLetra && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-2xl shadow-2xl max-w-2xl w-full max-h-[90vh] flex flex-col">
-            <div className="bg-gradient-to-r from-indigo-600 to-purple-600 text-white p-5 flex items-start justify-between gap-3 rounded-t-2xl">
-              <div className="min-w-0">
-                <h3 className="text-xl font-bold leading-tight">{verLetra.nome}</h3>
-                <p className="text-indigo-100 text-sm mt-0.5">{verLetra.cantor}</p>
-              </div>
-              <button
-                onClick={() => setVerLetra(null)}
-                className="p-2 hover:bg-white hover:bg-opacity-20 rounded-lg transition shrink-0"
-              >
-                <X size={22} />
-              </button>
-            </div>
+        <ModalVisualizaLetra
+          hino={{ nome: verLetra.nome, cantor: verLetra.cantor, letra: verLetra.letra } as any}
+          onClose={() => setVerLetra(null)}
+        >
+          {verLetra.fonte && (
+            <a
+              href={verLetra.fonte}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="mt-4 inline-flex items-center gap-1.5 text-xs text-indigo-600 hover:underline"
+            >
+              <ExternalLink size={13} />
+              Ver no site de origem
+            </a>
+          )}
 
-            <div className="p-5 overflow-auto">
-              <pre className="whitespace-pre-wrap font-sans text-gray-800 leading-relaxed">
-                {verLetra.letra}
-              </pre>
-
-              {verLetra.fonte && (
-                <a
-                  href={verLetra.fonte}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="mt-4 inline-flex items-center gap-1.5 text-xs text-indigo-600 hover:underline"
-                >
-                  <ExternalLink size={13} />
-                  Ver no site de origem
-                </a>
+          <div className="mt-5 flex flex-col sm:flex-row gap-2">
+            <button
+              onClick={() => guardarNasAnotacoes(verLetra)}
+              disabled={guardando === verLetra.musica.id}
+              className="flex-1 px-4 py-2.5 bg-amber-500 text-white rounded-xl hover:bg-amber-600 transition font-semibold text-sm flex items-center justify-center gap-2 disabled:opacity-60"
+            >
+              {guardando === verLetra.musica.id ? (
+                <Loader2 size={16} className="animate-spin" />
+              ) : (
+                <StickyNote size={16} />
               )}
-            </div>
-
-            <div className="p-4 border-t border-gray-100 flex flex-col sm:flex-row gap-2">
-              <button
-                onClick={() => setVerLetra(null)}
-                className="flex-1 px-4 py-2.5 bg-gray-100 text-gray-700 rounded-xl hover:bg-gray-200 transition font-semibold text-sm"
-              >
-                Fechar
-              </button>
-              <button
-                onClick={() => guardarNasAnotacoes(verLetra)}
-                disabled={guardando === verLetra.musica.id}
-                className="flex-1 px-4 py-2.5 bg-amber-500 text-white rounded-xl hover:bg-amber-600 transition font-semibold text-sm flex items-center justify-center gap-2 disabled:opacity-60"
-              >
-                {guardando === verLetra.musica.id ? (
-                  <Loader2 size={16} className="animate-spin" />
-                ) : (
-                  <StickyNote size={16} />
-                )}
-                Guardar em anotações
-              </button>
-              <button
-                onClick={() => abrirCadastro(verLetra)}
-                className="flex-1 px-4 py-2.5 bg-indigo-600 text-white rounded-xl hover:bg-indigo-700 transition font-semibold text-sm flex items-center justify-center gap-2"
-              >
-                <Plus size={16} />
-                Cadastrar hino
-              </button>
-            </div>
+              Guardar em anotações
+            </button>
+            <button
+              onClick={() => abrirCadastro(verLetra)}
+              className="flex-1 px-4 py-2.5 bg-indigo-600 text-white rounded-xl hover:bg-indigo-700 transition font-semibold text-sm flex items-center justify-center gap-2"
+            >
+              <Plus size={16} />
+              Cadastrar hino
+            </button>
           </div>
-        </div>
+        </ModalVisualizaLetra>
       )}
 
       {/* Modal: cadastro do hino */}

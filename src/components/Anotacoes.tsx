@@ -20,6 +20,7 @@ import { addHino, getAllHinos } from '../services/db';
 import { lerCantores, sincronizarCantoresDosHinos } from '../services/cantores';
 import { lerCategorias } from '../services/categorias';
 import { Hino } from '../types';
+import { ModalVisualizaLetra } from './ModalVisualizaLetra';
 
 const TONS = ['', 'C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'];
 const TONS_HINO = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'];
@@ -692,64 +693,33 @@ export const Anotacoes: React.FC = () => {
 
       {/* Modal: letra completa */}
       {letraAberta && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-2xl shadow-2xl max-w-2xl w-full max-h-[90vh] flex flex-col">
-            <div className="bg-gradient-to-r from-indigo-600 to-purple-600 text-white p-5 flex items-start justify-between gap-3 rounded-t-2xl">
-              <div className="min-w-0">
-                <h3 className="text-xl font-bold leading-tight">{letraAberta.nome}</h3>
-                <p className="text-indigo-100 text-sm mt-0.5">{letraAberta.cantor}</p>
-              </div>
-              <button
-                onClick={() => setLetraAberta(null)}
-                className="p-2 hover:bg-white hover:bg-opacity-20 rounded-lg transition shrink-0"
-              >
-                <X size={22} />
-              </button>
-            </div>
+        <ModalVisualizaLetra
+          hino={{ nome: letraAberta.nome, cantor: letraAberta.cantor, letra: letraAberta.letra } as any}
+          onClose={() => setLetraAberta(null)}
+        >
+          {letraAberta.fonte && (
+            <a
+              href={letraAberta.fonte}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="mt-4 inline-flex items-center gap-1.5 text-xs text-indigo-600 hover:underline"
+            >
+              <ExternalLink size={13} />
+              Ver no site de origem
+            </a>
+          )}
 
-            <div className="p-5 overflow-auto">
-              <pre className="whitespace-pre-wrap font-sans text-gray-800 leading-relaxed">
-                {letraAberta.letra}
-              </pre>
-
-              {letraAberta.fonte && (
-                <a
-                  href={letraAberta.fonte}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="mt-4 inline-flex items-center gap-1.5 text-xs text-indigo-600 hover:underline"
-                >
-                  <ExternalLink size={13} />
-                  Ver no site de origem
-                </a>
-              )}
-            </div>
-
-            <div className="p-4 border-t border-gray-100 flex flex-col sm:flex-row gap-2">
-              <button
-                onClick={() => setLetraAberta(null)}
-                className="flex-1 px-4 py-2.5 bg-gray-100 text-gray-700 rounded-xl hover:bg-gray-200 font-semibold text-sm"
-              >
-                Fechar
-              </button>
-
-              {letraAberta.musica && (
-                <button
-                  onClick={() => guardarNasAnotacoes(letraAberta)}
-                  disabled={salvando}
-                  className="flex-1 px-4 py-2.5 bg-indigo-600 text-white rounded-xl hover:bg-indigo-700 font-semibold text-sm flex items-center justify-center gap-2 disabled:opacity-60"
-                >
-                  {salvando ? (
-                    <Loader2 size={16} className="animate-spin" />
-                  ) : (
-                    <StickyNote size={16} />
-                  )}
-                  Guardar nas anotações
-                </button>
-              )}
-            </div>
-          </div>
-        </div>
+          {letraAberta.musica && (
+            <button
+              onClick={() => guardarNasAnotacoes(letraAberta)}
+              disabled={salvando}
+              className="mt-5 w-full px-4 py-2.5 bg-indigo-600 text-white rounded-xl hover:bg-indigo-700 font-semibold text-sm flex items-center justify-center gap-2 disabled:opacity-60"
+            >
+              {salvando ? <Loader2 size={16} className="animate-spin" /> : <StickyNote size={16} />}
+              Guardar nas anotações
+            </button>
+          )}
+        </ModalVisualizaLetra>
       )}
 
       {/* Modal: transferir para hinos comuns */}
