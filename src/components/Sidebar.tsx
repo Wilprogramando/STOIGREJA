@@ -12,6 +12,7 @@ import {
   Guitar,
   StickyNote,
   Globe,
+  Volume2,
   ListMusic
 } from 'lucide-react';
 
@@ -44,6 +45,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
     { id: 'hinos-comuns', label: 'Hinos Comuns', icon: ListMusic },
     { id: 'harpa', label: 'Hinos da Harpa', icon: BookOpen },
     { id: 'buscar-musica', label: 'Buscar Música', icon: Globe },
+    { id: 'ouvir-musica', label: 'Ouvir Música', icon: Volume2 },
     { id: 'montar-repertorio', label: 'Montar Repertório', icon: Music },
 
     { id: 'repertorios', label: 'Repertórios Salvos', icon: List },

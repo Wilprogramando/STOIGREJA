@@ -6,6 +6,7 @@ import { CadastrarHino } from './components/CadastrarHino';
 import { HinosComuns } from './components/HinosComuns';
 import { Harpa } from './components/Harpa';
 import { BuscarMusica } from './components/BuscarMusica';
+import { OuvirMusica } from './components/OuvirMusica';
 import { MontarRepertorio } from './components/MontarRepertorio';
 import { RepertoriosSalvos } from './components/RepertoriosSalvos';
 import { ConfiguracoesView } from './components/Configuracoes';
@@ -210,6 +211,9 @@ export default function App() {
 
       case 'buscar-musica':
         return <BuscarMusica />;
+
+      case 'ouvir-musica':
+        return <OuvirMusica />;
 
       case 'montar-repertorio':
         return (

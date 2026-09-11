@@ -18,6 +18,7 @@ export const MENUS: MenuDoSistema[] = [
   { id: 'hinos-comuns', label: 'Hinos Comuns' },
   { id: 'harpa', label: 'Hinos da Harpa' },
   { id: 'buscar-musica', label: 'Buscar Música' },
+  { id: 'ouvir-musica', label: 'Ouvir Música' },
   { id: 'montar-repertorio', label: 'Montar Repertório' },
   { id: 'repertorios', label: 'Repertórios Salvos' },
   { id: 'campo-harmonico', label: 'Dicas' },
