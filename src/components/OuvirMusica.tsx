@@ -1,7 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import {
   Search, Loader2, Play, Pause, Youtube, Music, Volume2, Upload, Link2,
-  Trash2, Plus, SkipBack, SkipForward, Rewind, FastForward, Globe, ListMusic, Mic, Square, Copy, Check,
+  Trash2, Plus, SkipBack, SkipForward, Rewind, FastForward, Globe, ListMusic, Mic, Square, Copy, Check, Gauge,
 } from 'lucide-react';
 import { procurarParaOuvir, acharVideoNoYoutube, MusicaParaOuvir } from '../services/audio';
 import {
@@ -12,6 +12,12 @@ import {
 } from '../services/db';
 import { MusicaAudio } from '../types';
 import { DeletePasswordModal } from './DeletePasswordModal';
+import { comprimirMusica, QUALIDADES, QualidadeAudio } from '../services/compressao';
+
+/** Tamanho em MB, com uma casa. */
+function mb(bytes: number): string {
+  return `${(bytes / 1024 / 1024).toFixed(1)} MB`;
+}
 
 /** Segundos em 3:45. */
 function tempo(segundos: number): string {
@@ -43,6 +49,11 @@ export const OuvirMusica: React.FC = () => {
   const [erro, setErro] = useState('');
   /** Música esperando a senha para ser apagada. */
   const [pedindoSenha, setPedindoSenha] = useState<MusicaAudio | null>(null);
+  /** Qualidade escolhida para o envio (comprime antes de subir). */
+  const [qualidade, setQualidade] = useState<QualidadeAudio>('media');
+  const [comprimindo, setComprimindo] = useState(0);
+  /** Tamanho final depois de comprimir, para mostrar o quanto diminuiu. */
+  const [tamanhoFinal, setTamanhoFinal] = useState(0);
 
   // ----- Tocador -----
   const audioRef = useRef<HTMLAudioElement | null>(null);
@@ -245,7 +256,17 @@ export const OuvirMusica: React.FC = () => {
       let duracaoNova = duracaoArquivo;
 
       if (arquivo) {
-        const enviado = await enviarArquivoMusica(arquivo);
+        let paraEnviar = arquivo;
+
+        // Comprime no próprio aparelho antes de subir, quando pedido.
+        if (qualidade !== 'original') {
+          setComprimindo(1);
+          paraEnviar = await comprimirMusica(arquivo, qualidade, setComprimindo);
+          setTamanhoFinal(paraEnviar.size);
+          setComprimindo(0);
+        }
+
+        const enviado = await enviarArquivoMusica(paraEnviar);
         url = enviado.url;
         caminho = enviado.caminho;
       }
@@ -520,9 +541,73 @@ export const OuvirMusica: React.FC = () => {
                 />
                 {arquivo && (
                   <p className="text-xs text-gray-600 mt-2">
-                    {arquivo.name} · {(arquivo.size / 1024 / 1024).toFixed(1)} MB
+                    {arquivo.name} · {mb(arquivo.size)}
                     {duracaoArquivo > 0 && ` · ${tempo(duracaoArquivo)}`}
+                    {tamanhoFinal > 0 && ` → enviado com ${mb(tamanhoFinal)}`}
                   </p>
+                )}
+              </div>
+
+              <div className="p-3 rounded-xl bg-gray-50 border border-gray-200">
+                <label className="block text-xs font-medium text-gray-600 mb-2 flex items-center gap-1.5">
+                  <Gauge size={14} />
+                  Qualidade do envio (comprime a música no aparelho)
+                </label>
+
+                <div className="grid grid-cols-2 gap-2">
+                  {(['alta', 'media', 'baixa'] as const).map(nivel => (
+                    <button
+                      key={nivel}
+                      onClick={() => setQualidade(nivel)}
+                      className={`px-3 py-2 rounded-lg text-xs font-semibold text-left transition border ${
+                        qualidade === nivel
+                          ? 'bg-indigo-600 text-white border-indigo-600'
+                          : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-100'
+                      }`}
+                    >
+                      {QUALIDADES[nivel].rotulo} · {QUALIDADES[nivel].kbps} kbps
+                      <span
+                        className={`block font-normal ${
+                          qualidade === nivel ? 'text-indigo-100' : 'text-gray-500'
+                        }`}
+                      >
+                        {QUALIDADES[nivel].explicacao}
+                      </span>
+                    </button>
+                  ))}
+
+                  <button
+                    onClick={() => setQualidade('original')}
+                    className={`px-3 py-2 rounded-lg text-xs font-semibold text-left transition border ${
+                      qualidade === 'original'
+                        ? 'bg-indigo-600 text-white border-indigo-600'
+                        : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-100'
+                    }`}
+                  >
+                    Original
+                    <span
+                      className={`block font-normal ${
+                        qualidade === 'original' ? 'text-indigo-100' : 'text-gray-500'
+                      }`}
+                    >
+                      envia do jeito que está
+                    </span>
+                  </button>
+                </div>
+
+                {comprimindo > 0 && (
+                  <div className="mt-3">
+                    <div className="flex items-center justify-between text-[11px] text-gray-600 mb-1">
+                      <span>Comprimindo a música...</span>
+                      <span className="tabular-nums">{comprimindo}%</span>
+                    </div>
+                    <div className="h-1.5 bg-gray-200 rounded-full overflow-hidden">
+                      <div
+                        className="h-full bg-indigo-600 rounded-full transition-all"
+                        style={{ width: `${comprimindo}%` }}
+                      />
+                    </div>
+                  </div>
                 )}
               </div>
 
