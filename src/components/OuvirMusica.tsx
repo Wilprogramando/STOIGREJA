@@ -882,8 +882,8 @@ export const OuvirMusica: React.FC = () => {
       {/* ==================== ABA: INTERNET ==================== */}
       {aba === 'internet' && (
         <>
-          <form onSubmit={buscar} className="flex flex-col sm:flex-row gap-2 mb-4">
-            <div className="relative flex-1">
+          <form onSubmit={buscar} className="flex flex-nowrap items-center gap-2 mb-4">
+            <div className="relative flex-1 min-w-0">
               <Search
                 size={18}
                 className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none"
@@ -892,17 +892,17 @@ export const OuvirMusica: React.FC = () => {
                 type="text"
                 value={texto}
                 onChange={e => setTexto(e.target.value)}
-                placeholder="Nome da música ou um trecho da letra"
+                placeholder="Nome da música ou trecho da letra"
                 className="w-full pl-10 pr-3 py-3 border border-gray-300 rounded-xl text-sm focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
               />
             </div>
             <button
               type="submit"
               disabled={buscando}
-              className="px-6 py-3 bg-indigo-600 text-white rounded-xl hover:bg-indigo-700 transition font-semibold text-sm flex items-center justify-center gap-2 disabled:opacity-60"
+              className="shrink-0 px-4 sm:px-6 py-3 bg-indigo-600 text-white rounded-xl hover:bg-indigo-700 transition font-semibold text-sm flex items-center justify-center gap-2 disabled:opacity-60"
             >
               {buscando ? <Loader2 size={18} className="animate-spin" /> : <Search size={18} />}
-              {buscando ? 'Procurando...' : 'Procurar'}
+              <span className="hidden sm:inline">{buscando ? 'Procurando...' : 'Procurar'}</span>
             </button>
           </form>
 
@@ -924,43 +924,45 @@ export const OuvirMusica: React.FC = () => {
                 return (
                   <div
                     key={musica.id}
-                    className="bg-white rounded-xl shadow-sm border border-gray-200 p-3 flex items-center gap-3"
+                    className="bg-white rounded-xl shadow-sm border border-gray-200 p-2.5 flex flex-nowrap items-center gap-2"
                   >
                     {musica.capa ? (
                       <img
                         src={musica.capa}
                         alt=""
-                        className="w-14 h-14 rounded-lg object-cover shrink-0"
+                        className="w-11 h-11 rounded-lg object-cover shrink-0"
                       />
                     ) : (
-                      <div className="w-14 h-14 rounded-lg bg-indigo-50 flex items-center justify-center shrink-0">
-                        <Music size={22} className="text-indigo-400" />
+                      <div className="w-11 h-11 rounded-lg bg-indigo-50 flex items-center justify-center shrink-0">
+                        <Music size={17} className="text-indigo-400" />
                       </div>
                     )}
 
                     <div className="min-w-0 flex-1">
-                      <p className="font-bold text-gray-900 text-sm break-words">{musica.nome}</p>
+                      <p className="font-bold text-gray-900 text-sm truncate">{musica.nome}</p>
                       <p className="text-xs text-gray-500 truncate">{musica.cantor}</p>
                       {musica.album && (
-                        <p className="text-[11px] text-gray-400 truncate">{musica.album}</p>
+                        <p className="hidden sm:block text-[11px] text-gray-400 truncate">
+                          {musica.album}
+                        </p>
                       )}
                     </div>
 
-                    <div className="flex items-center gap-1.5 shrink-0">
+                    <div className="flex flex-nowrap items-center gap-1 shrink-0">
                       {musica.previa ? (
                         <button
                           onClick={() => tocarPrevia(musica)}
                           title={estaTocando ? 'Parar' : 'Ouvir 30 segundos'}
-                          className={`w-11 h-11 rounded-full flex items-center justify-center transition ${
+                          className={`w-9 h-9 rounded-full flex items-center justify-center transition ${
                             estaTocando
                               ? 'bg-indigo-600 text-white hover:bg-indigo-700'
                               : 'bg-indigo-50 text-indigo-600 hover:bg-indigo-100'
                           }`}
                         >
-                          {estaTocando ? <Pause size={20} /> : <Play size={20} />}
+                          {estaTocando ? <Pause size={17} /> : <Play size={20} />}
                         </button>
                       ) : (
-                        <span className="text-[10px] text-gray-400 w-11 text-center leading-tight">
+                        <span className="text-[10px] text-gray-400 w-9 text-center leading-tight">
                           sem prévia
                         </span>
                       )}
@@ -969,12 +971,12 @@ export const OuvirMusica: React.FC = () => {
                         onClick={() => abrirNoYoutube(musica)}
                         disabled={abrindoYoutube === musica.id}
                         title="Ouvir a música completa no YouTube"
-                        className="w-11 h-11 rounded-full bg-red-50 text-red-600 hover:bg-red-100 flex items-center justify-center transition disabled:opacity-60"
+                        className="w-9 h-9 rounded-full bg-red-50 text-red-600 hover:bg-red-100 flex items-center justify-center transition disabled:opacity-60"
                       >
                         {abrindoYoutube === musica.id ? (
-                          <Loader2 size={20} className="animate-spin" />
+                          <Loader2 size={17} className="animate-spin" />
                         ) : (
-                          <Youtube size={20} />
+                          <Youtube size={17} />
                         )}
                       </button>
 
@@ -985,14 +987,14 @@ export const OuvirMusica: React.FC = () => {
                             ? 'Tirar dos favoritos'
                             : 'Guardar nos favoritos'
                         }
-                        className={`w-11 h-11 rounded-full flex items-center justify-center transition ${
+                        className={`w-9 h-9 rounded-full flex items-center justify-center transition ${
                           estaFavorita(musica.id)
                             ? 'bg-amber-100 text-amber-600 hover:bg-amber-200'
                             : 'bg-gray-100 text-gray-500 hover:bg-amber-50 hover:text-amber-600'
                         }`}
                       >
                         <Star
-                          size={20}
+                          size={17}
                           fill={estaFavorita(musica.id) ? 'currentColor' : 'none'}
                         />
                       </button>
@@ -1001,27 +1003,27 @@ export const OuvirMusica: React.FC = () => {
                         onClick={() => copiarLinkYoutube(musica)}
                         disabled={copiando === musica.id}
                         title="Copiar o link do YouTube"
-                        className={`w-11 h-11 rounded-full flex items-center justify-center transition disabled:opacity-60 ${
+                        className={`w-9 h-9 rounded-full flex items-center justify-center transition disabled:opacity-60 ${
                           copiado === musica.id
                             ? 'bg-green-600 text-white'
                             : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
                         }`}
                       >
                         {copiando === musica.id ? (
-                          <Loader2 size={20} className="animate-spin" />
+                          <Loader2 size={17} className="animate-spin" />
                         ) : copiado === musica.id ? (
-                          <Check size={20} />
+                          <Check size={17} />
                         ) : (
-                          <Copy size={20} />
+                          <Copy size={17} />
                         )}
                       </button>
 
                       <button
                         onClick={() => cadastrarDaBusca(musica)}
                         title="Cadastrar esta música em Minhas músicas"
-                        className="w-11 h-11 rounded-full bg-green-50 text-green-700 hover:bg-green-100 flex items-center justify-center transition"
+                        className="w-9 h-9 rounded-full bg-green-50 text-green-700 hover:bg-green-100 flex items-center justify-center transition"
                       >
-                        <Plus size={20} />
+                        <Plus size={17} />
                       </button>
                     </div>
                   </div>
