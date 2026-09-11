@@ -11,6 +11,7 @@ import {
   enviarArquivoMusica,
 } from '../services/db';
 import { MusicaAudio } from '../types';
+import { DeletePasswordModal } from './DeletePasswordModal';
 
 /** Segundos em 3:45. */
 function tempo(segundos: number): string {
@@ -40,6 +41,8 @@ export const OuvirMusica: React.FC = () => {
   const [duracaoArquivo, setDuracaoArquivo] = useState(0);
   const [salvando, setSalvando] = useState(false);
   const [erro, setErro] = useState('');
+  /** Música esperando a senha para ser apagada. */
+  const [pedindoSenha, setPedindoSenha] = useState<MusicaAudio | null>(null);
 
   // ----- Tocador -----
   const audioRef = useRef<HTMLAudioElement | null>(null);
@@ -189,8 +192,9 @@ export const OuvirMusica: React.FC = () => {
     }
   };
 
+  /** Só apaga depois da senha conferida no modal. */
   const excluirMusica = async (musica: MusicaAudio) => {
-    if (!confirm(`Apagar "${musica.nome}" da lista?`)) return;
+    setPedindoSenha(null);
 
     if (atual?.id === musica.id) {
       audioRef.current?.pause();
@@ -449,7 +453,7 @@ export const OuvirMusica: React.FC = () => {
                     </div>
 
                     <button
-                      onClick={() => excluirMusica(musica)}
+                      onClick={() => setPedindoSenha(musica)}
                       title="Apagar da lista"
                       className="p-2 text-red-600 hover:bg-red-50 rounded-lg shrink-0"
                     >
@@ -576,6 +580,15 @@ export const OuvirMusica: React.FC = () => {
             </div>
           )}
         </>
+      )}
+
+      {/* Senha para apagar, a mesma usada nos hinos */}
+      {pedindoSenha && (
+        <DeletePasswordModal
+          hinoNome={pedindoSenha.nome}
+          onConfirm={() => excluirMusica(pedindoSenha)}
+          onCancel={() => setPedindoSenha(null)}
+        />
       )}
 
       {/* ==================== BARRA DO TOCADOR (linha do tempo) ==================== */}
