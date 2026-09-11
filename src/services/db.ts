@@ -1436,6 +1436,29 @@ function mapearFavorita(linha: any): Favorita {
   };
 }
 
+/**
+ * Junta o que o servidor devolveu com o que ainda está na fila.
+ *
+ * Sem isso, a estrela marcada sem internet (ou com a tabela recém-criada)
+ * sumia da tela no recarregamento, dando a impressão de que não salvou.
+ */
+function juntarFavoritasPendentes(doServidor: Favorita[]): Favorita[] {
+  const fila = filaLer();
+  if (fila.length === 0) return doServidor;
+
+  const porId = new Map<string, Favorita>(doServidor.map(f => [f.id, f]));
+
+  for (const op of fila) {
+    if (op.tipo === 'favorita.upsert' && op.dados?.id) {
+      porId.set(op.dados.id, op.dados as Favorita);
+    } else if (op.tipo === 'favorita.delete') {
+      porId.delete(op.dados);
+    }
+  }
+
+  return [...porId.values()];
+}
+
 /** Favoritas da equipe (com cópia local para funcionar sem internet). */
 export async function getAllFavoritas(): Promise<Favorita[]> {
   try {
@@ -1453,7 +1476,7 @@ export async function getAllFavoritas(): Promise<Favorita[]> {
 
       if (error) throw error;
 
-      const favoritas = (data || []).map(mapearFavorita);
+      const favoritas = juntarFavoritasPendentes((data || []).map(mapearFavorita));
       cacheSalvar(CACHE_FAVORITAS, favoritas);
       return favoritas;
     }
