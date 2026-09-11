@@ -3,7 +3,7 @@ import {
   Search, Loader2, Play, Pause, Youtube, Music, Volume2, Upload, Link2,
   Trash2, Plus, SkipBack, SkipForward, Rewind, FastForward, Globe, ListMusic, Mic, Square,
 } from 'lucide-react';
-import { procurarParaOuvir, MusicaParaOuvir } from '../services/audio';
+import { procurarParaOuvir, acharVideoNoYoutube, MusicaParaOuvir } from '../services/audio';
 import {
   getAllMusicasAudio,
   saveMusicaAudio,
@@ -58,6 +58,8 @@ export const OuvirMusica: React.FC = () => {
   const [aviso, setAviso] = useState('');
   const [jaBuscou, setJaBuscou] = useState(false);
   const [previaTocando, setPreviaTocando] = useState<string | null>(null);
+  /** Qual resultado está procurando o vídeo no YouTube. */
+  const [abrindoYoutube, setAbrindoYoutube] = useState<string | null>(null);
   const previaRef = useRef<HTMLAudioElement | null>(null);
 
   useEffect(() => {
@@ -291,12 +293,19 @@ export const OuvirMusica: React.FC = () => {
    * Se nada abrir em um segundo - aparelho sem o app, ou computador -,
    * seguimos para o site normal.
    */
-  const abrirNoYoutube = (musica: MusicaParaOuvir) => {
+  const abrirNoYoutube = async (musica: MusicaParaOuvir) => {
     const busca = `${musica.nome} ${musica.cantor}`.trim();
     const noCelular = /Android|iPhone|iPad/i.test(navigator.userAgent);
 
+    setAbrindoYoutube(musica.id);
+    // Descobre o vídeo em si; não achando, cai na busca do YouTube.
+    const video = await acharVideoNoYoutube(musica.nome, musica.cantor);
+    setAbrindoYoutube(null);
+
+    const site = video?.url || musica.youtube;
+
     if (!noCelular) {
-      window.open(musica.youtube, '_blank', 'noopener');
+      window.open(site, '_blank', 'noopener');
       return;
     }
 
@@ -307,13 +316,15 @@ export const OuvirMusica: React.FC = () => {
     window.addEventListener('pagehide', aoSair, { once: true });
     document.addEventListener('visibilitychange', aoSair, { once: true });
 
-    window.location.href = `vnd.youtube://results?search_query=${encodeURIComponent(busca)}`;
+    window.location.href = video
+      ? `vnd.youtube://${video.id}`
+      : `vnd.youtube://results?search_query=${encodeURIComponent(busca)}`;
 
     setTimeout(() => {
       window.removeEventListener('pagehide', aoSair);
       document.removeEventListener('visibilitychange', aoSair);
       if (!abriu && !document.hidden) {
-        window.open(musica.youtube, '_blank', 'noopener');
+        window.open(site, '_blank', 'noopener');
       }
     }, 1000);
   };
@@ -701,10 +712,15 @@ export const OuvirMusica: React.FC = () => {
 
                       <button
                         onClick={() => abrirNoYoutube(musica)}
+                        disabled={abrindoYoutube === musica.id}
                         title="Ouvir a música completa no YouTube"
-                        className="w-11 h-11 rounded-full bg-red-50 text-red-600 hover:bg-red-100 flex items-center justify-center transition"
+                        className="w-11 h-11 rounded-full bg-red-50 text-red-600 hover:bg-red-100 flex items-center justify-center transition disabled:opacity-60"
                       >
-                        <Youtube size={20} />
+                        {abrindoYoutube === musica.id ? (
+                          <Loader2 size={20} className="animate-spin" />
+                        ) : (
+                          <Youtube size={20} />
+                        )}
                       </button>
 
                       <button

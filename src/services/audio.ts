@@ -73,6 +73,37 @@ async function buscarNoCatalogo(termo: string, limite = 20): Promise<MusicaParaO
   }
 }
 
+/**
+ * Descobre o endereço do vídeo em si (em vez da lista de resultados).
+ *
+ * Devolve vazio quando o servidor não achou nada - aí o sistema abre a busca
+ * normal do YouTube, como antes.
+ */
+export async function acharVideoNoYoutube(
+  nome: string,
+  cantor: string
+): Promise<{ id: string; url: string } | null> {
+  const termo = `${nome} ${cantor}`.trim();
+  if (!termo) return null;
+
+  const controlador = new AbortController();
+  const relogio = setTimeout(() => controlador.abort(), 7000);
+
+  try {
+    const resposta = await fetch(`/api/youtube?q=${encodeURIComponent(termo)}`, {
+      signal: controlador.signal,
+    });
+    if (!resposta.ok) return null;
+
+    const dados = await resposta.json();
+    return dados?.id ? { id: dados.id, url: dados.url } : null;
+  } catch {
+    return null;
+  } finally {
+    clearTimeout(relogio);
+  }
+}
+
 /** Tira repetidos (a mesma música costuma vir em vários álbuns). */
 function semRepetidos(lista: MusicaParaOuvir[]): MusicaParaOuvir[] {
   const vistos = new Set<string>();
