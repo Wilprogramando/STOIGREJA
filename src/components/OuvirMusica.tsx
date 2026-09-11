@@ -284,6 +284,40 @@ export const OuvirMusica: React.FC = () => {
 
   // ==================== BUSCA NA INTERNET ====================
 
+  /**
+   * Abre a música no aplicativo do YouTube quando ele está instalado.
+   *
+   * No celular tentamos primeiro o endereço do aplicativo (vnd.youtube://).
+   * Se nada abrir em um segundo - aparelho sem o app, ou computador -,
+   * seguimos para o site normal.
+   */
+  const abrirNoYoutube = (musica: MusicaParaOuvir) => {
+    const busca = `${musica.nome} ${musica.cantor}`.trim();
+    const noCelular = /Android|iPhone|iPad/i.test(navigator.userAgent);
+
+    if (!noCelular) {
+      window.open(musica.youtube, '_blank', 'noopener');
+      return;
+    }
+
+    let abriu = false;
+    const aoSair = () => {
+      abriu = true;
+    };
+    window.addEventListener('pagehide', aoSair, { once: true });
+    document.addEventListener('visibilitychange', aoSair, { once: true });
+
+    window.location.href = `vnd.youtube://results?search_query=${encodeURIComponent(busca)}`;
+
+    setTimeout(() => {
+      window.removeEventListener('pagehide', aoSair);
+      document.removeEventListener('visibilitychange', aoSair);
+      if (!abriu && !document.hidden) {
+        window.open(musica.youtube, '_blank', 'noopener');
+      }
+    }, 1000);
+  };
+
   const pararPrevia = () => {
     previaRef.current?.pause();
     previaRef.current = null;
@@ -665,15 +699,13 @@ export const OuvirMusica: React.FC = () => {
                         </span>
                       )}
 
-                      <a
-                        href={musica.youtube}
-                        target="_blank"
-                        rel="noopener noreferrer"
+                      <button
+                        onClick={() => abrirNoYoutube(musica)}
                         title="Ouvir a música completa no YouTube"
                         className="w-11 h-11 rounded-full bg-red-50 text-red-600 hover:bg-red-100 flex items-center justify-center transition"
                       >
                         <Youtube size={20} />
-                      </a>
+                      </button>
 
                       <button
                         onClick={() => cadastrarDaBusca(musica)}
