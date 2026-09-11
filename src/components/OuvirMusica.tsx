@@ -1,7 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import {
   Search, Loader2, Play, Pause, Youtube, Music, Volume2, Upload, Link2,
-  Trash2, Plus, SkipBack, SkipForward, Rewind, FastForward, Globe, ListMusic, Mic, Square, Copy, Check, Gauge,
+  Trash2, Plus, SkipBack, SkipForward, Rewind, FastForward, Globe, ListMusic, Mic, Square, Copy, Check, Gauge, Star,
 } from 'lucide-react';
 import { procurarParaOuvir, acharVideoNoYoutube, MusicaParaOuvir } from '../services/audio';
 import {
@@ -13,6 +13,7 @@ import {
 import { MusicaAudio } from '../types';
 import { DeletePasswordModal } from './DeletePasswordModal';
 import { comprimirMusica, QUALIDADES, QualidadeAudio } from '../services/compressao';
+import { lerFavoritas, alternarFavorita, removerFavorita, Favorita } from '../services/favoritos';
 
 /** Tamanho em MB, com uma casa. */
 function mb(bytes: number): string {
@@ -40,6 +41,8 @@ export const OuvirMusica: React.FC = () => {
 
   // ----- Músicas cadastradas -----
   const [musicas, setMusicas] = useState<MusicaAudio[]>([]);
+  /** Favoritas deste aparelho (cadastradas e achadas na internet). */
+  const [favoritas, setFavoritas] = useState<Favorita[]>(() => lerFavoritas());
   const [carregando, setCarregando] = useState(true);
   const [cadastrando, setCadastrando] = useState(false);
   const [form, setForm] = useState({ nome: '', cantor: '', url: '' });
@@ -134,6 +137,55 @@ export const OuvirMusica: React.FC = () => {
     const proxima = musicas[i + passo];
     if (proxima) tocarMusica(proxima);
   };
+
+  // ==================== FAVORITAS ====================
+
+  const estaFavorita = (id: string) => favoritas.some(f => f.id === id);
+
+  /** Estrela de uma música já cadastrada. */
+  const favoritarCadastrada = (musica: MusicaAudio) => {
+    setFavoritas(
+      alternarFavorita({
+        id: musica.id,
+        tipo: 'cadastrada',
+        nome: musica.nome,
+        cantor: musica.cantor,
+      })
+    );
+  };
+
+  /** Estrela de uma música achada na internet (fica guardada para depois). */
+  const favoritarDaInternet = (musica: MusicaParaOuvir) => {
+    setFavoritas(
+      alternarFavorita({
+        id: musica.id,
+        tipo: 'internet',
+        nome: musica.nome,
+        cantor: musica.cantor,
+        capa: musica.capa,
+        previa: musica.previa,
+        youtube: musica.youtube,
+      })
+    );
+  };
+
+  /** Favorita da internet de volta no formato dos resultados da busca. */
+  const comoResultado = (f: Favorita): MusicaParaOuvir => ({
+    id: f.id,
+    nome: f.nome,
+    cantor: f.cantor,
+    album: '',
+    capa: f.capa || '',
+    previa: f.previa || '',
+    youtube: f.youtube || '',
+  });
+
+  const favoritasDaInternet = favoritas.filter(f => f.tipo === 'internet');
+
+  // Favoritas cadastradas aparecem primeiro na lista.
+  const musicasOrdenadas = [...musicas].sort(
+    (a, b) => Number(estaFavorita(b.id)) - Number(estaFavorita(a.id))
+  );
 
   // ==================== CADASTRO ====================
 
@@ -688,6 +740,73 @@ export const OuvirMusica: React.FC = () => {
             </div>
           )}
 
+          {favoritasDaInternet.length > 0 && (
+            <div className="mb-5">
+              <h3 className="text-sm font-bold text-gray-900 flex items-center gap-1.5 mb-2">
+                <Star size={16} className="text-amber-500" fill="currentColor" />
+                Favoritas da internet
+              </h3>
+
+              <div className="space-y-2">
+                {favoritasDaInternet.map(f => {
+                  const musica = comoResultado(f);
+                  const estaTocando = previaTocando === f.id;
+
+                  return (
+                    <div
+                      key={f.id}
+                      className="bg-white rounded-xl border border-amber-200 p-3 flex items-center gap-3"
+                    >
+                      {f.capa ? (
+                        <img src={f.capa} alt="" className="w-12 h-12 rounded-lg object-cover shrink-0" />
+                      ) : (
+                        <div className="w-12 h-12 rounded-lg bg-amber-50 flex items-center justify-center shrink-0">
+                          <Music size={20} className="text-amber-400" />
+                        </div>
+                      )}
+
+                      <div className="min-w-0 flex-1">
+                        <p className="font-bold text-gray-900 text-sm break-words">{f.nome}</p>
+                        <p className="text-xs text-gray-500 truncate">{f.cantor}</p>
+                      </div>
+
+                      <div className="flex items-center gap-1 shrink-0">
+                        {f.previa && (
+                          <button
+                            onClick={() => tocarPrevia(musica)}
+                            title={estaTocando ? 'Parar' : 'Ouvir 30 segundos'}
+                            className="w-10 h-10 rounded-full bg-indigo-50 text-indigo-600 hover:bg-indigo-100 flex items-center justify-center"
+                          >
+                            {estaTocando ? <Pause size={18} /> : <Play size={18} />}
+                          </button>
+                        )}
+                        <button
+                          onClick={() => abrirNoYoutube(musica)}
+                          title="Ouvir no YouTube"
+                          className="w-10 h-10 rounded-full bg-red-50 text-red-600 hover:bg-red-100 flex items-center justify-center"
+                        >
+                          <Youtube size={18} />
+                        </button>
+                        <button
+                          onClick={() => setFavoritas(removerFavorita(f.id))}
+                          title="Tirar dos favoritos"
+                          className="w-10 h-10 rounded-full text-amber-500 hover:bg-amber-50 flex items-center justify-center"
+                        >
+                          <Star size={18} fill="currentColor" />
+                        </button>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+
+              <p className="text-[11px] text-gray-400 mt-2">
+                Essas ficam guardadas neste aparelho como lembrete. Para tocar inteira,
+                cadastre a música com o arquivo.
+              </p>
+            </div>
+          )}
+
           {carregando ? (
             <p className="text-sm text-gray-500">Carregando músicas...</p>
           ) : musicas.length === 0 ? (
@@ -696,8 +815,9 @@ export const OuvirMusica: React.FC = () => {
             </div>
           ) : (
             <div className="space-y-2">
-              {musicas.map(musica => {
+              {musicasOrdenadas.map(musica => {
                 const estaTocando = atual?.id === musica.id && tocando;
+                const favorita = estaFavorita(musica.id);
 
                 return (
                   <div
@@ -728,6 +848,18 @@ export const OuvirMusica: React.FC = () => {
                           .join(' · ')}
                       </p>
                     </div>
+
+                    <button
+                      onClick={() => favoritarCadastrada(musica)}
+                      title={favorita ? 'Tirar dos favoritos' : 'Marcar como favorita'}
+                      className={`p-2 rounded-lg shrink-0 transition ${
+                        favorita
+                          ? 'text-amber-500 hover:bg-amber-50'
+                          : 'text-gray-300 hover:text-amber-500 hover:bg-amber-50'
+                      }`}
+                    >
+                      <Star size={18} fill={favorita ? 'currentColor' : 'none'} />
+                    </button>
 
                     <button
                       onClick={() => setPedindoSenha(musica)}
@@ -841,6 +973,25 @@ export const OuvirMusica: React.FC = () => {
                         ) : (
                           <Youtube size={20} />
                         )}
+                      </button>
+
+                      <button
+                        onClick={() => favoritarDaInternet(musica)}
+                        title={
+                          estaFavorita(musica.id)
+                            ? 'Tirar dos favoritos'
+                            : 'Guardar nos favoritos'
+                        }
+                        className={`w-11 h-11 rounded-full flex items-center justify-center transition ${
+                          estaFavorita(musica.id)
+                            ? 'bg-amber-100 text-amber-600 hover:bg-amber-200'
+                            : 'bg-gray-100 text-gray-500 hover:bg-amber-50 hover:text-amber-600'
+                        }`}
+                      >
+                        <Star
+                          size={20}
+                          fill={estaFavorita(musica.id) ? 'currentColor' : 'none'}
+                        />
                       </button>
 
                       <button
