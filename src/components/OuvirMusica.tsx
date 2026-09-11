@@ -1,7 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import {
   Search, Loader2, Play, Pause, Youtube, Music, Volume2, Upload, Link2,
-  Trash2, Plus, SkipBack, SkipForward, Rewind, FastForward, Globe, ListMusic,
+  Trash2, Plus, SkipBack, SkipForward, Rewind, FastForward, Globe, ListMusic, Mic, Square,
 } from 'lucide-react';
 import { procurarParaOuvir, MusicaParaOuvir } from '../services/audio';
 import {
@@ -120,6 +120,82 @@ export const OuvirMusica: React.FC = () => {
   };
 
   // ==================== CADASTRO ====================
+
+  /** Abre o formulário já preenchido com a música achada na internet. */
+  const cadastrarDaBusca = (musica: MusicaParaOuvir) => {
+    pararPrevia();
+    setForm({ nome: musica.nome, cantor: musica.cantor, url: '' });
+    setArquivo(null);
+    setDuracaoArquivo(0);
+    setErro('');
+    setCadastrando(true);
+    setAba('minhas');
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  // ----- Gravar pelo próprio aparelho (ensaio, culto, playback) -----
+
+  const gravadorRef = useRef<MediaRecorder | null>(null);
+  const pedacosRef = useRef<Blob[]>([]);
+  /** Quando a gravação começou, para calcular a duração ao parar. */
+  const inicioRef = useRef<number>(0);
+  const [gravando, setGravando] = useState(false);
+  const [tempoGravado, setTempoGravado] = useState(0);
+
+  const iniciarGravacao = async () => {
+    setErro('');
+
+    try {
+      const microfone = await navigator.mediaDevices.getUserMedia({ audio: true });
+      const gravador = new MediaRecorder(microfone);
+      pedacosRef.current = [];
+
+      gravador.addEventListener('dataavailable', evento => {
+        if (evento.data.size > 0) pedacosRef.current.push(evento.data);
+      });
+
+      gravador.addEventListener('stop', () => {
+        microfone.getTracks().forEach(faixa => faixa.stop());
+
+        const tipo = gravador.mimeType || 'audio/webm';
+        const extensao = tipo.includes('mp4') ? 'm4a' : 'webm';
+        const bruto = new Blob(pedacosRef.current, { type: tipo });
+        const agora = new Date();
+
+        const gravacao = new File([bruto], `gravacao-${agora.getTime()}.${extensao}`, { type: tipo });
+        setArquivo(gravacao);
+        setDuracaoArquivo(Math.round((Date.now() - inicioRef.current) / 1000));
+
+        if (!form.nome.trim()) {
+          setForm(f => ({
+            ...f,
+            nome: `Gravação de ${agora.toLocaleDateString('pt-BR')}`,
+          }));
+        }
+      });
+
+      gravador.start();
+      gravadorRef.current = gravador;
+      inicioRef.current = Date.now();
+      setTempoGravado(0);
+      setGravando(true);
+    } catch {
+      setErro('Não consegui usar o microfone. Autorize o acesso ao microfone no navegador.');
+    }
+  };
+
+  const pararGravacao = () => {
+    gravadorRef.current?.stop();
+    gravadorRef.current = null;
+    setGravando(false);
+  };
+
+  // Relógio da gravação.
+  useEffect(() => {
+    if (!gravando) return;
+    const timer = setInterval(() => setTempoGravado(t => t + 1), 1000);
+    return () => clearInterval(timer);
+  }, [gravando]);
 
   const escolherArquivo = (e: React.ChangeEvent<HTMLInputElement>) => {
     const escolhido = e.target.files?.[0] || null;
@@ -370,6 +446,42 @@ export const OuvirMusica: React.FC = () => {
                 )}
               </div>
 
+              <div className="p-3 rounded-xl bg-gray-50 border border-gray-200">
+                <label className="block text-xs font-medium text-gray-600 mb-2 flex items-center gap-1.5">
+                  <Mic size={14} />
+                  Ou grave agora pelo aparelho (ensaio, culto, playback)
+                </label>
+
+                {gravando ? (
+                  <div className="flex items-center gap-3">
+                    <button
+                      onClick={pararGravacao}
+                      className="px-4 py-2 bg-red-600 text-white rounded-lg text-sm font-semibold flex items-center gap-2 hover:bg-red-700"
+                    >
+                      <Square size={16} />
+                      Parar gravação
+                    </button>
+                    <span className="text-sm font-bold text-red-600 tabular-nums flex items-center gap-1.5">
+                      <span className="w-2.5 h-2.5 rounded-full bg-red-600 animate-pulse" />
+                      {tempo(tempoGravado)}
+                    </span>
+                  </div>
+                ) : (
+                  <button
+                    onClick={iniciarGravacao}
+                    className="px-4 py-2 bg-white border border-gray-300 text-gray-700 rounded-lg text-sm font-semibold flex items-center gap-2 hover:bg-gray-100"
+                  >
+                    <Mic size={16} />
+                    Gravar agora
+                  </button>
+                )}
+
+                <p className="text-[11px] text-gray-500 mt-2">
+                  A gravação entra no lugar do arquivo acima. O navegador vai pedir
+                  permissão para usar o microfone na primeira vez.
+                </p>
+              </div>
+
               <div>
                 <label className="block text-xs font-medium text-gray-600 mb-1 flex items-center gap-1.5">
                   <Link2 size={14} />
@@ -562,6 +674,14 @@ export const OuvirMusica: React.FC = () => {
                       >
                         <Youtube size={20} />
                       </a>
+
+                      <button
+                        onClick={() => cadastrarDaBusca(musica)}
+                        title="Cadastrar esta música em Minhas músicas"
+                        className="w-11 h-11 rounded-full bg-green-50 text-green-700 hover:bg-green-100 flex items-center justify-center transition"
+                      >
+                        <Plus size={20} />
+                      </button>
                     </div>
                   </div>
                 );
