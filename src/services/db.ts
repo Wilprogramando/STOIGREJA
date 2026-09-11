@@ -16,6 +16,8 @@ import {
   estaOnline,
   filaAdicionar,
   filaLer,
+  filaRemover,
+  filaLimpar,
   filaProcessar,
   filaTamanho
 } from './offline';
@@ -1475,4 +1477,37 @@ export async function deleteFavorita(id: string): Promise<void> {
   cacheSalvar(CACHE_FAVORITAS, favoritas.filter(f => f.id !== id));
 
   await gravar('favorita.delete', id);
+}
+
+// ==================== PAINEL DE PENDÊNCIAS ====================
+
+/** O que ainda não subiu para a nuvem (Configurações > Alterações pendentes). */
+export function listarPendentes(): OperacaoPendente[] {
+  return filaLer();
+}
+
+/**
+ * Tenta enviar uma pendência específica.
+ * Devolve o erro em texto quando falha, para a tela explicar o motivo.
+ */
+export async function enviarPendente(id: string): Promise<string | null> {
+  const operacao = filaLer().find(op => op.id === id);
+  if (!operacao) return null;
+
+  try {
+    await executarNoSupabase(operacao);
+    filaRemover(id);
+    return null;
+  } catch (error: any) {
+    return error?.message || 'Não foi possível enviar agora.';
+  }
+}
+
+/** Descarta uma pendência que não vai subir (dado já corrigido, tabela antiga...). */
+export function descartarPendente(id: string): void {
+  filaRemover(id);
+}
+
+export function descartarTodasPendencias(): void {
+  filaLimpar();
 }

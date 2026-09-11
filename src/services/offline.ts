@@ -141,3 +141,17 @@ function avisarMudanca(): void {
     window.dispatchEvent(new CustomEvent('repertorio-sync-mudou', { detail: filaTamanho() }));
   }
 }
+
+/** Tira uma operação da fila (usada pelo painel de pendências). */
+export function filaRemover(id: string): OperacaoPendente[] {
+  const fila = filaLer().filter(op => op.id !== id);
+  filaGravar(fila);
+  avisarMudanca();
+  return fila;
+}
+
+/** Esvazia a fila inteira. */
+export function filaLimpar(): void {
+  filaGravar([]);
+  avisarMudanca();
+}

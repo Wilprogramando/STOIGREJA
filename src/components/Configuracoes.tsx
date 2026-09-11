@@ -2,9 +2,13 @@ import React, { useState, useEffect } from 'react';
 import {
   Save, Download, Upload, Trash2, AlertCircle, Eye, EyeOff, BarChart3, Mic2,
   UserPlus, Pencil, BookOpen, Smartphone, Building2, Type, Image, ListChecks,
-  ListOrdered, Database, Palette, Tag, TextCursorInput, Radio, MapPin, Wifi,
+  ListOrdered, Database, Palette, Tag, TextCursorInput, Radio, MapPin, Wifi, CloudOff,
 } from 'lucide-react';
-import { getConfiguracoes, saveConfiguracoes, exportData, importData, clearAllData } from '../services/db';
+import {
+  getConfiguracoes, saveConfiguracoes, exportData, importData, clearAllData,
+  listarPendentes, enviarPendente, descartarPendente, descartarTodasPendencias,
+} from '../services/db';
+import { OperacaoPendente } from '../services/offline';
 import { Configuracoes } from '../types';
 import { LogoUploader } from './LogoUploader';
 import { ImportCSVModal } from './ImportCSVModal';
@@ -37,6 +41,38 @@ import {
   sincronizarCantoresDosHinos,
 } from '../services/cantores';
 
+/** Nome amigavel de cada tipo de alteracao da fila. */
+const ROTULOS_PENDENCIA: Record<string, string> = {
+  'hino.add': 'Hino cadastrado',
+  'hino.update': 'Hino editado',
+  'hino.delete': 'Hino apagado',
+  'repertorio.add': 'Repertório salvo',
+  'repertorio.update': 'Repertório editado',
+  'repertorio.delete': 'Repertório apagado',
+  'config.save': 'Configurações salvas',
+  'anotacao.upsert': 'Anotação salva',
+  'anotacao.delete': 'Anotação apagada',
+  'cantor.add': 'Cantor adicionado',
+  'cantor.delete': 'Cantor removido',
+  'musica.upsert': 'Música cadastrada',
+  'musica.delete': 'Música apagada',
+  'favorita.upsert': 'Música favoritada',
+  'favorita.delete': 'Favorito removido',
+  'harpa.add': 'Hinos da Harpa',
+};
+
+function rotuloPendencia(tipo: string): string {
+  return ROTULOS_PENDENCIA[tipo] || 'Alteração';
+}
+
+/** Mostra do que se trata: o nome do hino, da música, e assim por diante. */
+function resumoPendencia(op: OperacaoPendente): string {
+  const d: any = op.dados;
+  if (typeof d === 'string') return d;
+  if (!d) return '';
+  return d.nome || d.hino || d.id || '';
+}
+
 interface ConfiguracoesProps {
   onConfigChange?: () => void;
 }
@@ -64,6 +100,10 @@ export const ConfiguracoesView: React.FC<ConfiguracoesProps> = ({ onConfigChange
   const [online, setOnline] = useState<AparelhoOnline[]>([]);
   const [rede, setRede] = useState<string>(() => redeDesteAparelho());
   const [redeSalva, setRedeSalva] = useState(false);
+  /** Alterações que ainda não subiram para a nuvem. */
+  const [pendencias, setPendencias] = useState<OperacaoPendente[]>(() => listarPendentes());
+  const [enviandoPendencia, setEnviandoPendencia] = useState<string | null>(null);
+  const [erroPendencia, setErroPendencia] = useState<Record<string, string>>({});
   /** Qual cartao esta aberto: a tela mostra so um por vez. */
   const [secaoAberta, setSecaoAberta] = useState<string | null>(null);
 
@@ -79,6 +119,43 @@ export const ConfiguracoesView: React.FC<ConfiguracoesProps> = ({ onConfigChange
 
   // Lista de quem está com o sistema aberto agora.
   useEffect(() => acompanharOnline(setOnline), []);
+
+  // ----- Alterações pendentes -----
+
+  const atualizarPendencias = () => setPendencias(listarPendentes());
+
+  const handleEnviarPendencia = async (id: string) => {
+    setEnviandoPendencia(id);
+    const erro = await enviarPendente(id);
+    setEnviandoPendencia(null);
+
+    setErroPendencia(atual => {
+      const novo = { ...atual };
+      if (erro) novo[id] = erro;
+      else delete novo[id];
+      return novo;
+    });
+
+    atualizarPendencias();
+  };
+
+  const handleEnviarTodasPendencias = async () => {
+    for (const op of listarPendentes()) {
+      await handleEnviarPendencia(op.id);
+    }
+  };
+
+  const handleDescartarPendencia = (id: string) => {
+    if (!confirm('Descartar esta alteração? Ela não será enviada para a nuvem.')) return;
+    descartarPendente(id);
+    atualizarPendencias();
+  };
+
+  const handleDescartarTodasPendencias = () => {
+    if (!confirm('Descartar todas as alterações pendentes? Elas não serão enviadas.')) return;
+    descartarTodasPendencias();
+    atualizarPendencias();
+  };
 
   const handleSalvarRede = async () => {
     setRede(salvarRedeDesteAparelho(rede));
@@ -708,6 +785,81 @@ Os hinos já cadastrados com esse cantor não mudam.`)) return;
                   );
                 })}
             </div>
+          )}
+        </SecaoConfig>
+
+        <SecaoConfig
+          id="pendencias"
+          titulo="Alterações pendentes"
+          descricao={
+            pendencias.length === 0
+              ? 'Tudo enviado para a nuvem'
+              : `${pendencias.length} esperando para subir`
+          }
+          icone={CloudOff}
+          aberta={secaoAberta}
+          onAbrir={setSecaoAberta}
+        >
+          {pendencias.length === 0 ? (
+            <p className="text-sm text-gray-500">
+              Nada pendente: tudo que foi feito neste aparelho já está na nuvem.
+            </p>
+          ) : (
+            <>
+              <p className="text-sm text-gray-500 mb-3">
+                Alterações feitas sem internet (ou que falharam ao subir). Elas sobem
+                sozinhas quando a conexão volta; aqui dá para forçar ou descartar.
+              </p>
+
+              <div className="space-y-2 mb-3">
+                {pendencias.map(op => (
+                  <div key={op.id} className="p-3 rounded-xl border border-gray-200">
+                    <p className="font-semibold text-gray-900 text-sm">
+                      {rotuloPendencia(op.tipo)}
+                    </p>
+                    <p className="text-xs text-gray-500 break-words">{resumoPendencia(op)}</p>
+                    <p className="text-[11px] text-gray-400 mt-0.5">
+                      {new Date(op.criadoEm).toLocaleString('pt-BR')} · {op.tipo}
+                    </p>
+
+                    {erroPendencia[op.id] && (
+                      <p className="text-[11px] text-red-600 mt-1">{erroPendencia[op.id]}</p>
+                    )}
+
+                    <div className="flex gap-2 mt-2">
+                      <button
+                        onClick={() => handleEnviarPendencia(op.id)}
+                        disabled={enviandoPendencia === op.id}
+                        className="px-3 py-1.5 rounded-lg bg-indigo-600 text-white text-xs font-semibold hover:bg-indigo-700 disabled:opacity-60"
+                      >
+                        {enviandoPendencia === op.id ? 'Enviando...' : 'Tentar enviar'}
+                      </button>
+                      <button
+                        onClick={() => handleDescartarPendencia(op.id)}
+                        className="px-3 py-1.5 rounded-lg bg-gray-100 text-gray-700 text-xs font-semibold hover:bg-gray-200"
+                      >
+                        Descartar
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              <div className="flex gap-2">
+                <button
+                  onClick={handleEnviarTodasPendencias}
+                  className="flex-1 px-4 py-2 rounded-lg bg-indigo-600 text-white text-sm font-semibold hover:bg-indigo-700"
+                >
+                  Tentar enviar todas
+                </button>
+                <button
+                  onClick={handleDescartarTodasPendencias}
+                  className="px-4 py-2 rounded-lg bg-red-50 text-red-700 text-sm font-semibold hover:bg-red-100"
+                >
+                  Descartar todas
+                </button>
+              </div>
+            </>
           )}
         </SecaoConfig>
 
