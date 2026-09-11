@@ -1,5 +1,5 @@
 import { createClient } from '@supabase/supabase-js';
-import { Hino, Repertorio, Configuracoes, HarpaItem, Anotacao, MusicaAudio } from '../types';
+import { Hino, Repertorio, Configuracoes, HarpaItem, Anotacao, MusicaAudio, Favorita } from '../types';
 import {
   CACHE_HINOS,
   CACHE_REPERTORIOS,
@@ -8,6 +8,7 @@ import {
   CACHE_ANOTACOES,
   CACHE_CANTORES,
   CACHE_MUSICAS_AUDIO,
+  CACHE_FAVORITAS,
   OperacaoPendente,
   cacheSalvar,
   cacheLer,
@@ -301,6 +302,32 @@ async function executarNoSupabase(op: OperacaoPendente): Promise<void> {
     }
     case 'musica.delete':
       falhar((await supabase.from('musicas_audio').delete().eq('id', op.dados)).error);
+      return;
+    case 'favorita.upsert': {
+      const f = op.dados as Favorita;
+      falhar(
+        (
+          await supabase.from('favoritos_musicas').upsert(
+            [
+              {
+                id: f.id,
+                tipo: f.tipo,
+                nome: f.nome,
+                cantor: f.cantor || '',
+                capa: f.capa || '',
+                previa: f.previa || '',
+                youtube: f.youtube || '',
+                criado_em: f.criadoEm || new Date().toISOString()
+              }
+            ],
+            { onConflict: 'id' }
+          )
+        ).error
+      );
+      return;
+    }
+    case 'favorita.delete':
+      falhar((await supabase.from('favoritos_musicas').delete().eq('id', op.dados)).error);
       return;
     case 'harpa.add':
       falhar(
@@ -1390,4 +1417,62 @@ export async function enviarArquivoMusica(
 
   const { data } = supabase.storage.from(BUCKET_MUSICAS).getPublicUrl(caminho);
   return { url: data?.publicUrl || '', caminho };
+}
+
+// ==================== FAVORITAS ====================
+
+function mapearFavorita(linha: any): Favorita {
+  return {
+    id: linha.id,
+    tipo: linha.tipo === 'internet' ? 'internet' : 'cadastrada',
+    nome: linha.nome || '',
+    cantor: linha.cantor || '',
+    capa: linha.capa || '',
+    previa: linha.previa || '',
+    youtube: linha.youtube || '',
+    criadoEm: linha.criado_em || new Date().toISOString()
+  };
+}
+
+/** Favoritas da equipe (com cópia local para funcionar sem internet). */
+export async function getAllFavoritas(): Promise<Favorita[]> {
+  try {
+    if (supabase) {
+      if (!estaOnline()) {
+        return cacheLer<Favorita[]>(CACHE_FAVORITAS) || [];
+      }
+
+      sincronizarPendentes().catch(() => undefined);
+
+      const { data, error } = await supabase
+        .from('favoritos_musicas')
+        .select('*')
+        .order('criado_em', { ascending: false });
+
+      if (error) throw error;
+
+      const favoritas = (data || []).map(mapearFavorita);
+      cacheSalvar(CACHE_FAVORITAS, favoritas);
+      return favoritas;
+    }
+
+    return cacheLer<Favorita[]>(CACHE_FAVORITAS) || [];
+  } catch (error) {
+    console.error('❌ Erro ao carregar favoritas, usando cópia local:', error);
+    return cacheLer<Favorita[]>(CACHE_FAVORITAS) || [];
+  }
+}
+
+export async function saveFavorita(favorita: Favorita): Promise<void> {
+  const favoritas = cacheLer<Favorita[]>(CACHE_FAVORITAS) || [];
+  cacheSalvar(CACHE_FAVORITAS, [...favoritas.filter(f => f.id !== favorita.id), favorita]);
+
+  await gravar('favorita.upsert', favorita);
+}
+
+export async function deleteFavorita(id: string): Promise<void> {
+  const favoritas = cacheLer<Favorita[]>(CACHE_FAVORITAS) || [];
+  cacheSalvar(CACHE_FAVORITAS, favoritas.filter(f => f.id !== id));
+
+  await gravar('favorita.delete', id);
 }

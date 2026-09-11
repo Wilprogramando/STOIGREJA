@@ -75,3 +75,16 @@ export interface MusicaAudio {
   duracao: number;
   criadoEm: string;
 }
+
+/** Música marcada como favorita (cadastrada no sistema ou achada na internet). */
+export interface Favorita {
+  id: string;
+  tipo: 'cadastrada' | 'internet';
+  nome: string;
+  cantor: string;
+  /** Só para as da internet. */
+  capa?: string;
+  previa?: string;
+  youtube?: string;
+  criadoEm: string;
+}

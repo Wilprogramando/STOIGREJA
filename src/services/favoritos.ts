@@ -1,8 +1,9 @@
 /**
  * MÚSICAS FAVORITAS
  *
- * Guardadas no próprio aparelho (localStorage), porque favorito é gosto de
- * cada um: o que o baixista marca não precisa aparecer para a cantora.
+ * Ficam no Supabase (tabela favoritos_musicas), com cópia local para
+ * continuar funcionando sem internet - igual ao resto do sistema. Assim a
+ * música marcada em um celular aparece nos outros aparelhos da equipe.
  *
  * Dois tipos convivem na mesma lista:
  *   - "cadastrada": uma música de "Minhas músicas" (guarda só o código dela)
@@ -10,57 +11,41 @@
  *     tocar a prévia e abrir no YouTube depois.
  */
 
-const CHAVE = 'repertorio:musicas-favoritas';
+import { Favorita } from '../types';
+import { getAllFavoritas, saveFavorita, deleteFavorita } from './db';
 
-export interface Favorita {
-  id: string;
-  tipo: 'cadastrada' | 'internet';
-  nome: string;
-  cantor: string;
-  /** Só para as da internet. */
-  capa?: string;
-  previa?: string;
-  youtube?: string;
-  criadoEm: string;
+export type { Favorita };
+
+export function listarFavoritas(): Promise<Favorita[]> {
+  return getAllFavoritas();
 }
 
-export function lerFavoritas(): Favorita[] {
-  try {
-    const bruto = localStorage.getItem(CHAVE);
-    const lista = bruto ? JSON.parse(bruto) : [];
-    return Array.isArray(lista) ? lista : [];
-  } catch {
-    return [];
+/**
+ * Marca ou desmarca a música e devolve a lista já atualizada.
+ *
+ * A lista atual vem por parâmetro para a tela responder na hora, sem esperar
+ * a ida à nuvem (que acontece em seguida, e entra na fila se estiver offline).
+ */
+export async function alternarFavorita(
+  atuais: Favorita[],
+  dados: Omit<Favorita, 'criadoEm'>
+): Promise<Favorita[]> {
+  const jaTem = atuais.some(f => f.id === dados.id);
+
+  if (jaTem) {
+    await deleteFavorita(dados.id);
+    return atuais.filter(f => f.id !== dados.id);
   }
+
+  const nova: Favorita = { ...dados, criadoEm: new Date().toISOString() };
+  await saveFavorita(nova);
+  return [...atuais, nova];
 }
 
-function gravar(lista: Favorita[]): void {
-  try {
-    localStorage.setItem(CHAVE, JSON.stringify(lista));
-  } catch (erro) {
-    console.error('Não foi possível guardar os favoritos:', erro);
-  }
-}
-
-export function ehFavorita(id: string): boolean {
-  return lerFavoritas().some(f => f.id === id);
-}
-
-/** Marca ou desmarca; devolve a lista já atualizada. */
-export function alternarFavorita(dados: Omit<Favorita, 'criadoEm'>): Favorita[] {
-  const lista = lerFavoritas();
-  const jaTem = lista.some(f => f.id === dados.id);
-
-  const nova = jaTem
-    ? lista.filter(f => f.id !== dados.id)
-    : [...lista, { ...dados, criadoEm: new Date().toISOString() }];
-
-  gravar(nova);
-  return nova;
-}
-
-export function removerFavorita(id: string): Favorita[] {
-  const nova = lerFavoritas().filter(f => f.id !== id);
-  gravar(nova);
-  return nova;
+export async function removerFavorita(
+  atuais: Favorita[],
+  id: string
+): Promise<Favorita[]> {
+  await deleteFavorita(id);
+  return atuais.filter(f => f.id !== id);
 }

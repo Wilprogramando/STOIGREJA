@@ -13,7 +13,7 @@ import {
 import { MusicaAudio } from '../types';
 import { DeletePasswordModal } from './DeletePasswordModal';
 import { comprimirMusica, QUALIDADES, QualidadeAudio } from '../services/compressao';
-import { lerFavoritas, alternarFavorita, removerFavorita, Favorita } from '../services/favoritos';
+import { listarFavoritas, alternarFavorita, removerFavorita, Favorita } from '../services/favoritos';
 
 /** Tamanho em MB, com uma casa. */
 function mb(bytes: number): string {
@@ -41,8 +41,8 @@ export const OuvirMusica: React.FC = () => {
 
   // ----- Músicas cadastradas -----
   const [musicas, setMusicas] = useState<MusicaAudio[]>([]);
-  /** Favoritas deste aparelho (cadastradas e achadas na internet). */
-  const [favoritas, setFavoritas] = useState<Favorita[]>(() => lerFavoritas());
+  /** Favoritas da equipe (cadastradas e achadas na internet). */
+  const [favoritas, setFavoritas] = useState<Favorita[]>([]);
   const [carregando, setCarregando] = useState(true);
   const [cadastrando, setCadastrando] = useState(false);
   const [form, setForm] = useState({ nome: '', cantor: '', url: '' });
@@ -83,6 +83,9 @@ export const OuvirMusica: React.FC = () => {
     getAllMusicasAudio()
       .then(setMusicas)
       .finally(() => setCarregando(false));
+
+    // Favoritas da equipe, guardadas na nuvem.
+    listarFavoritas().then(setFavoritas).catch(() => undefined);
 
     return () => {
       audioRef.current?.pause();
@@ -143,9 +146,9 @@ export const OuvirMusica: React.FC = () => {
   const estaFavorita = (id: string) => favoritas.some(f => f.id === id);
 
   /** Estrela de uma música já cadastrada. */
-  const favoritarCadastrada = (musica: MusicaAudio) => {
+  const favoritarCadastrada = async (musica: MusicaAudio) => {
     setFavoritas(
-      alternarFavorita({
+      await alternarFavorita(favoritas, {
         id: musica.id,
         tipo: 'cadastrada',
         nome: musica.nome,
@@ -155,9 +158,9 @@ export const OuvirMusica: React.FC = () => {
   };
 
   /** Estrela de uma música achada na internet (fica guardada para depois). */
-  const favoritarDaInternet = (musica: MusicaParaOuvir) => {
+  const favoritarDaInternet = async (musica: MusicaParaOuvir) => {
     setFavoritas(
-      alternarFavorita({
+      await alternarFavorita(favoritas, {
         id: musica.id,
         tipo: 'internet',
         nome: musica.nome,
@@ -788,7 +791,7 @@ export const OuvirMusica: React.FC = () => {
                           <Youtube size={18} />
                         </button>
                         <button
-                          onClick={() => setFavoritas(removerFavorita(f.id))}
+                          onClick={async () => setFavoritas(await removerFavorita(favoritas, f.id))}
                           title="Tirar dos favoritos"
                           className="w-10 h-10 rounded-full text-amber-500 hover:bg-amber-50 flex items-center justify-center"
                         >
@@ -801,7 +804,7 @@ export const OuvirMusica: React.FC = () => {
               </div>
 
               <p className="text-[11px] text-gray-400 mt-2">
-                Essas ficam guardadas neste aparelho como lembrete. Para tocar inteira,
+                Essas ficam guardadas na nuvem como lembrete. Para tocar inteira,
                 cadastre a música com o arquivo.
               </p>
             </div>
