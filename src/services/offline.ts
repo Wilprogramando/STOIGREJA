@@ -16,6 +16,7 @@ export const CACHE_CONFIG = 'configuracoes';
 export const CACHE_HARPA = 'harpa';
 export const CACHE_ANOTACOES = 'anotacoes';
 export const CACHE_CANTORES = 'cantores';
+export const CACHE_MUSICAS_AUDIO = 'musicas_audio';
 
 export interface OperacaoPendente {
   id: string;

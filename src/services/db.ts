@@ -1,5 +1,5 @@
 import { createClient } from '@supabase/supabase-js';
-import { Hino, Repertorio, Configuracoes, HarpaItem, Anotacao } from '../types';
+import { Hino, Repertorio, Configuracoes, HarpaItem, Anotacao, MusicaAudio } from '../types';
 import {
   CACHE_HINOS,
   CACHE_REPERTORIOS,
@@ -7,6 +7,7 @@ import {
   CACHE_HARPA,
   CACHE_ANOTACOES,
   CACHE_CANTORES,
+  CACHE_MUSICAS_AUDIO,
   OperacaoPendente,
   cacheSalvar,
   cacheLer,
@@ -275,6 +276,31 @@ async function executarNoSupabase(op: OperacaoPendente): Promise<void> {
       return;
     case 'anotacao.delete':
       falhar((await supabase.from('anotacoes_hinos').delete().eq('id', op.dados)).error);
+      return;
+    case 'musica.upsert': {
+      const m = op.dados as MusicaAudio;
+      falhar(
+        (
+          await supabase.from('musicas_audio').upsert(
+            [
+              {
+                id: m.id,
+                nome: m.nome,
+                cantor: m.cantor,
+                url: m.url,
+                arquivo: m.arquivo || '',
+                duracao: Math.round(m.duracao || 0),
+                criado_em: m.criadoEm || new Date().toISOString()
+              }
+            ],
+            { onConflict: 'id' }
+          )
+        ).error
+      );
+      return;
+    }
+    case 'musica.delete':
+      falhar((await supabase.from('musicas_audio').delete().eq('id', op.dados)).error);
       return;
     case 'harpa.add':
       falhar(
@@ -1254,3 +1280,114 @@ export default {
   exportData,
   importData
 };
+
+// ==================== MÚSICAS PARA OUVIR ====================
+
+const BUCKET_MUSICAS = 'musicas';
+
+function mapearMusicaAudio(linha: any): MusicaAudio {
+  return {
+    id: linha.id,
+    nome: linha.nome || '',
+    cantor: linha.cantor || '',
+    url: linha.url || '',
+    arquivo: linha.arquivo || '',
+    duracao: Number(linha.duracao) || 0,
+    criadoEm: linha.criado_em || new Date().toISOString()
+  };
+}
+
+function ordenarMusicasAudio(lista: MusicaAudio[]): MusicaAudio[] {
+  return [...lista].sort((a, b) => a.nome.localeCompare(b.nome, 'pt-BR'));
+}
+
+/** Músicas cadastradas para ouvir (com cópia local para funcionar offline). */
+export async function getAllMusicasAudio(): Promise<MusicaAudio[]> {
+  try {
+    if (supabase) {
+      if (!estaOnline()) {
+        return ordenarMusicasAudio(cacheLer<MusicaAudio[]>(CACHE_MUSICAS_AUDIO) || []);
+      }
+
+      sincronizarPendentes().catch(() => undefined);
+
+      const { data, error } = await supabase
+        .from('musicas_audio')
+        .select('*')
+        .order('nome', { ascending: true });
+
+      if (error) throw error;
+
+      const musicas = ordenarMusicasAudio((data || []).map(mapearMusicaAudio));
+      cacheSalvar(CACHE_MUSICAS_AUDIO, musicas);
+      console.log('✅ Músicas para ouvir carregadas:', musicas.length);
+      return musicas;
+    }
+
+    return ordenarMusicasAudio(cacheLer<MusicaAudio[]>(CACHE_MUSICAS_AUDIO) || []);
+  } catch (error) {
+    console.error('❌ Erro ao carregar músicas, usando cópia local:', error);
+    return ordenarMusicasAudio(cacheLer<MusicaAudio[]>(CACHE_MUSICAS_AUDIO) || []);
+  }
+}
+
+export async function saveMusicaAudio(musica: MusicaAudio): Promise<MusicaAudio> {
+  const musicas = cacheLer<MusicaAudio[]>(CACHE_MUSICAS_AUDIO) || [];
+  cacheSalvar(
+    CACHE_MUSICAS_AUDIO,
+    ordenarMusicasAudio([...musicas.filter(m => m.id !== musica.id), musica])
+  );
+
+  await gravar('musica.upsert', musica);
+  console.log('✅ Música salva:', musica.nome);
+  return musica;
+}
+
+export async function deleteMusicaAudio(musica: MusicaAudio): Promise<void> {
+  const musicas = cacheLer<MusicaAudio[]>(CACHE_MUSICAS_AUDIO) || [];
+  cacheSalvar(CACHE_MUSICAS_AUDIO, musicas.filter(m => m.id !== musica.id));
+
+  // Tira também o arquivo enviado, para não ocupar espaço à toa.
+  if (musica.arquivo && supabase && estaOnline()) {
+    try {
+      await supabase.storage.from(BUCKET_MUSICAS).remove([musica.arquivo]);
+    } catch (erro) {
+      console.warn('⚠️ Não foi possível apagar o arquivo da música:', erro);
+    }
+  }
+
+  await gravar('musica.delete', musica.id);
+  console.log('✅ Música excluída');
+}
+
+/**
+ * Envia o arquivo de música para o Supabase e devolve o endereço público.
+ *
+ * Precisa do balde "musicas" criado no painel (veja supabase_musicas.sql).
+ */
+export async function enviarArquivoMusica(
+  arquivo: File
+): Promise<{ url: string; caminho: string }> {
+  if (!supabase) throw new Error('Supabase não configurado - não dá para enviar arquivos.');
+  if (!estaOnline()) throw new Error('Sem internet: conecte-se para enviar a música.');
+
+  const extensao = (arquivo.name.split('.').pop() || 'mp3').toLowerCase();
+  const caminho = `${Date.now()}-${Math.random().toString(36).slice(2, 8)}.${extensao}`;
+
+  const { error } = await supabase.storage
+    .from(BUCKET_MUSICAS)
+    .upload(caminho, arquivo, { contentType: arquivo.type || 'audio/mpeg', upsert: false });
+
+  if (error) {
+    const texto = `${error.message || ''}`.toLowerCase();
+    if (texto.includes('bucket') && texto.includes('not found')) {
+      throw new Error(
+        'O espaço de arquivos "musicas" ainda não existe no Supabase. Rode o supabase_musicas.sql.'
+      );
+    }
+    throw error;
+  }
+
+  const { data } = supabase.storage.from(BUCKET_MUSICAS).getPublicUrl(caminho);
+  return { url: data?.publicUrl || '', caminho };
+}

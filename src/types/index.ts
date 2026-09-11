@@ -61,3 +61,17 @@ export interface Anotacao {
   letra?: string;
   criadoEm: string;
 }
+
+/** Música cadastrada para ouvir inteira dentro do sistema. */
+export interface MusicaAudio {
+  id: string;
+  nome: string;
+  cantor: string;
+  /** Endereço do áudio: arquivo enviado para o Supabase ou link colado. */
+  url: string;
+  /** Caminho no armazenamento do Supabase (vazio quando é só um link). */
+  arquivo?: string;
+  /** Duração em segundos, lida do próprio arquivo ao cadastrar. */
+  duracao: number;
+  criadoEm: string;
+}
