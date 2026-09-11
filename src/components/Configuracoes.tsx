@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import {
   Save, Download, Upload, Trash2, AlertCircle, Eye, EyeOff, BarChart3, Mic2,
   UserPlus, Pencil, BookOpen, Smartphone, Building2, Type, Image, ListChecks,
-  ListOrdered, Database, Palette, Tag, TextCursorInput,
+  ListOrdered, Database, Palette, Tag, TextCursorInput, Radio, MapPin, Wifi,
 } from 'lucide-react';
 import { getConfiguracoes, saveConfiguracoes, exportData, importData, clearAllData } from '../services/db';
 import { Configuracoes } from '../types';
@@ -21,6 +21,14 @@ import {
   salvarNomeDesteAparelho,
   ResumoAparelho,
 } from '../services/aparelhos';
+import {
+  acompanharOnline,
+  atualizarMeusDados,
+  redeDesteAparelho,
+  salvarRedeDesteAparelho,
+  tipoDeConexao,
+  AparelhoOnline,
+} from '../services/presenca';
 import {
   lerCantores,
   adicionarCantor,
@@ -52,6 +60,10 @@ export const ConfiguracoesView: React.FC<ConfiguracoesProps> = ({ onConfigChange
   const [aparelhos, setAparelhos] = useState<ResumoAparelho[]>([]);
   const [carregandoAparelhos, setCarregandoAparelhos] = useState(true);
   const [nomeAparelho, setNomeAparelho] = useState<string>(() => nomeDesteAparelho());
+  /** Aparelhos com o sistema aberto neste momento (tempo real). */
+  const [online, setOnline] = useState<AparelhoOnline[]>([]);
+  const [rede, setRede] = useState<string>(() => redeDesteAparelho());
+  const [redeSalva, setRedeSalva] = useState(false);
   /** Qual cartao esta aberto: a tela mostra so um por vez. */
   const [secaoAberta, setSecaoAberta] = useState<string | null>(null);
 
@@ -64,6 +76,16 @@ export const ConfiguracoesView: React.FC<ConfiguracoesProps> = ({ onConfigChange
       .then(setAparelhos)
       .finally(() => setCarregandoAparelhos(false));
   }, []);
+
+  // Lista de quem está com o sistema aberto agora.
+  useEffect(() => acompanharOnline(setOnline), []);
+
+  const handleSalvarRede = async () => {
+    setRede(salvarRedeDesteAparelho(rede));
+    await atualizarMeusDados();
+    setRedeSalva(true);
+    setTimeout(() => setRedeSalva(false), 2000);
+  };
 
   const handleAdicionarCantor = () => {
     const nome = novoCantor.trim();
@@ -138,6 +160,8 @@ Os hinos já cadastrados com esse cantor não mudam.`)) return;
     const salvo = await salvarNomeDesteAparelho(nomeAparelho);
     setNomeAparelho(salvo);
     setAparelhos(await carregarAparelhos(30));
+    // O novo nome aparece na hora para os outros aparelhos conectados.
+    await atualizarMeusDados();
   };
 
   const handleZerarAcessos = () => {
@@ -685,6 +709,143 @@ Os hinos já cadastrados com esse cantor não mudam.`)) return;
                 })}
             </div>
           )}
+        </SecaoConfig>
+
+        <SecaoConfig
+          id="online"
+          titulo="Aparelhos online agora"
+          descricao={
+            online.length === 1
+              ? '1 aparelho conectado neste momento'
+              : `${online.length} aparelhos conectados neste momento`
+          }
+          icone={Radio}
+          aberta={secaoAberta}
+          onAbrir={setSecaoAberta}
+        >
+          <div className="p-4 rounded-xl bg-green-50 border border-green-100 text-center mb-4">
+            <p className="text-4xl font-extrabold text-green-700">{online.length}</p>
+            <p className="text-xs text-green-900 mt-1">
+              {online.length === 1 ? 'aparelho com o sistema aberto' : 'aparelhos com o sistema aberto'}
+            </p>
+          </div>
+
+          {online.length === 0 ? (
+            <p className="text-sm text-gray-500">
+              Nenhum aparelho conectado. Se nem este aparece, a contagem em tempo real
+              precisa do Realtime ligado no painel do Supabase.
+            </p>
+          ) : (
+            <div className="space-y-2">
+              {online.map(ap => (
+                <div
+                  key={ap.aparelhoId}
+                  className="p-3 rounded-xl border border-gray-200 flex items-start gap-3"
+                >
+                  <span className="mt-1 w-2.5 h-2.5 rounded-full bg-green-500 shrink-0" />
+                  <div className="min-w-0 flex-1">
+                    <p className="font-semibold text-gray-900 text-sm break-words">
+                      {ap.nome}
+                      {ap.esteAparelho && (
+                        <span className="ml-2 text-[10px] px-1.5 py-0.5 rounded bg-indigo-100 text-indigo-700 align-middle">
+                          este aparelho
+                        </span>
+                      )}
+                    </p>
+                    <p className="text-xs text-gray-500">
+                      {[ap.rede, ap.cidade && `${ap.cidade}${ap.regiao ? ' - ' + ap.regiao : ''}`]
+                        .filter(Boolean)
+                        .join(' · ') || 'Local não identificado'}
+                    </p>
+                    {ap.desde && (
+                      <p className="text-[11px] text-gray-400">
+                        aberto desde {new Date(ap.desde).toLocaleTimeString('pt-BR')}
+                      </p>
+                    )}
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+
+          <p className="text-[11px] text-gray-400 mt-3">
+            A lista muda sozinha assim que alguém abre ou fecha o sistema.
+          </p>
+        </SecaoConfig>
+
+        <SecaoConfig
+          id="locais"
+          titulo="Local e rede dos aparelhos"
+          descricao="Cidade, provedor e apelido da rede de cada aparelho"
+          icone={MapPin}
+          aberta={secaoAberta}
+          onAbrir={setSecaoAberta}
+        >
+          <div className="mb-4 p-3 rounded-xl bg-gray-50 border border-gray-200">
+            <label className="block text-xs font-medium text-gray-600 mb-1">
+              Nome da rede wi-fi deste aparelho
+            </label>
+            <div className="flex gap-2">
+              <input
+                type="text"
+                value={rede}
+                onChange={e => setRede(e.target.value)}
+                className="flex-1 px-3 py-2 border border-gray-300 rounded-lg text-sm"
+                placeholder="Ex.: Wi-fi Igreja, Mesa de som, 4G"
+              />
+              <button
+                onClick={handleSalvarRede}
+                className="px-4 py-2 bg-indigo-600 text-white rounded-lg text-sm font-medium hover:bg-indigo-700"
+              >
+                {redeSalva ? 'Salvo!' : 'Salvar'}
+              </button>
+            </div>
+            <p className="text-[11px] text-gray-500 mt-2">
+              O navegador não deixa nenhum site ler o nome da rede wi-fi (é bloqueio de
+              privacidade do celular). Escreva aqui, uma vez, como essa rede se chama:
+              o apelido aparece para os outros aparelhos.
+              {tipoDeConexao() && ` Conexão detectada agora: ${tipoDeConexao()}.`}
+            </p>
+          </div>
+
+          {online.length === 0 ? (
+            <p className="text-sm text-gray-500">Nenhum aparelho conectado no momento.</p>
+          ) : (
+            <div className="space-y-2">
+              {online.map(ap => (
+                <div key={ap.aparelhoId} className="p-3 rounded-xl border border-gray-200">
+                  <p className="font-semibold text-gray-900 text-sm break-words">
+                    {ap.nome}
+                    {ap.esteAparelho && (
+                      <span className="ml-2 text-[10px] px-1.5 py-0.5 rounded bg-indigo-100 text-indigo-700 align-middle">
+                        este aparelho
+                      </span>
+                    )}
+                  </p>
+
+                  <p className="text-xs text-gray-600 mt-1 flex items-center gap-1.5">
+                    <MapPin size={13} className="text-gray-400 shrink-0" />
+                    {ap.cidade
+                      ? `${ap.cidade}${ap.regiao ? ' - ' + ap.regiao : ''}${ap.pais ? ', ' + ap.pais : ''}`
+                      : 'Cidade não identificada'}
+                  </p>
+
+                  <p className="text-xs text-gray-600 flex items-center gap-1.5">
+                    <Wifi size={13} className="text-gray-400 shrink-0" />
+                    {[ap.rede || 'rede sem apelido', ap.tipoConexao, ap.provedor]
+                      .filter(Boolean)
+                      .join(' · ')}
+                  </p>
+                </div>
+              ))}
+            </div>
+          )}
+
+          <p className="text-[11px] text-gray-400 mt-3">
+            A cidade vem do endereço de internet do aparelho e chega até o município -
+            bairro e rua não são possíveis por esse caminho. Em rede sem internet
+            aparece "não identificada".
+          </p>
         </SecaoConfig>
 
         <SecaoConfig

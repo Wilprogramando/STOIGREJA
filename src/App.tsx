@@ -19,6 +19,7 @@ import { BarraInferior } from './components/BarraInferior';
 import { initializeHarpaBase, getConfiguracoes } from './services/db';
 import { registrarAcesso } from './services/acessos';
 import { registrarAcessoDesteAparelho } from './services/aparelhos';
+import { acompanharOnline } from './services/presenca';
 import { menuVisivel, lerMenusOcultos, lerOrdemMenus, lerNomesMenus } from './services/menus';
 import { lerTema, Tema } from './services/tema';
 import { sincronizarCantoresDosHinos } from './services/cantores';
@@ -54,6 +55,10 @@ export default function App() {
     registrarAcesso(currentPage);
     registrarAcessoDesteAparelho();
   }, [currentPage]);
+
+  // Entra na sala de "aparelhos online" enquanto o sistema estiver aberto,
+  // em qualquer tela - as Configurações só leem essa lista.
+  useEffect(() => acompanharOnline(() => undefined), []);
 
   // Botão "voltar" do celular/navegador: volta para a tela anterior do sistema
   // em vez de fechar o app.

@@ -90,6 +90,11 @@ if (supabaseUrl && supabaseKey) {
 
 const DB_PREFIX = 'repertorio_igreja_';
 
+/** Cliente do Supabase para quem precisa dele direto (presença em tempo real). */
+export function clienteSupabase(): any {
+  return supabase;
+}
+
 // ==================== SUPORTE OFFLINE ====================
 
 /** Monta o payload do hino no formato das colunas do Supabase. */
