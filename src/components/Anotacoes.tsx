@@ -635,7 +635,7 @@ export const Anotacoes: React.FC = () => {
                     </p>
                   )}
 
-                  <div className="mt-2 flex flex-wrap gap-2">
+                  <div className="mt-2 flex flex-nowrap items-center gap-2">
                     {anotacao.letra ? (
                       <>
                         <button
@@ -646,7 +646,7 @@ export const Anotacoes: React.FC = () => {
                               letra: anotacao.letra || '',
                             })
                           }
-                          className="px-4 py-2 rounded-lg bg-indigo-600 text-white hover:bg-indigo-700 shadow-sm text-sm font-bold flex items-center gap-1.5"
+                          className="shrink-0 px-4 py-2 rounded-lg bg-indigo-600 text-white hover:bg-indigo-700 shadow-sm text-sm font-bold flex items-center gap-1.5"
                         >
                           <FileText size={16} />
                           Ver letra
@@ -654,10 +654,11 @@ export const Anotacoes: React.FC = () => {
 
                         <button
                           onClick={() => abrirTransferencia(anotacao)}
-                          className="px-3 py-1.5 rounded-lg bg-emerald-600 text-white hover:bg-emerald-700 text-xs font-semibold flex items-center gap-1.5"
+                          title="Transferir para hinos comuns"
+                          className="min-w-0 px-3 py-2 rounded-lg bg-emerald-600 text-white hover:bg-emerald-700 text-xs font-semibold flex items-center gap-1.5"
                         >
-                          <ArrowRightLeft size={14} />
-                          Transferir para hinos comuns
+                          <ArrowRightLeft size={14} className="shrink-0" />
+                          <span className="truncate">Transferir para hinos comuns</span>
                         </button>
                       </>
                     ) : (
