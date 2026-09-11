@@ -516,7 +516,7 @@ export const OuvirMusica: React.FC = () => {
       <div className="flex gap-2 mb-5">
         <button
           onClick={() => setAba('minhas')}
-          className={`flex-1 px-4 py-2.5 rounded-xl text-sm font-bold flex items-center justify-center gap-2 transition ${
+          className={`flex-1 min-w-0 px-2 sm:px-4 py-2.5 rounded-xl text-xs sm:text-sm font-bold flex items-center justify-center gap-1.5 sm:gap-2 whitespace-nowrap transition ${
             aba === 'minhas'
               ? 'bg-indigo-600 text-white shadow-sm'
               : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
@@ -527,7 +527,7 @@ export const OuvirMusica: React.FC = () => {
         </button>
         <button
           onClick={() => setAba('internet')}
-          className={`flex-1 px-4 py-2.5 rounded-xl text-sm font-bold flex items-center justify-center gap-2 transition ${
+          className={`flex-1 min-w-0 px-2 sm:px-4 py-2.5 rounded-xl text-xs sm:text-sm font-bold flex items-center justify-center gap-1.5 sm:gap-2 whitespace-nowrap transition ${
             aba === 'internet'
               ? 'bg-indigo-600 text-white shadow-sm'
               : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
@@ -957,7 +957,7 @@ export const OuvirMusica: React.FC = () => {
                         <button
                           onClick={() => tocarPrevia(musica)}
                           title={estaTocando ? 'Parar' : 'Ouvir 30 segundos'}
-                          className={`hidden sm:flex h-10 rounded-lg items-center justify-center transition ${
+                          className={`hidden sm:flex h-9 sm:h-10 rounded-lg items-center justify-center transition ${
                             estaTocando
                               ? 'bg-indigo-600 text-white hover:bg-indigo-700'
                               : 'bg-indigo-50 text-indigo-600 hover:bg-indigo-100'
@@ -966,7 +966,7 @@ export const OuvirMusica: React.FC = () => {
                           {estaTocando ? <Pause size={18} /> : <Play size={18} />}
                         </button>
                       ) : (
-                        <span className="hidden sm:flex h-10 rounded-lg bg-gray-50 text-[10px] text-gray-400 items-center justify-center leading-tight">
+                        <span className="hidden sm:flex h-9 sm:h-10 rounded-lg bg-gray-50 text-[10px] text-gray-400 items-center justify-center leading-tight">
                           sem prévia
                         </span>
                       )}
@@ -975,7 +975,7 @@ export const OuvirMusica: React.FC = () => {
                         onClick={() => abrirNoYoutube(musica)}
                         disabled={abrindoYoutube === musica.id}
                         title="Ouvir a música completa no YouTube"
-                        className="h-10 rounded-lg bg-red-50 text-red-600 hover:bg-red-100 flex items-center justify-center transition disabled:opacity-60"
+                        className="h-9 sm:h-10 rounded-lg bg-red-50 text-red-600 hover:bg-red-100 flex items-center justify-center transition disabled:opacity-60"
                       >
                         {abrindoYoutube === musica.id ? (
                           <Loader2 size={18} className="animate-spin" />
@@ -991,7 +991,7 @@ export const OuvirMusica: React.FC = () => {
                             ? 'Tirar dos favoritos'
                             : 'Guardar nos favoritos'
                         }
-                        className={`h-10 rounded-lg flex items-center justify-center transition ${
+                        className={`h-9 sm:h-10 rounded-lg flex items-center justify-center transition ${
                           estaFavorita(musica.id)
                             ? 'bg-amber-100 text-amber-600 hover:bg-amber-200'
                             : 'bg-gray-100 text-gray-500 hover:bg-amber-50 hover:text-amber-600'
@@ -1007,7 +1007,7 @@ export const OuvirMusica: React.FC = () => {
                         onClick={() => copiarLinkYoutube(musica)}
                         disabled={copiando === musica.id}
                         title="Copiar o link do YouTube"
-                        className={`hidden sm:flex h-10 rounded-lg items-center justify-center transition disabled:opacity-60 ${
+                        className={`hidden sm:flex h-9 sm:h-10 rounded-lg items-center justify-center transition disabled:opacity-60 ${
                           copiado === musica.id
                             ? 'bg-green-600 text-white'
                             : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
@@ -1025,7 +1025,7 @@ export const OuvirMusica: React.FC = () => {
                       <button
                         onClick={() => cadastrarDaBusca(musica)}
                         title="Cadastrar esta música em Minhas músicas"
-                        className="hidden sm:flex h-10 rounded-lg bg-green-50 text-green-700 hover:bg-green-100 items-center justify-center transition"
+                        className="hidden sm:flex h-9 sm:h-10 rounded-lg bg-green-50 text-green-700 hover:bg-green-100 items-center justify-center transition"
                       >
                         <Plus size={18} />
                       </button>
