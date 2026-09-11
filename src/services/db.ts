@@ -25,8 +25,64 @@ const supabaseKey = import.meta.env.VITE_SUPABASE_KEY || '';
 
 let supabase: any = null;
 
+/**
+ * Tempo máximo de espera por uma resposta da nuvem (ms).
+ *
+ * Em wi-fi sem internet (o da mesa de som, por exemplo) o aparelho continua
+ * "online" para o navegador, mas a chamada fica pendurada até o sistema
+ * desistir - e a tela nunca carrega. Com o limite abaixo a chamada falha
+ * rápido e o app cai para a cópia salva no aparelho.
+ */
+const TEMPO_LIMITE_NUVEM = 8000;
+
+/** fetch com prazo: passa esse tempo, cancela e deixa o app usar o cache. */
+const fetchComPrazo: typeof fetch = (entrada: any, opcoes: any = {}) => {
+  const controlador = new AbortController();
+  const relogio = setTimeout(() => controlador.abort(), TEMPO_LIMITE_NUVEM);
+
+  // Respeita um cancelamento que já tenha vindo de fora.
+  if (opcoes?.signal) {
+    if (opcoes.signal.aborted) controlador.abort();
+    else opcoes.signal.addEventListener('abort', () => controlador.abort());
+  }
+
+  return fetch(entrada, { ...opcoes, signal: controlador.signal })
+    .then(resposta => {
+      avisarNuvem(true);
+      return resposta;
+    })
+    .catch(erro => {
+      avisarNuvem(false);
+      throw erro;
+    })
+    .finally(() => clearTimeout(relogio));
+};
+
+/**
+ * Avisa a tela se a nuvem está respondendo.
+ *
+ * Serve para o caso do wi-fi que não tem internet: o aparelho se diz online,
+ * mas nada chega ao Supabase. A faixa de aviso então explica que o sistema
+ * está usando os dados guardados no aparelho.
+ */
+let nuvemRespondendo = true;
+function avisarNuvem(ok: boolean): void {
+  if (ok === nuvemRespondendo) return;
+  nuvemRespondendo = ok;
+  if (typeof window !== 'undefined') {
+    window.dispatchEvent(new CustomEvent('repertorio-nuvem', { detail: ok }));
+  }
+}
+
+/** A nuvem respondeu na última tentativa? */
+export function nuvemRespondeu(): boolean {
+  return nuvemRespondendo;
+}
+
 if (supabaseUrl && supabaseKey) {
-  supabase = createClient(supabaseUrl, supabaseKey);
+  supabase = createClient(supabaseUrl, supabaseKey, {
+    global: { fetch: fetchComPrazo }
+  });
   console.log('✅ Supabase conectado');
 } else {
   console.log('⚠️ Supabase não configurado');
@@ -326,7 +382,8 @@ export async function getAllHinos(): Promise<Hino[]> {
       }
 
       // Aproveita a conexão para subir o que ficou pendente.
-      await sincronizarPendentes();
+      // Em segundo plano: a tela não espera o envio do que ficou pendente.
+      sincronizarPendentes().catch(() => undefined);
 
       const { data, error } = await supabase
         .from('hinos_cadastro')
@@ -493,7 +550,8 @@ export async function getAllRepertorios(): Promise<Repertorio[]> {
         return local || [];
       }
 
-      await sincronizarPendentes();
+      // Em segundo plano: a tela não espera o envio do que ficou pendente.
+      sincronizarPendentes().catch(() => undefined);
 
       const { data, error } = await supabase
         .from('repertorios_cultos')
@@ -654,7 +712,8 @@ export async function getAllCantores(): Promise<string[]> {
         return cacheLer<string[]>(CACHE_CANTORES) || [];
       }
 
-      await sincronizarPendentes();
+      // Em segundo plano: a tela não espera o envio do que ficou pendente.
+      sincronizarPendentes().catch(() => undefined);
 
       const { data, error } = await supabase
         .from('cantores')
@@ -913,7 +972,8 @@ export async function getAllAnotacoes(): Promise<Anotacao[]> {
       }
 
       await migrarAnotacoesAntigas();
-      await sincronizarPendentes();
+      // Em segundo plano: a tela não espera o envio do que ficou pendente.
+      sincronizarPendentes().catch(() => undefined);
 
       const { data, error } = await supabase
         .from('anotacoes_hinos')

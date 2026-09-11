@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { WifiOff, RefreshCw } from 'lucide-react';
-import { alteracoesPendentes, sincronizarPendentes } from '../services/db';
+import { alteracoesPendentes, sincronizarPendentes, nuvemRespondeu } from '../services/db';
 
 /**
  * Faixa de aviso mostrada quando a internet cai ou quando existem
@@ -10,9 +10,13 @@ export const StatusConexao: React.FC = () => {
   const [online, setOnline] = useState(navigator.onLine);
   const [pendentes, setPendentes] = useState(alteracoesPendentes());
   const [sincronizando, setSincronizando] = useState(false);
+  /** Wi-fi conectado mas a nuvem não responde (rede sem internet, portal de login). */
+  const [nuvemOk, setNuvemOk] = useState(nuvemRespondeu());
 
   useEffect(() => {
     const atualizarPendentes = () => setPendentes(alteracoesPendentes());
+    const nuvemMudou = (e: Event) => setNuvemOk((e as CustomEvent).detail !== false);
+    window.addEventListener('repertorio-nuvem', nuvemMudou);
 
     const ficouOnline = () => {
       setOnline(true);
@@ -30,6 +34,7 @@ export const StatusConexao: React.FC = () => {
       window.removeEventListener('online', ficouOnline);
       window.removeEventListener('offline', ficouOffline);
       window.removeEventListener('repertorio-sync-mudou', atualizarPendentes);
+      window.removeEventListener('repertorio-nuvem', nuvemMudou);
       clearInterval(timer);
     };
   }, []);
@@ -44,7 +49,19 @@ export const StatusConexao: React.FC = () => {
     }
   };
 
-  if (online && pendentes === 0) return null;
+  if (online && nuvemOk && pendentes === 0) return null;
+
+  if (online && !nuvemOk) {
+    return (
+      <div className="bg-amber-100 border-b border-amber-300 text-amber-900 px-4 py-2 text-sm flex items-center gap-2">
+        <WifiOff size={16} />
+        <span>
+          Wi-fi sem internet - usando os dados guardados no aparelho.
+          {pendentes > 0 && ` ${pendentes} alteração(ões) serão enviadas quando a conexão voltar.`}
+        </span>
+      </div>
+    );
+  }
 
   if (!online) {
     return (

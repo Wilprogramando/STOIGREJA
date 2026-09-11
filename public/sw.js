@@ -7,10 +7,18 @@
  * O que NÃO fica guardado: as chamadas de /api/ (busca de letras). Elas são
  * respostas que mudam - guardá-las fazia o aparelho continuar mostrando uma
  * letra antiga, ou errada, mesmo depois do servidor já ter sido corrigido.
+ *
+ * Cuidado especial com wi-fi "sem internet" (o da mesa de som, por exemplo):
+ * esse tipo de rede responde qualquer endereço com a própria página de login.
+ * Se essa página fosse guardada no lugar do app, o sistema deixava de abrir.
+ * Por isso só guardamos resposta que realmente veio do nosso site.
  */
 
-const CACHE = 'repertorio-igreja-v3';
+const CACHE = 'repertorio-igreja-v4';
 const ESSENCIAIS = ['/', '/index.html', '/manifest.webmanifest', '/favicon.svg'];
+
+/** Espera no máximo esse tempo pela rede antes de usar a cópia salva (ms). */
+const PRAZO_REDE = 4000;
 
 self.addEventListener('install', event => {
   event.waitUntil(
@@ -31,6 +39,33 @@ self.addEventListener('activate', event => {
   );
 });
 
+/**
+ * A resposta veio mesmo do nosso site?
+ *
+ * Em rede com portal de login a resposta chega com desvio (redirected) ou de
+ * outra origem (type diferente de "basic"). Nesses casos não guardamos nada.
+ */
+function respostaConfiavel(resposta) {
+  return !!resposta && resposta.status === 200 && resposta.type === 'basic' && !resposta.redirected;
+}
+
+/** fetch que desiste depois de PRAZO_REDE, para a tela nunca ficar pendurada. */
+function buscarComPrazo(req) {
+  return new Promise((resolve, reject) => {
+    const relogio = setTimeout(() => reject(new Error('tempo esgotado')), PRAZO_REDE);
+    fetch(req).then(
+      resposta => {
+        clearTimeout(relogio);
+        resolve(resposta);
+      },
+      erro => {
+        clearTimeout(relogio);
+        reject(erro);
+      }
+    );
+  });
+}
+
 self.addEventListener('fetch', event => {
   const req = event.request;
 
@@ -45,16 +80,31 @@ self.addEventListener('fetch', event => {
   // mostrar uma letra guardada de outra busca.
   if (url.pathname.startsWith('/api/')) return;
 
-  // Navegação (abrir/atualizar a página): tenta a rede, cai para a cópia salva.
+  // Navegação (abrir/atualizar a página): abre na hora com a cópia salva e
+  // busca a versão nova em segundo plano. Assim o app abre sempre, mesmo em
+  // rede ruim ou com portal de login no caminho.
   if (req.mode === 'navigate') {
     event.respondWith(
-      fetch(req)
-        .then(resposta => {
-          const copia = resposta.clone();
-          caches.open(CACHE).then(cache => cache.put('/index.html', copia));
-          return resposta;
-        })
-        .catch(() => caches.match('/index.html').then(r => r || caches.match('/')))
+      caches.match('/index.html').then(salvo => {
+        const daRede = buscarComPrazo(req)
+          .then(resposta => {
+            if (respostaConfiavel(resposta)) {
+              const copia = resposta.clone();
+              caches.open(CACHE).then(cache => cache.put('/index.html', copia));
+              return resposta;
+            }
+            // Página de portal de login (ou erro): não guarda e não mostra.
+            if (salvo) return salvo;
+            return resposta;
+          })
+          .catch(() => salvo);
+
+        if (salvo) {
+          event.waitUntil(daRede);
+          return salvo;
+        }
+        return daRede;
+      })
     );
     return;
   }
@@ -66,15 +116,20 @@ self.addEventListener('fetch', event => {
     caches.match(req).then(cacheado => {
       const daRede = fetch(req)
         .then(resposta => {
-          if (resposta && resposta.status === 200 && resposta.type === 'basic') {
+          if (respostaConfiavel(resposta)) {
             const copia = resposta.clone();
             caches.open(CACHE).then(cache => cache.put(req, copia));
+            return resposta;
           }
-          return resposta;
+          return cacheado || resposta;
         })
         .catch(() => cacheado);
 
-      return cacheado || daRede;
+      if (cacheado) {
+        event.waitUntil(daRede.catch(() => undefined));
+        return cacheado;
+      }
+      return daRede;
     })
   );
 });
