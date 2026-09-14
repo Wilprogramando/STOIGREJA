@@ -172,6 +172,22 @@ export const Anotacoes: React.FC = () => {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
+  /**
+   * Tira da lista uma anotação cujo hino já está nos hinos comuns (transferida
+   * antes de a remoção passar a ser automática).
+   */
+  const tirarJaTransferida = async (anotacao: Anotacao) => {
+    try {
+      await excluirAnotacao(anotacao.id);
+      await recarregar();
+      if (form.id === anotacao.id) setForm(VAZIO);
+      setRecado(`"${anotacao.hino}" saiu das anotações.`);
+    } catch (error) {
+      console.error('Erro ao tirar a anotação já transferida:', error);
+      setAviso('Não foi possível tirar a anotação.');
+    }
+  };
+
   const excluir = async (anotacao: Anotacao) => {
     if (!confirm(`Apagar a anotação "${anotacao.hino}"?`)) return;
 
@@ -624,9 +640,18 @@ export const Anotacoes: React.FC = () => {
                     <h4 className="font-bold text-gray-900 break-words">{anotacao.hino}</h4>
 
                     {jaNosHinos && (
-                      <span className="shrink-0 text-[11px] font-semibold px-2 py-1 rounded-lg bg-green-50 text-green-700 border border-green-200">
-                        já nos hinos
-                      </span>
+                      <div className="shrink-0 flex items-center gap-1.5">
+                        <span className="text-[11px] font-semibold px-2 py-1 rounded-lg bg-green-50 text-green-700 border border-green-200">
+                          já nos hinos
+                        </span>
+                        <button
+                          onClick={() => tirarJaTransferida(anotacao)}
+                          title="Tirar das anotações (o hino já está nos hinos comuns)"
+                          className="text-[11px] font-semibold px-2 py-1 rounded-lg bg-gray-100 text-gray-600 hover:bg-gray-200"
+                        >
+                          Tirar daqui
+                        </button>
+                      </div>
                     )}
                   </div>
 
