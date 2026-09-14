@@ -860,8 +860,9 @@ export const OuvirMusica: React.FC = () => {
                   return (
                     <div
                       key={f.id}
-                      className="bg-white rounded-xl border border-amber-200 p-3 flex items-center gap-3"
+                      className="bg-white rounded-xl border border-amber-200 p-3"
                     >
+                      <div className="flex items-center gap-3">
                       {f.capa ? (
                         <img src={f.capa} alt="" className="w-12 h-12 rounded-lg object-cover shrink-0" />
                       ) : (
@@ -898,6 +899,38 @@ export const OuvirMusica: React.FC = () => {
                           className="w-10 h-10 rounded-full text-amber-500 hover:bg-amber-50 flex items-center justify-center"
                         >
                           <Star size={18} fill="currentColor" />
+                        </button>
+                      </div>
+                      </div>
+
+                      {/* Letra e envio para as anotações */}
+                      <div className="mt-2.5 flex flex-nowrap items-center gap-1.5 [&>*]:flex-1">
+                        <button
+                          onClick={() => verLetra(f.id, f.nome, f.cantor)}
+                          disabled={buscandoLetra === f.id}
+                          title="Ver a letra desta música"
+                          className="h-9 sm:h-10 rounded-lg bg-indigo-600 text-white hover:bg-indigo-700 flex items-center justify-center gap-1.5 text-xs font-bold transition disabled:opacity-60"
+                        >
+                          {buscandoLetra === f.id ? (
+                            <Loader2 size={16} className="animate-spin" />
+                          ) : (
+                            <FileText size={16} />
+                          )}
+                          Ver letra
+                        </button>
+
+                        <button
+                          onClick={() => enviarParaAnotacoes(f.id, f.nome, f.cantor)}
+                          disabled={enviando === f.id}
+                          title="Enviar para as Anotações (de lá vai para os Hinos Comuns)"
+                          className="h-9 sm:h-10 rounded-lg bg-emerald-600 text-white hover:bg-emerald-700 flex items-center justify-center gap-1.5 text-xs font-bold transition disabled:opacity-60"
+                        >
+                          {enviando === f.id ? (
+                            <Loader2 size={16} className="animate-spin" />
+                          ) : (
+                            <Send size={16} />
+                          )}
+                          Enviar
                         </button>
                       </div>
                     </div>
