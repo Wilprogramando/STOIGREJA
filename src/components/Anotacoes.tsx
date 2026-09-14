@@ -329,8 +329,15 @@ export const Anotacoes: React.FC = () => {
       await carregarNomes();
       setCantores(await sincronizarCantoresDosHinos());
 
+      // A anotação só sai da tela quando o hino é transferido de verdade.
+      if (transferindo) {
+        await excluirAnotacao(transferindo.id);
+        await recarregar();
+        if (form.id === transferindo.id) setForm(VAZIO);
+      }
+
       setTransferindo(null);
-      setRecado(`"${novo.nome}" foi transferido para os hinos comuns.`);
+      setRecado(`"${novo.nome}" foi transferido para os hinos comuns e saiu das anotações.`);
     } catch (error) {
       console.error('Erro ao transferir para hinos comuns:', error);
       setErroHino('Não foi possível transferir o hino. Tente de novo.');
