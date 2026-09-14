@@ -2,6 +2,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import {
   Search, Loader2, Play, Pause, Youtube, Music, Volume2, Upload, Link2,
   Trash2, Plus, SkipBack, SkipForward, Rewind, FastForward, Globe, ListMusic, Mic, Square, Copy, Check, Gauge, Star,
+  FileText, Send,
 } from 'lucide-react';
 import { procurarParaOuvir, acharVideoNoYoutube, MusicaParaOuvir } from '../services/audio';
 import {
@@ -10,10 +11,13 @@ import {
   deleteMusicaAudio,
   enviarArquivoMusica,
 } from '../services/db';
-import { MusicaAudio } from '../types';
+import { MusicaAudio, Hino } from '../types';
 import { DeletePasswordModal } from './DeletePasswordModal';
 import { comprimirMusica, QUALIDADES, QualidadeAudio } from '../services/compressao';
 import { listarFavoritas, alternarFavorita, removerFavorita, Favorita } from '../services/favoritos';
+import { procurarHino, buscarLetraDaSugestao } from '../services/letras';
+import { salvarAnotacao } from '../services/anotacoes';
+import { ModalVisualizaLetra } from './ModalVisualizaLetra';
 
 /** Tamanho em MB, com uma casa. */
 function mb(bytes: number): string {
@@ -78,6 +82,95 @@ export const OuvirMusica: React.FC = () => {
   const [copiando, setCopiando] = useState<string | null>(null);
   const [copiado, setCopiado] = useState<string | null>(null);
   const previaRef = useRef<HTMLAudioElement | null>(null);
+
+  // ----- Letra e envio para as anotações -----
+  /** Letra aberta na tela, no mesmo visual das outras telas. */
+  const [letraAberta, setLetraAberta] = useState<Hino | null>(null);
+  /** Qual música está procurando a letra e qual está sendo enviada. */
+  const [buscandoLetra, setBuscandoLetra] = useState<string | null>(null);
+  const [enviando, setEnviando] = useState<string | null>(null);
+  /** Recado curto que aparece no alto da lista (achou, não achou, enviou). */
+  const [recado, setRecado] = useState('');
+
+  /** Procura a letra na internet pelo nome (e cantor) e abre na tela. */
+  const verLetra = async (id: string, nome: string, cantor: string) => {
+    setBuscandoLetra(id);
+    setRecado('');
+
+    try {
+      const busca = await procurarHino(nome);
+      let achada = busca.letra;
+
+      if (!achada && busca.resultados.length > 0) {
+        const igual = (a: string, b: string) =>
+          a.trim().toLowerCase() === b.trim().toLowerCase();
+        const escolhida =
+          busca.resultados.find(r => igual(r.cantor, cantor)) || busca.resultados[0];
+        achada = await buscarLetraDaSugestao(escolhida);
+      }
+
+      if (!achada || !achada.letra) {
+        setRecado(`Não achei a letra de "${nome}".`);
+        return;
+      }
+
+      setLetraAberta({
+        id,
+        nome: achada.nome || nome,
+        cantor: achada.cantor || cantor,
+        tom: '',
+        letra: achada.letra,
+        categoria: '',
+        tipo: 'comum',
+        criadoEm: new Date().toISOString(),
+        atualizadoEm: new Date().toISOString(),
+      });
+    } catch {
+      setRecado('Não consegui buscar a letra agora. Tente de novo.');
+    } finally {
+      setBuscandoLetra(null);
+    }
+  };
+
+  /**
+   * Guarda a música nas Anotações, junto com a letra quando ela for achada.
+   * De lá a equipe transfere para os Hinos Comuns escolhendo tom e cantor.
+   */
+  const enviarParaAnotacoes = async (id: string, nome: string, cantor: string) => {
+    setEnviando(id);
+    setRecado('');
+
+    try {
+      let letra = letraAberta && letraAberta.id === id ? letraAberta.letra : '';
+
+      if (!letra) {
+        try {
+          const busca = await procurarHino(nome);
+          letra = busca.letra?.letra || '';
+
+          if (!letra && busca.resultados.length > 0) {
+            const achada = await buscarLetraDaSugestao(busca.resultados[0]);
+            letra = achada.letra || '';
+          }
+        } catch {
+          // Sem internet ou sem letra achada: envia a anotação mesmo assim.
+        }
+      }
+
+      await salvarAnotacao({ hino: nome, cantor, observacoes: 'Veio de Ouvir Música', letra });
+
+      setRecado(
+        letra
+          ? `"${nome}" foi para as Anotações com a letra.`
+          : `"${nome}" foi para as Anotações (sem letra).`
+      );
+    } catch {
+      setRecado('Não consegui enviar para as Anotações.');
+    } finally {
+      setEnviando(null);
+    }
+  };
+
 
   useEffect(() => {
     getAllMusicasAudio()
@@ -544,6 +637,15 @@ export const OuvirMusica: React.FC = () => {
         </div>
       )}
 
+      {recado && (
+        <div className="mb-4 p-3 rounded-xl bg-indigo-50 border border-indigo-200 text-indigo-900 text-sm flex items-start justify-between gap-3">
+          <span>{recado}</span>
+          <button onClick={() => setRecado('')} className="shrink-0 text-indigo-500 font-bold">
+            ✕
+          </button>
+        </div>
+      )}
+
       {/* ==================== ABA: MINHAS MÚSICAS ==================== */}
       {aba === 'minhas' && (
         <>
@@ -825,12 +927,13 @@ export const OuvirMusica: React.FC = () => {
                 return (
                   <div
                     key={musica.id}
-                    className={`bg-white rounded-xl border p-3 flex items-center gap-3 transition ${
+                    className={`bg-white rounded-xl border p-3 transition ${
                       atual?.id === musica.id
                         ? 'border-indigo-300 shadow-sm'
                         : 'border-gray-200'
                     }`}
                   >
+                    <div className="flex items-center gap-3">
                     <button
                       onClick={() => tocarMusica(musica)}
                       title={estaTocando ? 'Pausar' : 'Tocar'}
@@ -871,6 +974,38 @@ export const OuvirMusica: React.FC = () => {
                     >
                       <Trash2 size={18} />
                     </button>
+                    </div>
+
+                    {/* Letra e envio para as anotações */}
+                    <div className="mt-2.5 flex flex-nowrap items-center gap-1.5 [&>*]:flex-1">
+                      <button
+                        onClick={() => verLetra(musica.id, musica.nome, musica.cantor)}
+                        disabled={buscandoLetra === musica.id}
+                        title="Ver a letra desta música"
+                        className="h-9 sm:h-10 rounded-lg bg-indigo-600 text-white hover:bg-indigo-700 flex items-center justify-center gap-1.5 text-xs font-bold transition disabled:opacity-60"
+                      >
+                        {buscandoLetra === musica.id ? (
+                          <Loader2 size={16} className="animate-spin" />
+                        ) : (
+                          <FileText size={16} />
+                        )}
+                        Ver letra
+                      </button>
+
+                      <button
+                        onClick={() => enviarParaAnotacoes(musica.id, musica.nome, musica.cantor)}
+                        disabled={enviando === musica.id}
+                        title="Enviar para as Anotações (de lá vai para os Hinos Comuns)"
+                        className="h-9 sm:h-10 rounded-lg bg-emerald-600 text-white hover:bg-emerald-700 flex items-center justify-center gap-1.5 text-xs font-bold transition disabled:opacity-60"
+                      >
+                        {enviando === musica.id ? (
+                          <Loader2 size={16} className="animate-spin" />
+                        ) : (
+                          <Send size={16} />
+                        )}
+                        Enviar
+                      </button>
+                    </div>
                   </div>
                 );
               })}
@@ -1030,6 +1165,37 @@ export const OuvirMusica: React.FC = () => {
                         <Plus size={18} />
                       </button>
                     </div>
+
+                    {/* Letra e envio para as anotações */}
+                    <div className="mt-1.5 flex flex-nowrap items-center gap-1.5 [&>*]:flex-1">
+                      <button
+                        onClick={() => verLetra(musica.id, musica.nome, musica.cantor)}
+                        disabled={buscandoLetra === musica.id}
+                        title="Ver a letra desta música"
+                        className="h-9 sm:h-10 rounded-lg bg-indigo-600 text-white hover:bg-indigo-700 flex items-center justify-center gap-1.5 text-xs font-bold transition disabled:opacity-60"
+                      >
+                        {buscandoLetra === musica.id ? (
+                          <Loader2 size={16} className="animate-spin" />
+                        ) : (
+                          <FileText size={16} />
+                        )}
+                        Ver letra
+                      </button>
+
+                      <button
+                        onClick={() => enviarParaAnotacoes(musica.id, musica.nome, musica.cantor)}
+                        disabled={enviando === musica.id}
+                        title="Enviar para as Anotações (de lá vai para os Hinos Comuns)"
+                        className="h-9 sm:h-10 rounded-lg bg-emerald-600 text-white hover:bg-emerald-700 flex items-center justify-center gap-1.5 text-xs font-bold transition disabled:opacity-60"
+                      >
+                        {enviando === musica.id ? (
+                          <Loader2 size={16} className="animate-spin" />
+                        ) : (
+                          <Send size={16} />
+                        )}
+                        Enviar
+                      </button>
+                    </div>
                   </div>
                 );
               })}
@@ -1154,6 +1320,25 @@ export const OuvirMusica: React.FC = () => {
             </div>
           </div>
         </div>
+      )}
+
+      {letraAberta && (
+        <ModalVisualizaLetra hino={letraAberta} onClose={() => setLetraAberta(null)}>
+          <button
+            onClick={() =>
+              enviarParaAnotacoes(letraAberta.id, letraAberta.nome, letraAberta.cantor)
+            }
+            disabled={enviando === letraAberta.id}
+            className="px-4 py-2 rounded-lg bg-emerald-600 text-white hover:bg-emerald-700 text-sm font-bold flex items-center gap-1.5 disabled:opacity-60"
+          >
+            {enviando === letraAberta.id ? (
+              <Loader2 size={16} className="animate-spin" />
+            ) : (
+              <Send size={16} />
+            )}
+            Enviar para as Anotações
+          </button>
+        </ModalVisualizaLetra>
       )}
     </div>
   );
