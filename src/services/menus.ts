@@ -24,6 +24,7 @@ export const MENUS: MenuDoSistema[] = [
   { id: 'campo-harmonico', label: 'Dicas' },
   { id: 'relatorios', label: 'Relatórios' },
   { id: 'afinador', label: 'Afinador' },
+  { id: 'tom-musica', label: 'Saber o Tom' },
   { id: 'anotacoes', label: 'Anotações' },
   { id: 'configuracoes', label: 'Configurações', fixo: true },
 ];

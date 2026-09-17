@@ -13,7 +13,8 @@ import {
   StickyNote,
   Globe,
   Volume2,
-  ListMusic
+  ListMusic,
+  Mic
 } from 'lucide-react';
 
 interface SidebarProps {
@@ -54,6 +55,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
 
     { id: 'relatorios', label: 'Relatórios', icon: BarChart3 },
     { id: 'afinador', label: 'Afinador', icon: Guitar },
+    { id: 'tom-musica', label: 'Saber o Tom', icon: Mic },
     { id: 'anotacoes', label: 'Anotações', icon: StickyNote },
     { id: 'configuracoes', label: 'Configurações', icon: Settings },
   ];

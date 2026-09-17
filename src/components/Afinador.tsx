@@ -1,5 +1,11 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { Mic, MicOff, Check, AlertCircle, Volume2, VolumeX } from 'lucide-react';
+import {
+  NOTAS_PT,
+  notaDaFrequencia,
+  centsEntre,
+  detectarFrequencia
+} from '../services/pitch';
 
 /**
  * AFINADOR CROMÁTICO
@@ -91,102 +97,8 @@ const INSTRUMENTOS: Instrumento[] = [
   }
 ];
 
-const NOTAS = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'];
-const NOTAS_PT: Record<string, string> = {
-  C: 'Dó',
-  'C#': 'Dó#',
-  D: 'Ré',
-  'D#': 'Ré#',
-  E: 'Mi',
-  F: 'Fá',
-  'F#': 'Fá#',
-  G: 'Sol',
-  'G#': 'Sol#',
-  A: 'Lá',
-  'A#': 'Lá#',
-  B: 'Si'
-};
-
 const TOLERANCIA_CENTS = 5; // dentro disso a corda é considerada afinada
 
-/** Nome da nota (ex.: "E2") a partir da frequência. */
-function notaDaFrequencia(freq: number, a4: number) {
-  const semitons = Math.round(12 * Math.log2(freq / a4));
-  const indice = (((semitons + 9) % 12) + 12) % 12;
-  const oitava = 4 + Math.floor((semitons + 9) / 12);
-  const frequenciaCerta = a4 * Math.pow(2, semitons / 12);
-  const cents = Math.round(1200 * Math.log2(freq / frequenciaCerta));
-  return { nome: NOTAS[indice], oitava, cents, frequenciaCerta };
-}
-
-/** Diferença em cents entre duas frequências. */
-function centsEntre(freq: number, alvo: number) {
-  return Math.round(1200 * Math.log2(freq / alvo));
-}
-
-/**
- * Detecta a frequência fundamental por autocorrelação.
- * Retorna -1 quando o som está fraco demais ou indefinido.
- */
-function detectarFrequencia(buffer: Float32Array, sampleRate: number): number {
-  const tamanho = buffer.length;
-
-  let rms = 0;
-  for (let i = 0; i < tamanho; i++) rms += buffer[i] * buffer[i];
-  rms = Math.sqrt(rms / tamanho);
-  if (rms < 0.008) return -1; // silêncio / ruído
-
-  // Só procuramos notas entre 28 Hz (Si0 do baixo) e 1200 Hz.
-  const lagMin = Math.floor(sampleRate / 1200);
-  const lagMax = Math.min(Math.floor(sampleRate / 28), Math.floor(tamanho / 2));
-
-  // Energia acumulada: evita recalcular as normas dentro do laço de cada atraso.
-  const energia = new Float64Array(tamanho + 1);
-  for (let i = 0; i < tamanho; i++) energia[i + 1] = energia[i] + buffer[i] * buffer[i];
-
-  const correlacoes = new Float64Array(lagMax + 1);
-  let melhorValor = 0;
-
-  for (let lag = lagMin; lag <= lagMax; lag++) {
-    const limite = tamanho - lag;
-    let soma = 0;
-    for (let i = 0; i < limite; i++) soma += buffer[i] * buffer[i + lag];
-
-    const normaA = energia[limite] - energia[0];
-    const normaB = energia[tamanho] - energia[lag];
-    const correlacao = soma / (Math.sqrt(normaA * normaB) || 1);
-
-    correlacoes[lag] = correlacao;
-    if (correlacao > melhorValor) melhorValor = correlacao;
-  }
-
-  if (melhorValor < 0.7) return -1; // som sem altura definida (ruído, batida)
-
-  // Usa o PRIMEIRO pico que chega perto do máximo, e não o máximo em si:
-  // assim o afinador não confunde a nota com a oitava abaixo.
-  const alvo = melhorValor * 0.93;
-  let melhorLag = -1;
-  for (let lag = lagMin + 1; lag < lagMax; lag++) {
-    if (
-      correlacoes[lag] >= alvo &&
-      correlacoes[lag] >= correlacoes[lag - 1] &&
-      correlacoes[lag] >= correlacoes[lag + 1]
-    ) {
-      melhorLag = lag;
-      break;
-    }
-  }
-  if (melhorLag < 0) return -1;
-
-  // Interpolação parabólica: precisão de fração de amostra (evita erro de vários cents).
-  const y1 = correlacoes[melhorLag - 1];
-  const y2 = correlacoes[melhorLag];
-  const y3 = correlacoes[melhorLag + 1];
-  const divisor = 2 * (2 * y2 - y1 - y3);
-  const ajuste = divisor !== 0 ? (y3 - y1) / divisor : 0;
-
-  return sampleRate / (melhorLag + ajuste);
-}
 
 // ==================== SOM DE REFERÊNCIA DAS CORDAS ====================
 

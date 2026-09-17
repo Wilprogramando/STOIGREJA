@@ -13,6 +13,7 @@ import { ConfiguracoesView } from './components/Configuracoes';
 import { Relatorios } from './components/Relatorios';
 import { CampoHarmonico } from './components/CampoHarmonico';
 import { Afinador } from './components/Afinador';
+import { TomDaMusica } from './components/TomDaMusica';
 import { Anotacoes } from './components/Anotacoes';
 import { StatusConexao } from './components/StatusConexao';
 import { BarraInferior } from './components/BarraInferior';
@@ -241,6 +242,9 @@ export default function App() {
 
       case 'afinador':
         return <Afinador />;
+
+      case 'tom-musica':
+        return <TomDaMusica />;
 
       case 'anotacoes':
         return <Anotacoes />;
