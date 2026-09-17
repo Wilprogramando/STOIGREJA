@@ -25,6 +25,18 @@ if ('serviceWorker' in navigator && import.meta.env.PROD) {
       .then(() => console.log('✅ Modo offline ativado'))
       .catch(err => console.warn('⚠️ Não foi possível ativar o modo offline:', err))
   })
+
+  // Entrou uma versão nova: recarrega uma única vez, para a tela não continuar
+  // pedindo arquivos da versão antiga que acabou de ser substituída.
+  // Na primeira visita o app ainda não tinha versão nenhuma: nada a recarregar.
+  const tinhaVersaoAntiga = !!navigator.serviceWorker.controller
+  let jaRecarregou = false
+
+  navigator.serviceWorker.addEventListener('controllerchange', () => {
+    if (jaRecarregou || !tinhaVersaoAntiga) return
+    jaRecarregou = true
+    window.location.reload()
+  })
 }
 
 // Ao abrir, envia o que ficou pendente do último culto sem internet.

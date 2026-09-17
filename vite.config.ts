@@ -1,5 +1,8 @@
 import { defineConfig, Plugin } from 'vite'
 import react from '@vitejs/plugin-react'
+import fs from 'node:fs'
+import path from 'node:path'
+import { createHash } from 'node:crypto'
 
 /**
  * Faz a pasta /api funcionar no `npm run dev`.
@@ -44,8 +47,55 @@ function apiDev(): Plugin {
   }
 }
 
+/**
+ * Escreve dentro do dist/sw.js a lista de arquivos desta publicacao.
+ *
+ * E o que garante o modo offline de verdade: o service worker baixa todos eles
+ * de uma vez na instalacao, em vez de contar com o usuario ter aberto cada
+ * tela com internet. A versao muda a cada publicacao - e e isso que faz o
+ * navegador reinstalar o service worker e guardar os arquivos novos.
+ */
+function swOffline(): Plugin {
+  return {
+    name: 'sw-offline',
+    apply: 'build',
+    closeBundle() {
+      const caminhoSw = path.resolve('dist/sw.js')
+      if (!fs.existsSync(caminhoSw)) return
+
+      const arquivos: string[] = []
+
+      const varrer = (pasta: string, prefixo: string) => {
+        for (const item of fs.readdirSync(pasta, { withFileTypes: true })) {
+          const dentro = path.join(pasta, item.name)
+          if (item.isDirectory()) {
+            varrer(dentro, prefixo + '/' + item.name)
+          } else if (item.name !== 'sw.js' && item.name !== 'index.html') {
+            arquivos.push(prefixo + '/' + item.name)
+          }
+        }
+      }
+
+      varrer(path.resolve('dist'), '')
+
+      const versao = createHash('sha1').update(arquivos.join('|')).digest('hex').slice(0, 10)
+
+      const texto = fs
+        .readFileSync(caminhoSw, 'utf8')
+        .replace("const VERSAO = 'dev'; /*__VERSAO__*/", "const VERSAO = '" + versao + "';")
+        .replace(
+          'const ARQUIVOS_DO_APP = []; /*__ARQUIVOS__*/',
+          'const ARQUIVOS_DO_APP = ' + JSON.stringify(arquivos) + ';'
+        )
+
+      fs.writeFileSync(caminhoSw, texto)
+      console.log('Modo offline: ' + arquivos.length + ' arquivos guardados, versao ' + versao)
+    }
+  }
+}
+
 export default defineConfig({
-  plugins: [react(), apiDev()],
+  plugins: [react(), apiDev(), swOffline()],
   resolve: {
     extensions: ['.mjs', '.js', '.ts', '.jsx', '.tsx', '.json']
   },

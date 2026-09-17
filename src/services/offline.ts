@@ -28,13 +28,41 @@ export interface OperacaoPendente {
 
 // ==================== CACHE LOCAL ====================
 
+/**
+ * Ordem de sacrifício quando a memória do navegador enche.
+ *
+ * O que importa no culto sem internet é a LETRA do hino. Se faltar espaço,
+ * jogamos fora primeiro o que dá para viver sem (lista de áudios, favoritas)
+ * e só então desistimos.
+ */
+const DESCARTAVEIS = [CACHE_MUSICAS_AUDIO, CACHE_FAVORITAS, CACHE_CANTORES];
+
 export function cacheSalvar(chave: string, dados: any): void {
+  const texto = JSON.stringify(dados);
+
   try {
-    localStorage.setItem(CACHE_PREFIX + chave, JSON.stringify(dados));
+    localStorage.setItem(CACHE_PREFIX + chave, texto);
+    return;
   } catch (error) {
-    // Cota do navegador estourada (logos em base64, por exemplo)
-    console.warn('⚠️ Não foi possível guardar o cache local de', chave, error);
+    console.warn('⚠️ Memória do aparelho cheia ao guardar', chave, '- liberando espaço...');
   }
+
+  // Cota estourada: abre espaço e tenta de novo, para as letras não ficarem
+  // de fora justamente na hora do culto.
+  for (const descartavel of DESCARTAVEIS) {
+    if (descartavel === chave) continue;
+
+    try {
+      localStorage.removeItem(CACHE_PREFIX + descartavel);
+      localStorage.setItem(CACHE_PREFIX + chave, texto);
+      console.log('✅ Cache local de', chave, 'guardado depois de liberar espaço');
+      return;
+    } catch {
+      // Ainda não coube: continua liberando.
+    }
+  }
+
+  console.warn('⚠️ Não foi possível guardar o cache local de', chave);
 }
 
 export function cacheLer<T>(chave: string): T | null {
