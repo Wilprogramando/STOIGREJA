@@ -178,43 +178,6 @@ export const CampoHarmonico = () => {
         </div>
       </div>
 
-      {/* Acordes do tom escolhido */}
-      <Topico
-        id="campo"
-        icone="🎹"
-        titulo={`Campo harmônico de ${tomSelecionado}`}
-        resumo="Os 7 acordes que combinam neste tom"
-        aberto={estaAberto('campo')}
-        onToggle={alternarTopico}
-      >
-        <div className="grid grid-cols-4 sm:grid-cols-7 gap-1.5 p-3">
-          {acordes.map((acorde, index) => (
-            <div
-              key={GRAUS[index]}
-              className={`rounded-lg border p-1.5 text-center ${FUNCOES[index].cor}`}
-            >
-              <p className="text-[10px] font-bold opacity-70">{GRAUS[index]}</p>
-              <p className="text-lg font-extrabold leading-tight text-gray-900">{acorde}</p>
-              <p className="text-[9px] font-medium opacity-80 leading-tight">
-                {FUNCOES[index].nome}
-              </p>
-            </div>
-          ))}
-        </div>
-
-        <div className="flex flex-wrap gap-3 px-4 pb-4 text-[11px] text-gray-500">
-          <span className="flex items-center gap-1">
-            <span className="w-2.5 h-2.5 rounded-full bg-emerald-500" /> Tônica (repouso)
-          </span>
-          <span className="flex items-center gap-1">
-            <span className="w-2.5 h-2.5 rounded-full bg-blue-500" /> Subdominante (preparação)
-          </span>
-          <span className="flex items-center gap-1">
-            <span className="w-2.5 h-2.5 rounded-full bg-rose-500" /> Dominante (tensão)
-          </span>
-        </div>
-      </Topico>
-
       {/* Funções harmônicas: o que cada acorde faz dentro do tom */}
       <Topico
         id="funcoes"
@@ -267,6 +230,43 @@ export const CampoHarmonico = () => {
               ))}
             </div>
           </div>
+        </div>
+      </Topico>
+
+      {/* Acordes do tom escolhido */}
+      <Topico
+        id="campo"
+        icone="🎹"
+        titulo={`Campo harmônico de ${tomSelecionado}`}
+        resumo="Os 7 acordes que combinam neste tom"
+        aberto={estaAberto('campo')}
+        onToggle={alternarTopico}
+      >
+        <div className="grid grid-cols-4 sm:grid-cols-7 gap-1.5 p-3">
+          {acordes.map((acorde, index) => (
+            <div
+              key={GRAUS[index]}
+              className={`rounded-lg border p-1.5 text-center ${FUNCOES[index].cor}`}
+            >
+              <p className="text-[10px] font-bold opacity-70">{GRAUS[index]}</p>
+              <p className="text-lg font-extrabold leading-tight text-gray-900">{acorde}</p>
+              <p className="text-[9px] font-medium opacity-80 leading-tight">
+                {FUNCOES[index].nome}
+              </p>
+            </div>
+          ))}
+        </div>
+
+        <div className="flex flex-wrap gap-3 px-4 pb-4 text-[11px] text-gray-500">
+          <span className="flex items-center gap-1">
+            <span className="w-2.5 h-2.5 rounded-full bg-emerald-500" /> Tônica (repouso)
+          </span>
+          <span className="flex items-center gap-1">
+            <span className="w-2.5 h-2.5 rounded-full bg-blue-500" /> Subdominante (preparação)
+          </span>
+          <span className="flex items-center gap-1">
+            <span className="w-2.5 h-2.5 rounded-full bg-rose-500" /> Dominante (tensão)
+          </span>
         </div>
       </Topico>
 
