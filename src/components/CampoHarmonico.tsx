@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { ChevronDown } from 'lucide-react';
 import { Braco, CORDAS_VIOLAO, CORDAS_BAIXO, CORDAS_BAIXO_5, notaDoAcorde } from './Braco';
+import { DiagramaAcorde } from './DiagramaAcorde';
 
 const CAMPOS = {
   C: ['C', 'Dm', 'Em', 'F', 'G', 'Am', 'B°'],
@@ -243,15 +244,9 @@ export const CampoHarmonico = () => {
 
               <div className="flex flex-wrap gap-2">
                 {funcao.graus.map(grau => (
-                  <span
-                    key={grau}
-                    className="px-2.5 py-1 rounded-lg bg-white/80 border border-white text-gray-900 text-sm font-bold"
-                  >
-                    {acordes[grau]}
-                    <span className="ml-1 text-[10px] font-semibold text-gray-500">
-                      {GRAUS[grau]}
-                    </span>
-                  </span>
+                  <div key={grau} className="rounded-lg bg-white/80 border border-white px-2 py-1.5">
+                    <DiagramaAcorde acorde={acordes[grau]} rodape={GRAUS[grau]} />
+                  </div>
                 ))}
               </div>
             </div>
