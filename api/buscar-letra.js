@@ -89,13 +89,38 @@ async function buscarSugestoes(termo) {
     }));
 }
 
+/**
+ * Abre uma pagina e devolve o HTML.
+ *
+ * O letras.mus.br recusa com 403 os acessos que vem do servidor da Vercel,
+ * por causa do endereco de onde partem - cabecalho de navegador nao resolve.
+ * Quando isso acontece, a mesma pagina e aberta atraves de um leitor publico,
+ * que devolve o HTML igualzinho.
+ */
+async function abrirPagina(pagina) {
+  try {
+    const direta = await fetch(pagina, { headers: CABECALHOS });
+    if (direta.ok) return await direta.text();
+  } catch {
+    // Segue para o plano B.
+  }
+
+  try {
+    const pelaLeitura = await fetch(`https://r.jina.ai/${pagina}`, {
+      headers: { ...CABECALHOS, 'x-return-format': 'html' },
+    });
+    if (!pelaLeitura.ok) return null;
+    return await pelaLeitura.text();
+  } catch {
+    return null;
+  }
+}
+
 /** Abre a pagina da musica e extrai a letra. */
 async function buscarLetra(dns, url) {
   const pagina = `https://www.letras.mus.br/${encodeURIComponent(dns)}/${encodeURIComponent(url)}/`;
-  const resposta = await fetch(pagina, { headers: CABECALHOS });
-  if (!resposta.ok) return null;
-
-  const html = await resposta.text();
+  const html = await abrirPagina(pagina);
+  if (!html) return null;
 
   const bloco = /<div[^>]*class="[^"]*lyric-original[^"]*"[^>]*>([\s\S]*?)<\/div>/i.exec(html);
   if (!bloco) return null;

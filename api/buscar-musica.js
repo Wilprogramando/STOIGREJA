@@ -207,23 +207,44 @@ function extrairLetraDoLetras(html) {
   return '';
 }
 
+/**
+ * Abre uma pagina e devolve o HTML.
+ *
+ * O letras.mus.br recusa com 403 os acessos que vem do servidor da Vercel,
+ * por causa do endereco de onde partem - cabecalho de navegador nao resolve.
+ * Quando isso acontece, a mesma pagina e aberta atraves de um leitor publico,
+ * que devolve o HTML igualzinho.
+ */
+async function abrirPagina(pagina) {
+  try {
+    const direta = await fetch(pagina, { headers: CABECALHOS });
+    if (direta.ok) return await direta.text();
+    anotar(`letras.mus.br recusou: HTTP ${direta.status}`);
+  } catch (erro) {
+    anotar('letras.mus.br nao respondeu: ' + (erro && erro.message));
+  }
+
+  try {
+    const pelaLeitura = await fetch(`https://r.jina.ai/${pagina}`, {
+      headers: { ...CABECALHOS, 'x-return-format': 'html' },
+    });
+    if (!pelaLeitura.ok) {
+      anotar(`o leitor publico tambem recusou: HTTP ${pelaLeitura.status}`);
+      return null;
+    }
+    return await pelaLeitura.text();
+  } catch (erro) {
+    anotar('o leitor publico nao respondeu: ' + (erro && erro.message));
+    return null;
+  }
+}
+
 /** Abre a pagina do Letras.mus.br e extrai a letra. */
 async function letraDoLetras(dns, url) {
   const pagina = `https://www.letras.mus.br/${encodeURIComponent(dns)}/${encodeURIComponent(url)}/`;
 
-  let resposta;
-  try {
-    resposta = await fetch(pagina, { headers: CABECALHOS });
-  } catch (erro) {
-    anotar('letras.mus.br nao respondeu: ' + (erro && erro.message));
-    return null;
-  }
-  if (!resposta.ok) {
-    anotar('letras.mus.br recusou: HTTP ' + resposta.status);
-    return null;
-  }
-
-  const html = await resposta.text();
+  const html = await abrirPagina(pagina);
+  if (!html) return null;
 
   const letra = extrairLetraDoLetras(html);
   if (!letra) {
