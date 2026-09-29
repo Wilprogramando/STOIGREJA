@@ -21,8 +21,23 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
 if ('serviceWorker' in navigator && import.meta.env.PROD) {
   window.addEventListener('load', () => {
     navigator.serviceWorker
-      .register('/sw.js')
-      .then(() => console.log('✅ Modo offline ativado'))
+      // updateViaCache 'none': o navegador tem de baixar o sw.js do servidor,
+      // nunca da própria cópia guardada. Sem isso ele podia continuar lendo o
+      // arquivo antigo e o app ficava parado numa versão velha.
+      .register('/sw.js', { updateViaCache: 'none' })
+      .then(registro => {
+        console.log('✅ Modo offline ativado')
+
+        // Procura versão nova ao abrir e toda vez que o app volta para a
+        // frente (trocou de aba, destravou o celular). É o que faz a
+        // publicação chegar sozinha, sem precisar do botão de atualizar.
+        const procurarVersaoNova = () => {
+          if (document.visibilityState === 'visible') registro.update().catch(() => undefined)
+        }
+
+        procurarVersaoNova()
+        document.addEventListener('visibilitychange', procurarVersaoNova)
+      })
       .catch(err => console.warn('⚠️ Não foi possível ativar o modo offline:', err))
   })
 
