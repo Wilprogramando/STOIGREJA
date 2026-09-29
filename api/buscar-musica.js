@@ -29,6 +29,15 @@ const CABECALHOS = {
   'upgrade-insecure-requests': '1',
 };
 
+/**
+ * Diario da busca atual: anota por que cada fonte falhou, para a mensagem de
+ * erro poder dizer o motivo em vez de so dizer que nao achou.
+ */
+let diario = [];
+const anotar = (motivo) => {
+  if (motivo) diario.push(String(motivo));
+};
+
 /** Tira acento e pontuacao para comparar textos. */
 function normalizar(texto) {
   return (texto || '')
@@ -205,15 +214,22 @@ async function letraDoLetras(dns, url) {
   let resposta;
   try {
     resposta = await fetch(pagina, { headers: CABECALHOS });
-  } catch {
+  } catch (erro) {
+    anotar('letras.mus.br nao respondeu: ' + (erro && erro.message));
     return null;
   }
-  if (!resposta.ok) return null;
+  if (!resposta.ok) {
+    anotar('letras.mus.br recusou: HTTP ' + resposta.status);
+    return null;
+  }
 
   const html = await resposta.text();
 
   const letra = extrairLetraDoLetras(html);
-  if (!letra) return null;
+  if (!letra) {
+    anotar('letras.mus.br abriu, mas nao achei o bloco da letra');
+    return null;
+  }
 
   const { nome, cantor } = identificarPaginaDoLetras(html);
 
@@ -333,7 +349,10 @@ function limparCabecalhoGenius(letra) {
 async function letraDoGenius(caminho) {
   const pagina = caminho.startsWith('http') ? caminho : `https://genius.com${caminho}`;
   const resposta = await fetch(pagina, { headers: CABECALHOS });
-  if (!resposta.ok) return null;
+  if (!resposta.ok) {
+    anotar('genius.com recusou: HTTP ' + resposta.status);
+    return null;
+  }
 
   const html = await resposta.text();
   const partes = [];
@@ -569,6 +588,8 @@ export default async function handler(req, res) {
   const guardar = () =>
     res.setHeader('Cache-Control', 's-maxage=3600, stale-while-revalidate');
 
+  diario = [];
+
   try {
     // ---- Letra completa de uma musica ja escolhida na lista.
     //
@@ -611,6 +632,9 @@ export default async function handler(req, res) {
           if (!achado || !achado.letra) continue;
 
           if (!letraConfere(achado, nome, cantor, !exata)) {
+            anotar(
+              `achei "${achado.nome}" - "${achado.cantor}", que nao e a musica pedida`
+            );
             console.warn(
               `Letra descartada: pedi "${nome}" - "${cantor}", ` +
                 `a pagina e de "${achado.nome}" - "${achado.cantor}" (${achado.fonte})`
@@ -620,14 +644,21 @@ export default async function handler(req, res) {
 
           return responder(achado);
         } catch (erro) {
+          anotar(erro && erro.message);
           console.warn('Tentativa de letra falhou:', erro && erro.message);
         }
       }
 
+      // O motivo vai junto: sem ele, "nao encontrei" nao diz se o site
+      // bloqueou, se mudou de desenho ou se a letra era de outro cantor.
+      const motivo = Array.from(new Set(diario)).slice(0, 3).join(' | ');
+
       return res.status(404).json({
         erro:
           'Nao encontrei a letra desta musica com o mesmo cantor. ' +
-          'Tente outra opcao da lista.',
+          'Tente outra opcao da lista.' +
+          (motivo ? ` (motivo: ${motivo})` : ''),
+        motivo,
       });
     }
 
