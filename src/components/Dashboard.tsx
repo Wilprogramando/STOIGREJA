@@ -306,18 +306,25 @@ export const Dashboard: React.FC<DashboardProps> = ({ onPageChange }) => {
               const hoje = ehHoje(rep.data) && !passou;
               const ontem = ehOntem(rep.data);
               const indiceProximo = proximos.findIndex(r => !jaPassou(r));
+              // O próximo culto fica sempre em verde e em destaque, para bater o
+              // olho e já saber qual é.
+              const ehProximo = index === indiceProximo;
 
               return (
                 <button
                   key={rep.id}
                   onClick={() => onPageChange('repertorios')}
-                  className="w-full text-left bg-white rounded-2xl border border-gray-100 shadow-lg hover:shadow-xl transition p-4 flex items-center gap-4"
+                  className={`w-full text-left rounded-2xl transition p-4 flex items-center gap-4 ${
+                    ehProximo
+                      ? 'bg-green-50 border-2 border-green-500 ring-2 ring-green-200 shadow-xl hover:shadow-2xl'
+                      : 'bg-white border border-gray-100 shadow-lg hover:shadow-xl'
+                  }`}
                 >
                   <div className={`w-16 shrink-0 rounded-xl border py-2 text-center ${
-                    passou ? 'border-gray-200 bg-gray-100' : hoje ? 'border-green-300 bg-green-50' : 'border-gray-200'
+                    ehProximo ? 'border-green-400 bg-white' : passou ? 'border-gray-200 bg-gray-100' : 'border-gray-200'
                   }`}>
                     <p className={`text-2xl font-extrabold leading-none ${
-                      passou ? 'text-gray-400' : hoje ? 'text-green-600' : 'text-indigo-600'
+                      ehProximo ? 'text-green-600' : passou ? 'text-gray-400' : 'text-indigo-600'
                     }`}>
                       {dia || '--'}
                     </p>
@@ -337,8 +344,8 @@ export const Dashboard: React.FC<DashboardProps> = ({ onPageChange }) => {
                         <span className="shrink-0 text-[10px] font-bold text-green-700 bg-green-100 px-2 py-0.5 rounded-full">
                           HOJE
                         </span>
-                      ) : index === indiceProximo ? (
-                        <span className="shrink-0 text-[10px] font-bold text-indigo-700 bg-indigo-100 px-2 py-0.5 rounded-full">
+                      ) : ehProximo ? (
+                        <span className="shrink-0 text-[10px] font-bold text-white bg-green-600 px-2 py-0.5 rounded-full">
                           PRÓXIMO
                         </span>
                       ) : null}
@@ -356,7 +363,9 @@ export const Dashboard: React.FC<DashboardProps> = ({ onPageChange }) => {
                     <p className="text-sm text-gray-500">🎵 {rep.hinos.length} hino(s)</p>
                   </div>
 
-                  <span className="shrink-0 p-2 rounded-lg bg-gray-50 text-gray-500">
+                  <span className={`shrink-0 p-2 rounded-lg ${
+                    ehProximo ? 'bg-green-100 text-green-700' : 'bg-gray-50 text-gray-500'
+                  }`}>
                     <ChevronRight size={18} />
                   </span>
                 </button>
