@@ -18,13 +18,73 @@ const GRAUS = ['I', 'ii', 'iii', 'IV', 'V', 'vi', 'vii°'];
 
 /** Papel de cada grau, com a cor usada no cartão. */
 const FUNCOES = [
-  { nome: 'Tônica', cor: 'bg-indigo-50 border-indigo-200 text-indigo-700' },
-  { nome: 'Subdominante', cor: 'bg-sky-50 border-sky-200 text-sky-700' },
-  { nome: 'Tônica', cor: 'bg-indigo-50 border-indigo-200 text-indigo-700' },
-  { nome: 'Subdominante', cor: 'bg-sky-50 border-sky-200 text-sky-700' },
-  { nome: 'Dominante', cor: 'bg-amber-50 border-amber-200 text-amber-700' },
-  { nome: 'Tônica', cor: 'bg-indigo-50 border-indigo-200 text-indigo-700' },
-  { nome: 'Dominante', cor: 'bg-amber-50 border-amber-200 text-amber-700' },
+  { nome: 'Tônica', cor: 'bg-emerald-100 border-emerald-400 text-emerald-800' },
+  { nome: 'Subdominante', cor: 'bg-blue-100 border-blue-400 text-blue-800' },
+  { nome: 'Tônica', cor: 'bg-emerald-100 border-emerald-400 text-emerald-800' },
+  { nome: 'Subdominante', cor: 'bg-blue-100 border-blue-400 text-blue-800' },
+  { nome: 'Dominante', cor: 'bg-rose-100 border-rose-400 text-rose-800' },
+  { nome: 'Tônica', cor: 'bg-emerald-100 border-emerald-400 text-emerald-800' },
+  { nome: 'Dominante', cor: 'bg-rose-100 border-rose-400 text-rose-800' },
+];
+
+/** As tres funcoes harmonicas, com os graus que pertencem a cada uma. */
+const FUNCOES_HARMONICAS = [
+  {
+    nome: 'Tônica',
+    sensacao: 'Repouso',
+    cor: 'bg-emerald-100 border-emerald-400 text-emerald-800',
+    bolinha: 'bg-emerald-500',
+    graus: [0, 2, 5],
+    texto:
+      'Sentido conclusivo, de descanso. Geralmente é o acorde que termina a música. O principal é o I grau, que pode ser trocado pelo vi ou pelo iii.',
+  },
+  {
+    nome: 'Subdominante',
+    sensacao: 'Preparação',
+    cor: 'bg-blue-100 border-blue-400 text-blue-800',
+    bolinha: 'bg-blue-500',
+    graus: [3, 1],
+    texto:
+      'Sentido meio suspensivo, dá a sensação de afastamento da tônica. O principal é o IV grau, que pode ser trocado pelo ii.',
+  },
+  {
+    nome: 'Dominante',
+    sensacao: 'Tensão',
+    cor: 'bg-rose-100 border-rose-400 text-rose-800',
+    bolinha: 'bg-rose-500',
+    graus: [4, 6],
+    texto:
+      'Sentido suspensivo, pede resolução na tônica. É a sensação de que a música vai voltar para casa. O principal é o V grau, que pode ser trocado pelo vii.',
+  },
+];
+
+/** Os cinco tipos de cadencia mais comuns. */
+const CADENCIAS = [
+  {
+    nome: 'Cadência Perfeita',
+    texto: 'A resolução mais forte: dominante seguida da tônica (V - I). É o final mais definitivo. Quando vem uma subdominante antes (IV ou ii), ela é chamada de "autêntica".',
+    exemplo: 'G7 - C',
+  },
+  {
+    nome: 'Cadência Imperfeita',
+    texto: 'É a V7 - I com um dos acordes invertido, ou então vii - I. A resolução fica bem mais discreta.',
+    exemplo: 'G/B - C  •  Bm7(b5) - C',
+  },
+  {
+    nome: 'Cadência Plagal',
+    texto: 'Também conclui, mas de forma mais suave. Usa subdominante e tônica (IV - I), invertidos ou não.',
+    exemplo: 'F - C  •  Dm - C',
+  },
+  {
+    nome: 'Meia Cadência',
+    texto: 'Quando a frase termina na dominante, deixando a sensação de continuação.',
+    exemplo: 'Am - G  •  Dm - G',
+  },
+  {
+    nome: 'Cadência Interrompida',
+    texto: 'Parece que vai terminar numa cadência perfeita, mas desvia para outro grau.',
+    exemplo: 'Dm - G - Am  •  F - G - Em',
+  },
 ];
 
 /** Progressões comuns, guardadas pelo índice do grau. */
@@ -143,14 +203,75 @@ export const CampoHarmonico = () => {
 
         <div className="flex flex-wrap gap-3 px-4 pb-4 text-[11px] text-gray-500">
           <span className="flex items-center gap-1">
-            <span className="w-2.5 h-2.5 rounded-full bg-indigo-400" /> Tônica (repouso)
+            <span className="w-2.5 h-2.5 rounded-full bg-emerald-500" /> Tônica (repouso)
           </span>
           <span className="flex items-center gap-1">
-            <span className="w-2.5 h-2.5 rounded-full bg-sky-400" /> Subdominante (preparação)
+            <span className="w-2.5 h-2.5 rounded-full bg-blue-500" /> Subdominante (preparação)
           </span>
           <span className="flex items-center gap-1">
-            <span className="w-2.5 h-2.5 rounded-full bg-amber-400" /> Dominante (tensão)
+            <span className="w-2.5 h-2.5 rounded-full bg-rose-500" /> Dominante (tensão)
           </span>
+        </div>
+      </Topico>
+
+      {/* Funções harmônicas: o que cada acorde faz dentro do tom */}
+      <Topico
+        id="funcoes"
+        icone="🧭"
+        titulo="Funções Harmônicas"
+        resumo="O que cada acorde faz dentro do tom"
+        aberto={estaAberto('funcoes')}
+        onToggle={alternarTopico}
+      >
+        <div className="p-4 space-y-3">
+          <p className="text-xs text-gray-500">
+            Todo acorde do campo harmônico tem um papel. São só três: um que descansa, um que
+            prepara e um que cria tensão. Abaixo, já no tom de {tomSelecionado}.
+          </p>
+
+          {FUNCOES_HARMONICAS.map(funcao => (
+            <div key={funcao.nome} className={`rounded-xl border p-3 ${funcao.cor}`}>
+              <div className="flex items-center gap-2 mb-1">
+                <span className={`w-2.5 h-2.5 rounded-full ${funcao.bolinha}`} />
+                <p className="font-bold">{funcao.nome}</p>
+                <span className="text-[10px] font-semibold uppercase tracking-wide opacity-70">
+                  {funcao.sensacao}
+                </span>
+              </div>
+
+              <p className="text-xs leading-relaxed text-gray-700 mb-2">{funcao.texto}</p>
+
+              <div className="flex flex-wrap gap-2">
+                {funcao.graus.map(grau => (
+                  <span
+                    key={grau}
+                    className="px-2.5 py-1 rounded-lg bg-white/80 border border-white text-gray-900 text-sm font-bold"
+                  >
+                    {acordes[grau]}
+                    <span className="ml-1 text-[10px] font-semibold text-gray-500">
+                      {GRAUS[grau]}
+                    </span>
+                  </span>
+                ))}
+              </div>
+            </div>
+          ))}
+
+          <div className="rounded-xl bg-gray-50 border border-gray-100 p-3">
+            <p className="text-xs font-semibold text-gray-500 mb-2">
+              Cadências: como as funções se encaixam para encerrar uma frase
+            </p>
+
+            <div className="space-y-2.5">
+              {CADENCIAS.map(cadencia => (
+                <div key={cadencia.nome}>
+                  <p className="text-sm font-bold text-gray-800">{cadencia.nome}</p>
+                  <p className="text-xs leading-relaxed text-gray-600">{cadencia.texto}</p>
+                  <p className="text-xs font-bold text-indigo-700 mt-0.5">{cadencia.exemplo}</p>
+                </div>
+              ))}
+            </div>
+          </div>
         </div>
       </Topico>
 
