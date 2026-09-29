@@ -316,7 +316,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ onPageChange }) => {
                   onClick={() => onPageChange('repertorios')}
                   className={`w-full text-left rounded-2xl transition p-4 flex items-center gap-4 ${
                     ehProximo
-                      ? 'bg-green-50 border border-green-500 ring-1 ring-green-200 shadow-xl hover:shadow-2xl'
+                      ? 'bg-green-50 border border-green-500 shadow-xl hover:shadow-2xl'
                       : passou
                         ? 'bg-white border border-gray-200 shadow-lg hover:shadow-xl'
                         : 'bg-white border border-green-400 shadow-lg hover:shadow-xl'

@@ -13,10 +13,20 @@
  *   GET /api/buscar-musica?letra=1&path=/Xis-lyrics&nome=..&cantor=..  -> letra (Genius)
  */
 
+// O Letras.mus.br devolve 403 para quem nao parece um navegador de verdade,
+// por isso o cabecalho vai completo, do jeito que o Chrome manda.
 const CABECALHOS = {
   'user-agent':
-    'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0 Safari/537.36',
-  'accept-language': 'pt-BR,pt;q=0.9',
+    'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36',
+  accept: 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8',
+  'accept-language': 'pt-BR,pt;q=0.9,en;q=0.8',
+  'sec-ch-ua': '"Chromium";v="131", "Not_A Brand";v="24"',
+  'sec-ch-ua-mobile': '?0',
+  'sec-ch-ua-platform': '"Windows"',
+  'sec-fetch-dest': 'document',
+  'sec-fetch-mode': 'navigate',
+  'sec-fetch-site': 'same-origin',
+  'upgrade-insecure-requests': '1',
 };
 
 /** Tira acento e pontuacao para comparar textos. */
@@ -221,7 +231,12 @@ function identificarPaginaDoLetras(html) {
   const limpar = (t) => decodificar(String(t || '').replace(/<[^>]+>/g, '')).trim();
 
   const tituloTag = /<h1[^>]*>([\s\S]*?)<\/h1>/i.exec(html);
-  const cantorTag = /<h2[^>]*>[\s\S]*?<span[^>]*>([\s\S]*?)<\/span>/i.exec(html);
+  // O cantor vem no link logo abaixo do titulo (class title-secondary). Pegar
+  // um <h2> qualquer trazia o cabecalho do site e a letra era descartada.
+  const cantorTag =
+    /<h1[^>]*>[\s\S]*?<\/h1>[\s\S]{0,400}?<a[^>]*class="[^"]*title-secondary[^"]*"[^>]*>([\s\S]*?)<\/a>/i.exec(
+      html
+    );
 
   let nome = tituloTag ? limpar(tituloTag[1]) : '';
   let cantor = cantorTag ? limpar(cantorTag[1]) : '';
