@@ -562,7 +562,12 @@ export default async function handler(req, res) {
     q = '', letra = '', dns = '', url = '', path = '', nome = '', cantor = '', gid = '',
   } = req.query || {};
 
-  res.setHeader('Cache-Control', 's-maxage=3600, stale-while-revalidate');
+  // Só o que deu certo fica guardado. Se a resposta for erro, ela nao pode
+  // ficar em cache: o problema ficaria preso por uma hora, mesmo depois de
+  // arrumado.
+  res.setHeader('Cache-Control', 'no-store');
+  const guardar = () =>
+    res.setHeader('Cache-Control', 's-maxage=3600, stale-while-revalidate');
 
   try {
     // ---- Letra completa de uma musica ja escolhida na lista.
@@ -571,12 +576,14 @@ export default async function handler(req, res) {
     // procura a mesma musica na outra fonte antes de desistir. Assim uma pagina
     // fora do ar (ou com o desenho trocado) nao deixa o hino sem letra.
     if (letra) {
-      const responder = (achado) =>
-        res.status(200).json({
+      const responder = (achado) => {
+        guardar();
+        return res.status(200).json({
           ...achado,
           nome: achado.nome || nome,
           cantor: achado.cantor || cantor,
         });
+      };
 
       const idGenius = String(gid || '').replace('genius:', '');
 
@@ -644,6 +651,7 @@ export default async function handler(req, res) {
       });
     }
 
+    guardar();
     return res.status(200).json({ resultados });
   } catch (erro) {
     console.error('Erro ao buscar musica:', erro);

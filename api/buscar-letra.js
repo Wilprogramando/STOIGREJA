@@ -133,13 +133,18 @@ async function buscarLetra(dns, url) {
 export default async function handler(req, res) {
   const { q = '', dns = '', url = '' } = req.query || {};
 
-  res.setHeader('Cache-Control', 's-maxage=3600, stale-while-revalidate');
+  // Só o que deu certo fica guardado: uma resposta de erro em cache prenderia
+  // o problema por uma hora, mesmo depois de arrumado.
+  res.setHeader('Cache-Control', 'no-store');
+  const guardar = () =>
+    res.setHeader('Cache-Control', 's-maxage=3600, stale-while-revalidate');
 
   try {
     // Modo 2: ja sei qual musica quero, so trago a letra.
     if (dns && url) {
       const achado = await buscarLetra(dns, url);
       if (!achado) return res.status(404).json({ erro: 'Letra nao encontrada' });
+      guardar();
       return res.status(200).json(achado);
     }
 
@@ -157,6 +162,7 @@ export default async function handler(req, res) {
     if (normalizar(primeiro.nome) === normalizar(termo)) {
       const achado = await buscarLetra(primeiro.dns, primeiro.url);
       if (achado) {
+        guardar();
         return res.status(200).json({
           ...achado,
           nome: achado.nome || primeiro.nome,
@@ -166,6 +172,7 @@ export default async function handler(req, res) {
       }
     }
 
+    guardar();
     return res.status(200).json({ resultados: sugestoes });
   } catch (erro) {
     console.error('Erro ao buscar letra:', erro);
