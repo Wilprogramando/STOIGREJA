@@ -280,6 +280,7 @@ export default function App() {
           logoSistema={configuracoes?.logoSistema}
           subtitulo={configuracoes?.subtitulo}
           logoADireita={tema.posicaoLogo === 'direita'}
+          mostrarBusca={currentPage === 'dashboard'}
         />
 
         <StatusConexao />

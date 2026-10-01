@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { Music, Menu, RefreshCw } from 'lucide-react';
+import { BuscaHinosHeader } from './BuscaHinosHeader';
 
 interface HeaderProps {
   onToggleSidebar: () => void;
@@ -8,6 +9,8 @@ interface HeaderProps {
   subtitulo?: string;
   /** Escolhido em Configurações > Aparência. */
   logoADireita?: boolean;
+  /** Mostra a barra de pesquisa de hinos (só na tela inicial). */
+  mostrarBusca?: boolean;
 }
 
 export const Header: React.FC<HeaderProps> = ({ 
@@ -15,7 +18,8 @@ export const Header: React.FC<HeaderProps> = ({
   tituloSistema,
   logoSistema,
   subtitulo,
-  logoADireita
+  logoADireita,
+  mostrarBusca
 }) => {
   const [atualizando, setAtualizando] = useState(false);
 
@@ -49,7 +53,11 @@ export const Header: React.FC<HeaderProps> = ({
 
   return (
     <header className="cabecalho-sistema relative bg-gradient-to-r from-indigo-600 to-purple-600 text-white">
-      <div className="max-w-7xl mx-auto px-4 pt-4 pb-6 flex items-center justify-between">
+      <div
+        className={`max-w-7xl mx-auto px-4 pt-4 flex items-center justify-between ${
+          mostrarBusca ? 'pb-3' : 'pb-6'
+        }`}
+      >
         <div className="flex items-center gap-3 min-w-0">
           <button
             onClick={onToggleSidebar}
@@ -81,6 +89,13 @@ export const Header: React.FC<HeaderProps> = ({
           </button>
         </div>
       </div>
+
+      {/* Pesquisa de hinos: aparece só na tela inicial */}
+      {mostrarBusca && (
+        <div className="max-w-7xl mx-auto px-4 pb-6">
+          <BuscaHinosHeader />
+        </div>
+      )}
 
       {/* Onda na base: tira o corte reto do cabeçalho. */}
       <svg
