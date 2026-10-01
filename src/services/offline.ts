@@ -86,8 +86,45 @@ export function cacheLimpar(): void {
 
 // ==================== ESTADO DA CONEXÃO ====================
 
+/**
+ * A nuvem respondeu da última vez? Em wi-fi sem internet (o da mesa de som,
+ * por exemplo) o aparelho se diz online, mas nada chega ao Supabase.
+ */
+let nuvemOk = true;
+let nuvemFalhouEm = 0;
+
+/** De quanto em quanto tempo uma chamada pode tentar a nuvem de novo (ms). */
+const ESPERA_NOVA_TENTATIVA = 30000;
+
+/**
+ * Registra como foi a última conversa com a nuvem.
+ *
+ * Enquanto ela estiver fora, o sistema trabalha direto com a cópia do
+ * aparelho: nada de esperar o prazo da chamada em cada tela.
+ */
+export function marcarNuvem(ok: boolean): void {
+  nuvemOk = ok;
+  if (!ok) nuvemFalhouEm = Date.now();
+}
+
+/** Volta a tentar a nuvem na próxima chamada (ex.: o wi-fi mudou). */
+export function reiniciarNuvem(): void {
+  nuvemOk = true;
+  nuvemFalhouEm = 0;
+}
+
 export function estaOnline(): boolean {
-  return typeof navigator === 'undefined' || navigator.onLine !== false;
+  if (typeof navigator !== 'undefined' && navigator.onLine === false) return false;
+  if (nuvemOk) return true;
+
+  // Uma tentativa de tempos em tempos, para o sistema voltar sozinho
+  // assim que a internet aparecer - sem travar as telas no meio tempo.
+  return Date.now() - nuvemFalhouEm >= ESPERA_NOVA_TENTATIVA;
+}
+
+// Trocou de rede ou o wi-fi voltou: vale tentar a nuvem na hora.
+if (typeof window !== 'undefined') {
+  window.addEventListener('online', reiniciarNuvem);
 }
 
 // ==================== FILA DE SINCRONIZAÇÃO ====================

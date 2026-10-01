@@ -14,6 +14,7 @@ import {
   cacheLer,
   cacheLimpar,
   estaOnline,
+  marcarNuvem,
   filaAdicionar,
   filaLer,
   filaRemover,
@@ -37,7 +38,7 @@ let supabase: any = null;
  * desistir - e a tela nunca carrega. Com o limite abaixo a chamada falha
  * rápido e o app cai para a cópia salva no aparelho.
  */
-const TEMPO_LIMITE_NUVEM = 8000;
+const TEMPO_LIMITE_NUVEM = 6000;
 
 /** fetch com prazo: passa esse tempo, cancela e deixa o app usar o cache. */
 const fetchComPrazo: typeof fetch = (entrada: any, opcoes: any = {}) => {
@@ -71,6 +72,10 @@ const fetchComPrazo: typeof fetch = (entrada: any, opcoes: any = {}) => {
  */
 let nuvemRespondendo = true;
 function avisarNuvem(ok: boolean): void {
+  // Sempre registra: cada falha reinicia a espera da próxima tentativa, senão
+  // o app voltaria a pendurar 1 chamada de 6s em cada tela do wi-fi sem internet.
+  marcarNuvem(ok);
+
   if (ok === nuvemRespondendo) return;
   nuvemRespondendo = ok;
   if (typeof window !== 'undefined') {
