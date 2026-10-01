@@ -174,14 +174,14 @@ th {
     from var(--luz-angulo),
     transparent 0deg,
     transparent 250deg,
-    rgba(22, 163, 74, 0.5) 285deg,
-    rgba(21, 128, 61, 1) 325deg,
-    rgba(74, 222, 128, 1) 348deg,
-    rgba(22, 163, 74, 0.5) 360deg
+    rgba(5, 150, 105, 0.85) 285deg,
+    rgba(4, 120, 87, 1) 320deg,
+    rgba(0, 230, 118, 1) 348deg,
+    rgba(5, 150, 105, 0.85) 360deg
   );
   /* Brilho em volta da faixa, para a luz parecer acesa */
-  filter: drop-shadow(0 0 3px rgba(34, 197, 94, 0.9))
-    drop-shadow(0 0 7px rgba(21, 128, 61, 0.6));
+  filter: saturate(1.6) drop-shadow(0 0 3px rgba(0, 230, 118, 1))
+    drop-shadow(0 0 8px rgba(5, 150, 105, 0.85));
   /* Deixa visível só a faixa da borda */
   -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
   -webkit-mask-composite: xor;
