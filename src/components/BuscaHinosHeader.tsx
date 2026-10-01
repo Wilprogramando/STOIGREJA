@@ -81,7 +81,8 @@ export const BuscaHinosHeader: React.FC = () => {
           className="absolute left-5 top-1/2 -translate-y-1/2 text-indigo-500 pointer-events-none"
         />
         <input
-          type="search"
+          // "text" e não "search": o navegador desenharia um X próprio, ficando dois.
+          type="text"
           value={termo}
           onChange={e => {
             setTermo(e.target.value);
