@@ -60,7 +60,9 @@ export const BuscaHinosHeader: React.FC = () => {
       .filter(h =>
         semAcento(h.nome).includes(busca) ||
         semAcento(h.cantor).includes(busca) ||
-        String(h.numeroHarpa ?? '').includes(busca)
+        String(h.numeroHarpa ?? '').includes(busca) ||
+        // Trecho da letra: só a partir de 3 letras, senão quase tudo casa.
+        (busca.length >= 3 && semAcento(h.letra).includes(busca))
       )
       .slice(0, MAX_RESULTADOS);
   }, [termo, hinos]);
@@ -75,8 +77,8 @@ export const BuscaHinosHeader: React.FC = () => {
     <>
       <div ref={caixa} className="relative w-full">
         <Search
-          size={18}
-          className="absolute left-3 top-1/2 -translate-y-1/2 text-white/70 pointer-events-none"
+          size={20}
+          className="absolute left-5 top-1/2 -translate-y-1/2 text-indigo-500 pointer-events-none"
         />
         <input
           type="search"
@@ -86,9 +88,9 @@ export const BuscaHinosHeader: React.FC = () => {
             setAberta(true);
           }}
           onFocus={() => setAberta(true)}
-          placeholder="Pesquisar hino e abrir a letra..."
+          placeholder="Buscar hinos, números ou palavras..."
           aria-label="Pesquisar hino"
-          className="w-full bg-white/20 text-white placeholder-white/70 rounded-xl pl-10 pr-9 py-2.5 outline-none transition focus:bg-white/30 focus:ring-2 focus:ring-white/60"
+          className="w-full bg-white/90 text-gray-800 placeholder-gray-400 rounded-full pl-14 pr-11 py-3.5 shadow-lg outline-none transition focus:bg-white focus:ring-2 focus:ring-white"
         />
         {termo && (
           <button
@@ -98,7 +100,7 @@ export const BuscaHinosHeader: React.FC = () => {
             }}
             title="Limpar busca"
             aria-label="Limpar busca"
-            className="absolute right-2 top-1/2 -translate-y-1/2 p-1 rounded-lg text-white/80 hover:bg-white/20 transition"
+            className="absolute right-3 top-1/2 -translate-y-1/2 p-1 rounded-full text-gray-400 hover:bg-gray-100 hover:text-gray-600 transition"
           >
             <X size={16} />
           </button>
