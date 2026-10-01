@@ -1,6 +1,6 @@
 import React, { useDeferredValue, useEffect, useMemo, useRef, useState } from 'react';
 import { Search, X } from 'lucide-react';
-import { getAllHinos } from '../services/db';
+import { getHinosByType } from '../services/db';
 import { Hino } from '../types';
 import { ModalVisualizaLetra } from './ModalVisualizaLetra';
 
@@ -23,11 +23,12 @@ export const BuscaHinosHeader: React.FC = () => {
   const [hinoAberto, setHinoAberto] = useState<Hino | null>(null);
   const caixa = useRef<HTMLDivElement>(null);
 
-  // Carrega os hinos assim que a tela abre, para a primeira busca já ser instantânea.
+  // Carrega os hinos assim que a tela abre, para a primeira busca já ser
+  // instantânea. Só os hinos comuns: a Harpa tem a tela dela.
   useEffect(() => {
     let cancelado = false;
     setCarregando(true);
-    getAllHinos()
+    getHinosByType('comum')
       .then(lista => {
         if (!cancelado) setHinos(lista);
       })
@@ -56,9 +57,7 @@ export const BuscaHinosHeader: React.FC = () => {
     () =>
       hinos.map(hino => ({
         hino,
-        titulo: semAcento(
-          hino.nome + ' ' + (hino.cantor || '') + ' ' + (hino.numeroHarpa ?? '')
-        ),
+        titulo: semAcento(hino.nome + ' ' + (hino.cantor || '')),
         letra: semAcento(hino.letra)
       })),
     [hinos]
@@ -72,7 +71,7 @@ export const BuscaHinosHeader: React.FC = () => {
     const busca = semAcento(termoBusca).trim();
     if (!busca) return [];
 
-    // Primeiro quem bate no nome/cantor/número, que é o que a pessoa busca na
+    // Primeiro quem bate no nome ou no cantor, que é o que a pessoa busca na
     // maioria das vezes; a letra entra depois, só para completar a lista.
     const porNome: Hino[] = [];
     const porLetra: Hino[] = [];
@@ -112,7 +111,7 @@ export const BuscaHinosHeader: React.FC = () => {
             setAberta(true);
           }}
           onFocus={() => setAberta(true)}
-          placeholder="Buscar hinos, números ou palavras..."
+          placeholder="Buscar hinos ou palavras da letra..."
           aria-label="Pesquisar hino"
           className="w-full bg-white/90 text-gray-800 placeholder-gray-400 rounded-full pl-14 pr-11 py-3.5 shadow-lg outline-none transition focus:bg-white focus:ring-2 focus:ring-white"
         />
@@ -145,7 +144,6 @@ export const BuscaHinosHeader: React.FC = () => {
                       className="w-full text-left px-4 py-3 hover:bg-indigo-50 transition"
                     >
                       <p className="font-semibold text-gray-900 break-words">
-                        {hino.numeroHarpa ? hino.numeroHarpa + ' - ' : ''}
                         {hino.nome}
                       </p>
                       <p className="text-xs text-gray-500 mt-0.5">
