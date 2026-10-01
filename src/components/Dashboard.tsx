@@ -209,10 +209,12 @@ export const Dashboard: React.FC<DashboardProps> = ({ onPageChange }) => {
     return new Date(ano, mes - 1, dia, hora || 0, minuto || 0, 0, 0);
   };
 
-  // Já passou: a data/horário do repertório ficou para trás
+  // Já passou: só 5h depois do horário marcado, para o repertório seguir
+  // como "Hoje" durante o culto e o tempo logo depois dele
   const jaPassou = (rep: Repertorio) => {
     const inicio = inicioDoRepertorio(rep);
-    return inicio !== null && inicio.getTime() <= Date.now();
+    if (inicio === null) return false;
+    return inicio.getTime() + 5 * 60 * 60 * 1000 <= Date.now();
   };
 
   // Mostra "Ontem" quando a data é a do dia anterior
