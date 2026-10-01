@@ -167,16 +167,17 @@ th {
 .borda-luz::before {
   content: '';
   position: absolute;
-  inset: -1px;
+  inset: -2px;
   border-radius: inherit;
-  padding: 1px;
+  padding: 2px;
   background: conic-gradient(
     from var(--luz-angulo),
     transparent 0deg,
-    transparent 290deg,
-    rgba(34, 197, 94, 0.25) 320deg,
-    rgba(134, 239, 172, 0.95) 350deg,
-    rgba(34, 197, 94, 0.25) 360deg
+    transparent 250deg,
+    rgba(21, 128, 61, 0.35) 285deg,
+    rgba(20, 83, 45, 1) 330deg,
+    rgba(22, 163, 74, 1) 352deg,
+    rgba(21, 128, 61, 0.35) 360deg
   );
   /* Deixa visível só a faixa da borda */
   -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
