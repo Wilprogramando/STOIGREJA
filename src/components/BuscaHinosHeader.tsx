@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useRef, useState } from 'react';
+import React, { useDeferredValue, useEffect, useMemo, useRef, useState } from 'react';
 import { Search, X } from 'lucide-react';
 import { getAllHinos } from '../services/db';
 import { Hino } from '../types';
@@ -23,10 +23,8 @@ export const BuscaHinosHeader: React.FC = () => {
   const [hinoAberto, setHinoAberto] = useState<Hino | null>(null);
   const caixa = useRef<HTMLDivElement>(null);
 
-  // Carrega os hinos uma vez, na primeira digitação, para não pesar a abertura do app.
+  // Carrega os hinos assim que a tela abre, para a primeira busca já ser instantânea.
   useEffect(() => {
-    if (!termo.trim() || hinos.length > 0 || carregando) return;
-
     let cancelado = false;
     setCarregando(true);
     getAllHinos()
@@ -41,7 +39,7 @@ export const BuscaHinosHeader: React.FC = () => {
     return () => {
       cancelado = true;
     };
-  }, [termo, hinos.length, carregando]);
+  }, []);
 
   // Clique fora fecha a lista de resultados.
   useEffect(() => {
@@ -52,20 +50,45 @@ export const BuscaHinosHeader: React.FC = () => {
     return () => document.removeEventListener('mousedown', aoClicar);
   }, []);
 
+  // Índice pronto: tira os acentos de cada hino uma vez só. Sem isso, cada tecla
+  // digitada normalizava a letra inteira de todos os hinos — daí a lentidão.
+  const indice = useMemo(
+    () =>
+      hinos.map(hino => ({
+        hino,
+        titulo: semAcento(
+          hino.nome + ' ' + (hino.cantor || '') + ' ' + (hino.numeroHarpa ?? '')
+        ),
+        letra: semAcento(hino.letra)
+      })),
+    [hinos]
+  );
+
+  // Enquanto a digitação continua, a tela não trava: o React mostra o resultado
+  // anterior e calcula o novo em segundo plano.
+  const termoBusca = useDeferredValue(termo);
+
   const resultados = useMemo(() => {
-    const busca = semAcento(termo).trim();
+    const busca = semAcento(termoBusca).trim();
     if (!busca) return [];
 
-    return hinos
-      .filter(h =>
-        semAcento(h.nome).includes(busca) ||
-        semAcento(h.cantor).includes(busca) ||
-        String(h.numeroHarpa ?? '').includes(busca) ||
-        // Trecho da letra: só a partir de 3 letras, senão quase tudo casa.
-        (busca.length >= 3 && semAcento(h.letra).includes(busca))
-      )
-      .slice(0, MAX_RESULTADOS);
-  }, [termo, hinos]);
+    // Primeiro quem bate no nome/cantor/número, que é o que a pessoa busca na
+    // maioria das vezes; a letra entra depois, só para completar a lista.
+    const porNome: Hino[] = [];
+    const porLetra: Hino[] = [];
+    const buscaNaLetra = busca.length >= 3;
+
+    for (const item of indice) {
+      if (item.titulo.includes(busca)) {
+        porNome.push(item.hino);
+        if (porNome.length === MAX_RESULTADOS) return porNome;
+      } else if (buscaNaLetra && porLetra.length < MAX_RESULTADOS && item.letra.includes(busca)) {
+        porLetra.push(item.hino);
+      }
+    }
+
+    return porNome.concat(porLetra).slice(0, MAX_RESULTADOS);
+  }, [termoBusca, indice]);
 
   const abrirLetra = (hino: Hino) => {
     setHinoAberto(hino);
