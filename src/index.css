@@ -167,9 +167,9 @@ th {
 .borda-luz::before {
   content: '';
   position: absolute;
-  inset: -1px;
+  inset: -0.5px;
   border-radius: inherit;
-  padding: 1px;
+  padding: 0.5px;
   background: conic-gradient(
     from var(--luz-angulo),
     transparent 0deg,
@@ -187,7 +187,7 @@ th {
   -webkit-mask-composite: xor;
   mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
   mask-composite: exclude;
-  animation: girarLuz 4s linear infinite;
+  animation: girarLuz 9s linear infinite;
   pointer-events: none;
 }
 
