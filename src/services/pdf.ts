@@ -1,5 +1,16 @@
-import html2pdf from 'html2pdf.js';
 import { Hino, Repertorio, Configuracoes } from '../types';
+
+/**
+ * Carrega o gerador de PDF só na hora de gerar um.
+ *
+ * Ele traz o jsPDF e o html2canvas junto (quase meio mega), e quem abre o app
+ * quase nunca vai pedir um PDF logo de cara. Antes isso vinha no arquivo
+ * principal e atrasava a abertura de todas as telas.
+ */
+async function carregarHtml2Pdf() {
+  const modulo = await import('html2pdf.js');
+  return modulo.default;
+}
 
 export async function generateHinoPdf(
   hino: Hino,
@@ -64,6 +75,8 @@ ${hino.letra}
     html2canvas: { scale: 2, useCORS: true, logging: false, backgroundColor: '#ffffff' },
     jsPDF: { orientation: 'portrait', unit: 'mm', format: 'a4', compress: true }
   };
+
+  const html2pdf = await carregarHtml2Pdf();
 
   return html2pdf()
     .set(opt)
@@ -192,6 +205,8 @@ ${hinoRep.letra}
     html2canvas: { scale: 2, useCORS: true, logging: false, backgroundColor: '#ffffff' },
     jsPDF: { orientation: 'portrait', unit: 'mm', format: 'a4', compress: true }
   };
+
+  const html2pdf = await carregarHtml2Pdf();
 
   return html2pdf()
     .set(opt)

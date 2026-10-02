@@ -1,22 +1,39 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, Suspense, lazy } from 'react';
 import { Header } from './components/Header';
 import { Sidebar } from './components/Sidebar';
 import { Dashboard } from './components/Dashboard';
-import { CadastrarHino } from './components/CadastrarHino';
-import { HinosComuns } from './components/HinosComuns';
-import { Harpa } from './components/Harpa';
-import { BuscarMusica } from './components/BuscarMusica';
-import { OuvirMusica } from './components/OuvirMusica';
-import { MontarRepertorio } from './components/MontarRepertorio';
-import { RepertoriosSalvos } from './components/RepertoriosSalvos';
-import { ConfiguracoesView } from './components/Configuracoes';
-import { Relatorios } from './components/Relatorios';
-import { CampoHarmonico } from './components/CampoHarmonico';
-import { Afinador } from './components/Afinador';
-import { TomDaMusica } from './components/TomDaMusica';
-import { Anotacoes } from './components/Anotacoes';
 import { StatusConexao } from './components/StatusConexao';
 import { BarraInferior } from './components/BarraInferior';
+
+/**
+ * TELAS CARREGADAS SÓ QUANDO USADAS
+ *
+ * Quem abre o app cai no Dashboard - ele vem junto, pronto. As outras telas
+ * viram arquivos separados, baixados no clique do menu (e já guardados pelo
+ * modo offline). Antes as dezessete telas vinham num arquivo só de 1,3 MB,
+ * que o celular tinha de baixar e interpretar inteiro antes de desenhar
+ * qualquer coisa.
+ */
+const CadastrarHino = lazy(() => import('./components/CadastrarHino').then(m => ({ default: m.CadastrarHino })));
+const HinosComuns = lazy(() => import('./components/HinosComuns').then(m => ({ default: m.HinosComuns })));
+const Harpa = lazy(() => import('./components/Harpa').then(m => ({ default: m.Harpa })));
+const BuscarMusica = lazy(() => import('./components/BuscarMusica').then(m => ({ default: m.BuscarMusica })));
+const OuvirMusica = lazy(() => import('./components/OuvirMusica').then(m => ({ default: m.OuvirMusica })));
+const MontarRepertorio = lazy(() => import('./components/MontarRepertorio').then(m => ({ default: m.MontarRepertorio })));
+const RepertoriosSalvos = lazy(() => import('./components/RepertoriosSalvos').then(m => ({ default: m.RepertoriosSalvos })));
+const ConfiguracoesView = lazy(() => import('./components/Configuracoes').then(m => ({ default: m.ConfiguracoesView })));
+const Relatorios = lazy(() => import('./components/Relatorios').then(m => ({ default: m.Relatorios })));
+const CampoHarmonico = lazy(() => import('./components/CampoHarmonico').then(m => ({ default: m.CampoHarmonico })));
+const Afinador = lazy(() => import('./components/Afinador').then(m => ({ default: m.Afinador })));
+const TomDaMusica = lazy(() => import('./components/TomDaMusica').then(m => ({ default: m.TomDaMusica })));
+const Anotacoes = lazy(() => import('./components/Anotacoes').then(m => ({ default: m.Anotacoes })));
+
+/** Espera curta da tela que está sendo baixada, sem pular o layout. */
+const CarregandoTela = () => (
+  <div className="flex items-center justify-center py-20">
+    <div className="w-8 h-8 rounded-full border-2 border-gray-200 border-t-indigo-600 animate-spin" />
+  </div>
+);
 
 import { initializeHarpaBase, getConfiguracoes } from './services/db';
 import { registrarAcesso } from './services/acessos';
@@ -286,7 +303,9 @@ export default function App() {
         <StatusConexao />
 
         <main className="flex-1 overflow-auto p-4 md:p-8">
-          {renderPage()}
+          <Suspense fallback={<CarregandoTela />}>
+            {renderPage()}
+          </Suspense>
         </main>
 
         <BarraInferior

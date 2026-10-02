@@ -17,10 +17,11 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
 )
 
 // Tira a abertura animada (está no index.html, para aparecer antes do React).
-// Espera o tempo da animação acabar, senão em conexão rápida ela só piscava.
+// O mínimo é curto de propósito: é só para a logo não dar um flash de 50ms
+// quando o app já está no cache. Passado isso, quem manda é o app estar pronto.
 const abertura = document.getElementById('abertura')
 if (abertura) {
-  const DURACAO_MINIMA = 1100
+  const DURACAO_MINIMA = 450
   const esperar = Math.max(0, DURACAO_MINIMA - performance.now())
 
   window.setTimeout(() => {
