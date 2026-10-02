@@ -125,7 +125,7 @@ function contarMaisCantados(repertorios: Repertorio[], hinos: Hino[]): HinoConta
 const StatCard = ({ icon: Icon, label, value, rodape, cor, onClick }: any) => (
   <button
     onClick={onClick}
-    className={`relative overflow-hidden text-left bg-white rounded-2xl border border-gray-100 border-l-4 ${cor.borda} shadow-lg hover:shadow-xl transition p-3 sm:p-4 w-full`}
+    className={`relative overflow-hidden text-left bg-white rounded-2xl ${cor.borda} shadow-lg hover:shadow-xl transition p-3 sm:p-4 w-full`}
   >
     {/* Marca d'água: o próprio ícone do card, grande e bem apagado */}
     <Icon
@@ -395,14 +395,22 @@ export const Dashboard: React.FC<DashboardProps> = ({ onPageChange }) => {
           icon={Music}
           label={rotuloDoMenu('hinos-comuns')}
           value={stats.totalHinos}
-          cor={{ borda: 'border-l-indigo-500', fundo: 'bg-indigo-50', icone: 'text-indigo-600' }}
+          cor={{
+            borda: 'border border-gray-100 border-l-4 border-l-indigo-500',
+            fundo: 'bg-indigo-50',
+            icone: 'text-indigo-600'
+          }}
           onClick={() => onPageChange('hinos-comuns')}
         />
         <StatCard
           icon={BookOpen}
           label={rotuloDoMenu('harpa')}
           value={stats.totalHarpa}
-          cor={{ borda: 'border-l-purple-500', fundo: 'bg-purple-50', icone: 'text-purple-600' }}
+          cor={{
+            borda: 'border-2 border-purple-200 border-l-4 border-l-purple-500',
+            fundo: 'bg-purple-50',
+            icone: 'text-purple-600'
+          }}
           onClick={() => onPageChange('harpa')}
         />
       </div>
