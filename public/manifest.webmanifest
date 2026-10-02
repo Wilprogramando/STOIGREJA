@@ -5,19 +5,20 @@
   "start_url": "/",
   "scope": "/",
   "display": "standalone",
+  "_comentario_abertura": "background_color é a cor da abertura animada (ver index.html): a tela que o celular desenha antes do app carregar fica igual ao fundo dela. Os ícones são declarados em 192x192 de propósito, e não em 'any': para desenhar o ícone naquela tela o Chrome exige um de 512 ou mais, e sem ele mostra só a cor de fundo. Assim a nossa animação é a única logo que aparece. O atalho na tela de início continua usando este mesmo arquivo, que é SVG e não perde qualidade.",
   "background_color": "#4f46e5",
   "theme_color": "#4f46e5",
   "lang": "pt-BR",
   "icons": [
     {
       "src": "/icone.svg",
-      "sizes": "any",
+      "sizes": "192x192",
       "type": "image/svg+xml",
       "purpose": "any"
     },
     {
       "src": "/icone.svg",
-      "sizes": "any",
+      "sizes": "192x192",
       "type": "image/svg+xml",
       "purpose": "maskable"
     }
