@@ -3,6 +3,7 @@ import {
   Save, Download, Upload, Trash2, AlertCircle, Eye, EyeOff, BarChart3, Mic2,
   UserPlus, Pencil, BookOpen, Smartphone, Building2, Type, Image, ListChecks,
   ListOrdered, Database, Palette, Tag, TextCursorInput, Radio, MapPin, Wifi, CloudOff,
+  Sparkles,
 } from 'lucide-react';
 import {
   getConfiguracoes, saveConfiguracoes, exportData, importData, clearAllData,
@@ -16,6 +17,7 @@ import { MENUS, lerMenusOcultos, salvarMenusOcultos, rotuloDoMenu } from '../ser
 import { OrdemMenus } from './OrdemMenus';
 import { SecaoConfig } from './SecaoConfig';
 import { Aparencia } from './Aparencia';
+import { AberturaConfig } from './AberturaConfig';
 import { CategoriasConfig } from './CategoriasConfig';
 import { NomesMenus } from './NomesMenus';
 import { lerAcessos, zerarAcessos, RegistroAcessos } from '../services/acessos';
@@ -390,6 +392,17 @@ Os hinos já cadastrados com esse cantor não mudam.`)) return;
             logoSistema={config.logoSistema}
             subtitulo={config.subtitulo}
           />
+        </SecaoConfig>
+
+        <SecaoConfig
+          id="abertura"
+          titulo="Abertura do Sistema"
+          descricao="Animacao da logo, cor de fundo e outros modelos"
+          icone={Sparkles}
+          aberta={secaoAberta}
+          onAbrir={setSecaoAberta}
+        >
+          <AberturaConfig />
         </SecaoConfig>
 
         <SecaoConfig

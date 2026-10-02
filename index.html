@@ -18,16 +18,28 @@
       Quem a tira do ar é o Dashboard, quando termina de carregar
       (ver src/services/abertura.ts).
 
-      IMPORTANTE - por que a nota é branca e não tem quadrado branco em volta:
-      no app instalado, o celular desenha antes a sua própria tela de abertura,
-      com o ícone de public/icone.svg (nota branca no roxo). Essa tela é do
-      sistema, não dá para animar nem pular. Então esta aqui começa com o mesmo
-      desenho e no mesmo tamanho: quando o sistema entrega a vez para o app,
-      a nota continua no lugar e só começa a se mexer - em vez de aparecer uma
-      segunda logo, diferente da primeira.
+      O modelo, o fundo e o que aparece saem das Configurações > Abertura do
+      Sistema. O CSS está todo aqui, mas em CLASSE (.abertura) e não em id, de
+      propósito: a prévia das Configurações usa as mesmas classes, então o que
+      a pessoa vê lá é a abertura de verdade, não um desenho parecido.
+
+      Por que a nota é branca e não tem quadrado em volta no modelo padrão:
+      no app instalado, o celular desenha antes a sua própria tela de abertura.
+      Essa tela é do sistema, não dá para animar. Então o modelo padrão começa
+      com o mesmo desenho, para emendar um no outro.
     -->
     <style>
-      #abertura {
+      .abertura {
+        /* Trocados pelas Configurações; estes são o padrão. */
+        --abertura-fundo: linear-gradient(
+          140deg,
+          var(--cor-principal, #4f46e5),
+          var(--cor-escura, #7c3aed)
+        );
+        --abertura-frente: #ffffff;
+        /* Cor da nota dentro do cartão claro: tem de contrastar com a frente. */
+        --abertura-nota: var(--cor-principal, #4f46e5);
+
         position: fixed;
         inset: 0;
         z-index: 9999;
@@ -36,24 +48,17 @@
         align-items: center;
         justify-content: center;
         gap: 26px;
-        background: linear-gradient(
-          140deg,
-          var(--cor-principal, #4f46e5),
-          var(--cor-escura, #7c3aed)
-        );
+        background: var(--abertura-fundo);
+        color: var(--abertura-frente);
         /* A saída é feita pela classe .saindo (ver services/abertura.ts). */
         transition: opacity 0.45s ease, visibility 0.45s ease;
       }
 
-      #abertura.saindo {
+      .abertura.saindo {
         opacity: 0;
         visibility: hidden;
       }
 
-      /*
-       * A nota, do mesmo tamanho do ícone do sistema. Sem animação de entrada
-       * de propósito: ela já nasce pronta, para emendar na tela do celular.
-       */
       .abertura-logo {
         position: relative;
         width: 104px;
@@ -66,22 +71,35 @@
       .abertura-logo svg {
         width: 64px;
         height: 64px;
-        color: #fff;
-        /* Balanço curto, como quem marca o compasso. */
-        animation: abertura-balanco 1.6s ease-in-out 0.25s infinite;
+        color: var(--abertura-frente);
       }
 
-      /* Duas ondas saindo da nota, uma atrasada em relação à outra. */
+      /* Ondas e barras só aparecem nos modelos que as usam. */
+      .abertura-onda,
+      .abertura-barras {
+        display: none;
+      }
+
       .abertura-onda {
         position: absolute;
         inset: 0;
         border-radius: 50%;
-        border: 2px solid rgba(255, 255, 255, 0.45);
-        animation: abertura-onda 1.8s ease-out infinite;
+        border: 2px solid currentColor;
+        opacity: 0.45;
       }
 
-      .abertura-onda.atrasada {
-        animation-delay: 0.9s;
+      .abertura-barras {
+        align-items: flex-end;
+        gap: 6px;
+        height: 64px;
+      }
+
+      .abertura-barras span {
+        width: 8px;
+        height: 100%;
+        border-radius: 4px;
+        background: currentColor;
+        transform-origin: bottom;
       }
 
       .abertura-nome {
@@ -90,7 +108,6 @@
         font-weight: 700;
         letter-spacing: 0.08em;
         text-transform: uppercase;
-        color: #fff;
         animation: abertura-sobe 0.6s ease-out 0.15s both;
       }
 
@@ -105,7 +122,8 @@
         width: 7px;
         height: 7px;
         border-radius: 50%;
-        background: rgba(255, 255, 255, 0.85);
+        background: currentColor;
+        opacity: 0.85;
         animation: abertura-pulo 1s ease-in-out infinite;
       }
 
@@ -116,6 +134,79 @@
       .abertura-pontos span:nth-child(3) {
         animation-delay: 0.3s;
       }
+
+      /* Desligados nas Configurações. */
+      .abertura[data-nome="nao"] .abertura-nome,
+      .abertura[data-pontos="nao"] .abertura-pontos {
+        display: none;
+      }
+
+      /* ==================== MODELOS ==================== */
+
+      /* NOTA (padrão): a nota marcando o compasso, com ondas saindo dela. */
+      .abertura[data-modelo="nota"] .abertura-logo svg {
+        animation: abertura-balanco 1.6s ease-in-out 0.25s infinite;
+      }
+
+      .abertura[data-modelo="nota"] .abertura-onda {
+        display: block;
+        animation: abertura-onda 1.8s ease-out infinite;
+      }
+
+      .abertura[data-modelo="nota"] .abertura-onda.atrasada {
+        animation-delay: 0.9s;
+      }
+
+      /* PULSO: a nota batendo como um coração, sem ondas. */
+      .abertura[data-modelo="pulso"] .abertura-logo svg {
+        animation: abertura-pulso 1.1s ease-in-out infinite;
+      }
+
+      /* CARTAO: a nota num quadrado claro, que entra crescendo e girando. */
+      .abertura[data-modelo="cartao"] .abertura-logo {
+        border-radius: 32px;
+        background: var(--abertura-frente);
+        box-shadow: 0 18px 40px rgba(0, 0, 0, 0.22);
+        animation: abertura-entrada 0.75s cubic-bezier(0.22, 1.2, 0.36, 1) both;
+      }
+
+      .abertura[data-modelo="cartao"] .abertura-logo svg {
+        width: 56px;
+        height: 56px;
+        /* No cartão a nota fica na cor do fundo, para aparecer no claro. */
+        color: var(--abertura-nota);
+        animation: abertura-balanco 1.6s ease-in-out 0.65s infinite;
+      }
+
+      /* EQUALIZADOR: barras dançando no lugar da nota. */
+      .abertura[data-modelo="equalizador"] .abertura-logo svg {
+        display: none;
+      }
+
+      .abertura[data-modelo="equalizador"] .abertura-barras {
+        display: flex;
+      }
+
+      .abertura[data-modelo="equalizador"] .abertura-barras span {
+        animation: abertura-barra 0.9s ease-in-out infinite;
+      }
+
+      .abertura[data-modelo="equalizador"] .abertura-barras span:nth-child(2) {
+        animation-delay: 0.15s;
+      }
+      .abertura[data-modelo="equalizador"] .abertura-barras span:nth-child(3) {
+        animation-delay: 0.3s;
+      }
+      .abertura[data-modelo="equalizador"] .abertura-barras span:nth-child(4) {
+        animation-delay: 0.45s;
+      }
+      .abertura[data-modelo="equalizador"] .abertura-barras span:nth-child(5) {
+        animation-delay: 0.6s;
+      }
+
+      /* SIMPLES: logo parada, nada se mexe além dos pontinhos. */
+
+      /* ==================== ANIMAÇÕES ==================== */
 
       @keyframes abertura-balanco {
         0%,
@@ -131,6 +222,22 @@
         }
       }
 
+      @keyframes abertura-pulso {
+        0%,
+        100% {
+          transform: scale(1);
+        }
+        18% {
+          transform: scale(1.16);
+        }
+        36% {
+          transform: scale(1);
+        }
+        54% {
+          transform: scale(1.1);
+        }
+      }
+
       @keyframes abertura-onda {
         from {
           opacity: 0.55;
@@ -139,6 +246,27 @@
         to {
           opacity: 0;
           transform: scale(1.7);
+        }
+      }
+
+      @keyframes abertura-entrada {
+        from {
+          opacity: 0;
+          transform: scale(0.5) rotate(-14deg);
+        }
+        to {
+          opacity: 1;
+          transform: scale(1) rotate(0deg);
+        }
+      }
+
+      @keyframes abertura-barra {
+        0%,
+        100% {
+          transform: scaleY(0.3);
+        }
+        50% {
+          transform: scaleY(1);
         }
       }
 
@@ -165,9 +293,40 @@
         }
       }
 
+      /*
+       * Prévia das Configurações: mesma abertura, só encaixada numa caixinha
+       * no meio da página em vez de cobrir a tela.
+       */
+      .abertura--previa {
+        position: relative;
+        inset: auto;
+        z-index: 0;
+        width: 100%;
+        height: 190px;
+        border-radius: 16px;
+        overflow: hidden;
+        gap: 14px;
+        transform: scale(0.78);
+      }
+
+      .abertura--previa .abertura-logo {
+        width: 72px;
+        height: 72px;
+      }
+
+      .abertura--previa .abertura-logo svg,
+      .abertura--previa .abertura-barras {
+        width: 46px;
+        height: 46px;
+      }
+
+      .abertura--previa .abertura-nome {
+        font-size: 13px;
+      }
+
       /* Quem pediu menos animação no aparelho vê só a logo parada. */
       @media (prefers-reduced-motion: reduce) {
-        #abertura * {
+        .abertura * {
           animation: none !important;
         }
       }
@@ -176,10 +335,11 @@
   <body>
     <div id="root"></div>
 
-    <div id="abertura" role="status" aria-label="Abrindo o aplicativo">
+    <div id="abertura" class="abertura" data-modelo="nota" role="status" aria-label="Abrindo o aplicativo">
       <div class="abertura-logo">
         <span class="abertura-onda"></span>
         <span class="abertura-onda atrasada"></span>
+
         <!-- Mesma nota musical do ícone do app (public/icone.svg). -->
         <svg viewBox="0 0 512 512" aria-hidden="true">
           <path
@@ -187,6 +347,10 @@
             fill="currentColor"
           />
         </svg>
+
+        <span class="abertura-barras">
+          <span></span><span></span><span></span><span></span><span></span>
+        </span>
       </div>
 
       <div class="abertura-nome">Conjunto Manancial</div>
@@ -197,6 +361,59 @@
         <span></span>
       </div>
     </div>
+
+    <!--
+      Aplica a escolha das Configurações antes de a tela ser pintada.
+
+      Está escrito solto aqui, e não importado de services/abertura.ts, porque
+      o módulo só chega depois do React: se esperasse por ele, a abertura
+      apareceria no modelo padrão e trocaria na frente do usuário. São as
+      mesmas chaves do arquivo aberturaPreferida() - mexeu em um, mexa no outro.
+    -->
+    <script>
+      (function () {
+        var abertura = document.getElementById('abertura');
+        if (!abertura) return;
+
+        var escolha = {};
+        try {
+          escolha = JSON.parse(localStorage.getItem('repertorio:abertura') || '{}') || {};
+        } catch (e) {
+          escolha = {};
+        }
+
+        // Desligada: nem chega a aparecer.
+        if (escolha.modelo === 'nenhuma') {
+          abertura.remove();
+          return;
+        }
+
+        abertura.dataset.modelo = escolha.modelo || 'nota';
+        abertura.dataset.nome = escolha.mostrarNome === false ? 'nao' : 'sim';
+        abertura.dataset.pontos = escolha.mostrarPontos === false ? 'nao' : 'sim';
+
+        if (escolha.fundo === 'claro') {
+          abertura.style.setProperty('--abertura-fundo', '#f8fafc');
+          abertura.style.setProperty('--abertura-frente', 'var(--cor-principal, #4f46e5)');
+          abertura.style.setProperty('--abertura-nota', '#f8fafc');
+        } else if (escolha.fundo === 'escuro') {
+          abertura.style.setProperty('--abertura-fundo', '#0f172a');
+          abertura.style.setProperty('--abertura-frente', '#ffffff');
+          abertura.style.setProperty('--abertura-nota', '#0f172a');
+        } else if (escolha.fundo === 'personalizada' && escolha.cor) {
+          abertura.style.setProperty('--abertura-fundo', escolha.cor);
+          abertura.style.setProperty('--abertura-nota', escolha.cor);
+          // Cor clara pede letra escura, cor escura pede letra branca.
+          var rgb = escolha.cor.replace('#', '');
+          var luz =
+            (parseInt(rgb.slice(0, 2), 16) * 299 +
+              parseInt(rgb.slice(2, 4), 16) * 587 +
+              parseInt(rgb.slice(4, 6), 16) * 114) /
+            1000;
+          abertura.style.setProperty('--abertura-frente', luz > 150 ? '#111827' : '#ffffff');
+        }
+      })();
+    </script>
 
     <script type="module" src="/src/main.tsx"></script>
   </body>
