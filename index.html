@@ -9,9 +9,199 @@
     <meta name="theme-color" content="#4f46e5" />
     <link rel="manifest" href="/manifest.webmanifest" />
     <link rel="apple-touch-icon" href="/icone.svg" />
+
+    <!--
+      ABERTURA DO APP
+
+      Fica escrita aqui dentro, e não num componente, porque precisa aparecer
+      antes do React carregar: é justamente o tempo em que a tela ficava branca.
+      O main.tsx tira ela do ar quando o app já está desenhado (ver #abertura).
+    -->
+    <style>
+      #abertura {
+        position: fixed;
+        inset: 0;
+        z-index: 9999;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 22px;
+        background: linear-gradient(
+          140deg,
+          var(--cor-principal, #4f46e5),
+          var(--cor-escura, #7c3aed)
+        );
+        /* A saída é feita pela classe .saindo, posta pelo main.tsx. */
+        transition: opacity 0.45s ease, visibility 0.45s ease;
+      }
+
+      #abertura.saindo {
+        opacity: 0;
+        visibility: hidden;
+      }
+
+      /* Círculo branco com o ícone: cresce de leve girando ao entrar. */
+      .abertura-logo {
+        position: relative;
+        width: 104px;
+        height: 104px;
+        border-radius: 32px;
+        background: #fff;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        box-shadow: 0 18px 40px rgba(0, 0, 0, 0.22);
+        animation: abertura-entrada 0.75s cubic-bezier(0.22, 1.2, 0.36, 1) both;
+      }
+
+      .abertura-logo svg {
+        width: 56px;
+        height: 56px;
+        color: var(--cor-principal, #4f46e5);
+        /* Balanço curto, como quem marca o compasso. */
+        animation: abertura-balanco 1.6s ease-in-out 0.65s infinite;
+      }
+
+      /* Duas ondas saindo do ícone, uma atrasada em relação à outra. */
+      .abertura-onda {
+        position: absolute;
+        inset: 0;
+        border-radius: 32px;
+        border: 2px solid rgba(255, 255, 255, 0.55);
+        animation: abertura-onda 1.8s ease-out 0.5s infinite;
+      }
+
+      .abertura-onda.atrasada {
+        animation-delay: 1.15s;
+      }
+
+      .abertura-nome {
+        font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
+        font-size: 17px;
+        font-weight: 700;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        color: #fff;
+        animation: abertura-sobe 0.6s ease-out 0.35s both;
+      }
+
+      /* Três pontinhos pulsando, no lugar de uma barra de carregamento. */
+      .abertura-pontos {
+        display: flex;
+        gap: 7px;
+        animation: abertura-sobe 0.6s ease-out 0.5s both;
+      }
+
+      .abertura-pontos span {
+        width: 7px;
+        height: 7px;
+        border-radius: 50%;
+        background: rgba(255, 255, 255, 0.85);
+        animation: abertura-pulo 1s ease-in-out infinite;
+      }
+
+      .abertura-pontos span:nth-child(2) {
+        animation-delay: 0.15s;
+      }
+
+      .abertura-pontos span:nth-child(3) {
+        animation-delay: 0.3s;
+      }
+
+      @keyframes abertura-entrada {
+        from {
+          opacity: 0;
+          transform: scale(0.5) rotate(-14deg);
+        }
+        to {
+          opacity: 1;
+          transform: scale(1) rotate(0deg);
+        }
+      }
+
+      @keyframes abertura-balanco {
+        0%,
+        55%,
+        100% {
+          transform: rotate(0deg);
+        }
+        15% {
+          transform: rotate(-9deg);
+        }
+        35% {
+          transform: rotate(9deg);
+        }
+      }
+
+      @keyframes abertura-onda {
+        from {
+          opacity: 0.6;
+          transform: scale(1);
+        }
+        to {
+          opacity: 0;
+          transform: scale(1.75);
+        }
+      }
+
+      @keyframes abertura-sobe {
+        from {
+          opacity: 0;
+          transform: translateY(10px);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+
+      @keyframes abertura-pulo {
+        0%,
+        100% {
+          opacity: 0.35;
+          transform: translateY(0);
+        }
+        50% {
+          opacity: 1;
+          transform: translateY(-5px);
+        }
+      }
+
+      /* Quem pediu menos animação no aparelho vê só a logo parada. */
+      @media (prefers-reduced-motion: reduce) {
+        #abertura *,
+        #abertura *::before {
+          animation: none !important;
+        }
+      }
+    </style>
   </head>
   <body>
     <div id="root"></div>
+
+    <div id="abertura" role="status" aria-label="Abrindo o aplicativo">
+      <div class="abertura-logo">
+        <span class="abertura-onda"></span>
+        <span class="abertura-onda atrasada"></span>
+        <!-- Mesma nota musical do ícone do app (public/icone.svg). -->
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+             stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <path d="M9 18V5l12-2v13" />
+          <circle cx="6" cy="18" r="3" />
+          <circle cx="18" cy="16" r="3" />
+        </svg>
+      </div>
+
+      <div class="abertura-nome">Conjunto Manancial</div>
+
+      <div class="abertura-pontos">
+        <span></span>
+        <span></span>
+        <span></span>
+      </div>
+    </div>
+
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>

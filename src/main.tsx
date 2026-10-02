@@ -16,6 +16,20 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
   </React.StrictMode>,
 )
 
+// Tira a abertura animada (está no index.html, para aparecer antes do React).
+// Espera o tempo da animação acabar, senão em conexão rápida ela só piscava.
+const abertura = document.getElementById('abertura')
+if (abertura) {
+  const DURACAO_MINIMA = 1100
+  const esperar = Math.max(0, DURACAO_MINIMA - performance.now())
+
+  window.setTimeout(() => {
+    abertura.classList.add('saindo')
+    // Só sai do documento depois do desaparecer, para não cortar a transição.
+    abertura.addEventListener('transitionend', () => abertura.remove(), { once: true })
+  }, esperar)
+}
+
 // Guarda o app no navegador para funcionar sem internet.
 // Só no site publicado (em https), pois o navegador não permite em http comum.
 if ('serviceWorker' in navigator && import.meta.env.PROD) {
