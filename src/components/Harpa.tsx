@@ -537,10 +537,8 @@ export const Harpa: React.FC<HarpaProps> = ({ configuracoes }) => {
             return (
               <Painel
                 key={hino.id}
-                className={`p-3 sm:p-4 border-2 border-l-4 [content-visibility:auto] [contain-intrinsic-size:auto_96px] ${
-                  favorito
-                    ? 'border-amber-200 border-l-amber-400'
-                    : 'border-indigo-100 border-l-indigo-500'
+                className={`p-3 sm:p-4 border-l-4 [content-visibility:auto] [contain-intrinsic-size:auto_96px] ${
+                  favorito ? 'border-l-amber-400' : 'border-l-indigo-500'
                 }`}
               >
                 <div className="flex items-center gap-3">
