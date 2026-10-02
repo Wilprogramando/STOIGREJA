@@ -51,6 +51,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
 
     { id: 'repertorios', label: 'Repertórios Salvos', icon: List },
 
+    { id: 'tocar-cifra', label: 'Tocar por Cifra', icon: Guitar },
     { id: 'campo-harmonico', label: 'Dicas', icon: Music2 },
 
     { id: 'relatorios', label: 'Relatórios', icon: BarChart3 },

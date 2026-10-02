@@ -21,6 +21,7 @@ export const MENUS: MenuDoSistema[] = [
   { id: 'ouvir-musica', label: 'Ouvir Música' },
   { id: 'montar-repertorio', label: 'Montar Repertório' },
   { id: 'repertorios', label: 'Repertórios Salvos' },
+  { id: 'tocar-cifra', label: 'Tocar por Cifra' },
   { id: 'campo-harmonico', label: 'Dicas' },
   { id: 'relatorios', label: 'Relatórios' },
   { id: 'afinador', label: 'Afinador' },

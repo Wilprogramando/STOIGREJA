@@ -247,6 +247,85 @@ export async function removerFavoritoSupabase(usuarioId: string, hinoId: string)
   }
 }
 
+// ==================== CIFRAS (Tocar por Cifra) ====================
+
+/**
+ * A tabela usa nomes com underline (tom_original), e o app usa camelCase.
+ * A tradução fica nestas duas funções, para o resto do código não saber disso.
+ */
+function cifraDaTabela(linha: any) {
+  return {
+    id: String(linha.id),
+    nome: linha.nome || '',
+    artista: linha.artista || '',
+    tomOriginal: linha.tom_original || '',
+    tomEscolhido: linha.tom_escolhido || '',
+    cifra: linha.cifra || '',
+    afinacao: linha.afinacao || '',
+    fonte: linha.fonte || '',
+    criadoEm: linha.criado_em || new Date().toISOString(),
+  };
+}
+
+function cifraParaTabela(cifra: any) {
+  return {
+    id: cifra.id,
+    nome: cifra.nome,
+    artista: cifra.artista || '',
+    tom_original: cifra.tomOriginal || '',
+    tom_escolhido: cifra.tomEscolhido || '',
+    cifra: cifra.cifra,
+    afinacao: cifra.afinacao || '',
+    fonte: cifra.fonte || '',
+    criado_em: cifra.criadoEm || new Date().toISOString(),
+  };
+}
+
+export async function lerCifrasSupabase(): Promise<any[] | null> {
+  if (!supabase) return null;
+  try {
+    const { data, error } = await supabase
+      .from('cifras')
+      .select('*')
+      .order('criado_em', { ascending: false });
+    if (error) throw error;
+
+    return (data || []).map(cifraDaTabela);
+  } catch (error) {
+    console.error('❌ Erro ao ler cifras:', error);
+    return null;
+  }
+}
+
+/** Grava a cifra nova ou atualiza a que já tem o mesmo id (upsert). */
+export async function salvarCifraSupabase(cifra: any): Promise<boolean> {
+  if (!supabase) return false;
+  try {
+    const { error } = await supabase.from('cifras').upsert([cifraParaTabela(cifra)]);
+    if (error) throw error;
+
+    console.log('✅ Cifra salva no Supabase:', cifra.nome);
+    return true;
+  } catch (error) {
+    console.error('❌ Erro ao salvar cifra:', error);
+    return false;
+  }
+}
+
+export async function removerCifraSupabase(id: string): Promise<boolean> {
+  if (!supabase) return false;
+  try {
+    const { error } = await supabase.from('cifras').delete().eq('id', id);
+    if (error) throw error;
+
+    console.log('✅ Cifra removida do Supabase:', id);
+    return true;
+  } catch (error) {
+    console.error('❌ Erro ao remover cifra:', error);
+    return false;
+  }
+}
+
 // ==================== STATUS ====================
 
 export function isSupabaseReady(): boolean {

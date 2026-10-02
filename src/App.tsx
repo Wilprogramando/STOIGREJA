@@ -31,7 +31,8 @@ const carregarTela = {
   CampoHarmonico: () => import('./components/CampoHarmonico'),
   Afinador: () => import('./components/Afinador'),
   TomDaMusica: () => import('./components/TomDaMusica'),
-  Anotacoes: () => import('./components/Anotacoes')
+  Anotacoes: () => import('./components/Anotacoes'),
+  TocarPorCifra: () => import('./components/TocarPorCifra')
 };
 
 const CadastrarHino = lazy(() => carregarTela.CadastrarHino().then(m => ({ default: m.CadastrarHino })));
@@ -47,6 +48,7 @@ const CampoHarmonico = lazy(() => carregarTela.CampoHarmonico().then(m => ({ def
 const Afinador = lazy(() => carregarTela.Afinador().then(m => ({ default: m.Afinador })));
 const TomDaMusica = lazy(() => carregarTela.TomDaMusica().then(m => ({ default: m.TomDaMusica })));
 const Anotacoes = lazy(() => carregarTela.Anotacoes().then(m => ({ default: m.Anotacoes })));
+const TocarPorCifra = lazy(() => carregarTela.TocarPorCifra().then(m => ({ default: m.TocarPorCifra })));
 
 /**
  * Busca todas as telas em segundo plano, uma atrás da outra para não disputar
@@ -307,6 +309,9 @@ export default function App() {
 
       case 'anotacoes':
         return <Anotacoes />;
+
+      case 'tocar-cifra':
+        return <TocarPorCifra />;
 
       case 'configuracoes':
         return (
