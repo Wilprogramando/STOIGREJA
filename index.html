@@ -108,6 +108,11 @@
         font-weight: 700;
         letter-spacing: 0.08em;
         text-transform: uppercase;
+        /* A frase é escrita pelo usuário: pode ser um versículo inteiro. */
+        max-width: 86vw;
+        text-align: center;
+        line-height: 1.45;
+        overflow-wrap: break-word;
         animation: abertura-sobe 0.6s ease-out 0.15s both;
       }
 
@@ -322,6 +327,7 @@
 
       .abertura--previa .abertura-nome {
         font-size: 13px;
+        max-width: 80%;
       }
 
       /* Quem pediu menos animação no aparelho vê só a logo parada. */
@@ -391,6 +397,11 @@
         abertura.dataset.modelo = escolha.modelo || 'nota';
         abertura.dataset.nome = escolha.mostrarNome === false ? 'nao' : 'sim';
         abertura.dataset.pontos = escolha.mostrarPontos === false ? 'nao' : 'sim';
+
+        // Frase escolhida nas Configurações, no lugar do nome do conjunto.
+        var frase = (escolha.texto || '').trim();
+        var alvo = abertura.querySelector('.abertura-nome');
+        if (frase && alvo) alvo.textContent = frase;
 
         if (escolha.fundo === 'claro') {
           abertura.style.setProperty('--abertura-fundo', '#f8fafc');

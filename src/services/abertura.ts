@@ -26,8 +26,13 @@ export interface Abertura {
   /** Cor usada quando o fundo é 'personalizada'. */
   cor: string
   mostrarNome: boolean
+  /** Frase que aparece na abertura. Vazio volta para o nome do conjunto. */
+  texto: string
   mostrarPontos: boolean
 }
+
+/** Usado quando a pessoa não escreveu nada no lugar. */
+export const TEXTO_PADRAO = 'Conjunto Manancial'
 
 export const MODELOS: { id: ModeloAbertura; nome: string; descricao: string }[] = [
   { id: 'nota', nome: 'Nota com ondas', descricao: 'A nota marca o compasso e solta ondas' },
@@ -50,6 +55,7 @@ export const ABERTURA_PADRAO: Abertura = {
   fundo: 'tema',
   cor: '#4f46e5',
   mostrarNome: true,
+  texto: TEXTO_PADRAO,
   mostrarPontos: true
 }
 
@@ -94,8 +100,16 @@ function frenteParaCor(cor: string): string {
  * Põe a escolha num elemento .abertura - serve para a prévia das Configurações
  * e para a abertura de teste. A abertura real é montada pelo index.html.
  */
+export function textoDaAbertura(abertura: Abertura): string {
+  return abertura.texto.trim() || TEXTO_PADRAO
+}
+
 export function aplicarAbertura(elemento: HTMLElement, abertura: Abertura): void {
   elemento.dataset.modelo = abertura.modelo === 'nenhuma' ? 'simples' : abertura.modelo
+
+  const nome = elemento.querySelector('.abertura-nome')
+  if (nome) nome.textContent = textoDaAbertura(abertura)
+
   elemento.dataset.nome = abertura.mostrarNome ? 'sim' : 'nao'
   elemento.dataset.pontos = abertura.mostrarPontos ? 'sim' : 'nao'
 

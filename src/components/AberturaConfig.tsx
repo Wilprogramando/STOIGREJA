@@ -9,6 +9,8 @@ import {
   salvarAbertura,
   aplicarAbertura,
   testarAbertura,
+  textoDaAbertura,
+  TEXTO_PADRAO,
 } from '../services/abertura';
 
 /**
@@ -63,7 +65,7 @@ const Previa: React.FC<{ abertura: Abertura }> = ({ abertura }) => {
         </span>
       </div>
 
-      <div className="abertura-nome">Conjunto Manancial</div>
+      <div className="abertura-nome">{textoDaAbertura(abertura)}</div>
 
       <div className="abertura-pontos">
         <span />
@@ -222,10 +224,31 @@ export const AberturaConfig: React.FC = () => {
 
           <div className="space-y-2">
             <Chave
-              titulo="Mostrar o nome do sistema"
+              titulo="Mostrar a frase na abertura"
               ligado={abertura.mostrarNome}
               onMudar={mostrarNome => mudar({ mostrarNome })}
             />
+
+            {abertura.mostrarNome && (
+              <div className="px-3.5 py-3 rounded-xl border border-gray-200 bg-gray-50">
+                <label className="block text-sm font-medium text-gray-700 mb-1.5">
+                  Frase da abertura
+                </label>
+                <input
+                  type="text"
+                  value={abertura.texto}
+                  onChange={e => mudar({ texto: e.target.value })}
+                  maxLength={60}
+                  placeholder={TEXTO_PADRAO}
+                  className="w-full px-3.5 py-2.5 border border-gray-200 rounded-xl bg-white focus:outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100 transition text-sm"
+                />
+                <p className="text-xs text-gray-500 mt-1.5">
+                  Escreva o que quiser aqui: um versículo, o nome da igreja, uma
+                  saudação. Em branco, volta para "{TEXTO_PADRAO}".
+                </p>
+              </div>
+            )}
+
             <Chave
               titulo="Mostrar os pontinhos de carregando"
               ligado={abertura.mostrarPontos}
