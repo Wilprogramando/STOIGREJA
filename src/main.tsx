@@ -5,6 +5,7 @@ import './index.css'
 import './tema.css'
 import { sincronizarPendentes } from './services/db'
 import { aplicarTema, acompanharAparelho } from './services/tema'
+import { garantirSaidaDaAbertura } from './services/abertura'
 
 // A aparencia escolhida entra antes de desenhar a tela, para nao piscar branco.
 aplicarTema()
@@ -16,20 +17,9 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
   </React.StrictMode>,
 )
 
-// Tira a abertura animada (está no index.html, para aparecer antes do React).
-// O mínimo é curto de propósito: é só para a logo não dar um flash de 50ms
-// quando o app já está no cache. Passado isso, quem manda é o app estar pronto.
-const abertura = document.getElementById('abertura')
-if (abertura) {
-  const DURACAO_MINIMA = 450
-  const esperar = Math.max(0, DURACAO_MINIMA - performance.now())
-
-  window.setTimeout(() => {
-    abertura.classList.add('saindo')
-    // Só sai do documento depois do desaparecer, para não cortar a transição.
-    abertura.addEventListener('transitionend', () => abertura.remove(), { once: true })
-  }, esperar)
-}
+// Quem tira a abertura do ar é o Dashboard, quando termina de carregar
+// (ver services/abertura.ts). Aqui fica só o limite de segurança.
+garantirSaidaDaAbertura()
 
 // Guarda o app no navegador para funcionar sem internet.
 // Só no site publicado (em https), pois o navegador não permite em http comum.

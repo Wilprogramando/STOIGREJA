@@ -12,6 +12,7 @@ import {
 } from 'lucide-react';
 import { getAllHinos, getAllRepertorios, getHinosByType } from '../services/db';
 import { rotuloDoMenu } from '../services/menus';
+import { fecharAbertura } from '../services/abertura';
 import { Repertorio, Hino } from '../types';
 
 interface DashboardProps {
@@ -182,6 +183,15 @@ export const Dashboard: React.FC<DashboardProps> = ({ onPageChange }) => {
     const timer = setInterval(loadStats, 60 * 1000);
     return () => clearInterval(timer);
   }, []);
+
+  // Dados na mão e conteúdo desenhado: pode tirar a abertura animada.
+  // O requestAnimationFrame espera o navegador pintar esta tela, senão a logo
+  // sairia um instante antes do dashboard estar visível e piscaria branco.
+  useEffect(() => {
+    if (loading) return;
+    const quadro = requestAnimationFrame(() => fecharAbertura());
+    return () => cancelAnimationFrame(quadro);
+  }, [loading]);
 
   // Data/hora do repertório + 24h. Sem horário, considera 00:00.
   const fimDaExibicao = (rep: Repertorio) => {
