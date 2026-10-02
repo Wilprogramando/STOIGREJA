@@ -15,7 +15,16 @@
 
       Fica escrita aqui dentro, e não num componente, porque precisa aparecer
       antes do React carregar: é justamente o tempo em que a tela ficava branca.
-      O main.tsx tira ela do ar quando o app já está desenhado (ver #abertura).
+      Quem a tira do ar é o Dashboard, quando termina de carregar
+      (ver src/services/abertura.ts).
+
+      IMPORTANTE - por que a nota é branca e não tem quadrado branco em volta:
+      no app instalado, o celular desenha antes a sua própria tela de abertura,
+      com o ícone de public/icone.svg (nota branca no roxo). Essa tela é do
+      sistema, não dá para animar nem pular. Então esta aqui começa com o mesmo
+      desenho e no mesmo tamanho: quando o sistema entrega a vez para o app,
+      a nota continua no lugar e só começa a se mexer - em vez de aparecer uma
+      segunda logo, diferente da primeira.
     -->
     <style>
       #abertura {
@@ -26,13 +35,13 @@
         flex-direction: column;
         align-items: center;
         justify-content: center;
-        gap: 22px;
+        gap: 26px;
         background: linear-gradient(
           140deg,
           var(--cor-principal, #4f46e5),
           var(--cor-escura, #7c3aed)
         );
-        /* A saída é feita pela classe .saindo, posta pelo main.tsx. */
+        /* A saída é feita pela classe .saindo (ver services/abertura.ts). */
         transition: opacity 0.45s ease, visibility 0.45s ease;
       }
 
@@ -41,39 +50,38 @@
         visibility: hidden;
       }
 
-      /* Círculo branco com o ícone: cresce de leve girando ao entrar. */
+      /*
+       * A nota, do mesmo tamanho do ícone do sistema. Sem animação de entrada
+       * de propósito: ela já nasce pronta, para emendar na tela do celular.
+       */
       .abertura-logo {
         position: relative;
         width: 104px;
         height: 104px;
-        border-radius: 32px;
-        background: #fff;
         display: flex;
         align-items: center;
         justify-content: center;
-        box-shadow: 0 18px 40px rgba(0, 0, 0, 0.22);
-        animation: abertura-entrada 0.75s cubic-bezier(0.22, 1.2, 0.36, 1) both;
       }
 
       .abertura-logo svg {
-        width: 56px;
-        height: 56px;
-        color: var(--cor-principal, #4f46e5);
+        width: 64px;
+        height: 64px;
+        color: #fff;
         /* Balanço curto, como quem marca o compasso. */
-        animation: abertura-balanco 1.6s ease-in-out 0.65s infinite;
+        animation: abertura-balanco 1.6s ease-in-out 0.25s infinite;
       }
 
-      /* Duas ondas saindo do ícone, uma atrasada em relação à outra. */
+      /* Duas ondas saindo da nota, uma atrasada em relação à outra. */
       .abertura-onda {
         position: absolute;
         inset: 0;
-        border-radius: 32px;
-        border: 2px solid rgba(255, 255, 255, 0.55);
-        animation: abertura-onda 1.8s ease-out 0.5s infinite;
+        border-radius: 50%;
+        border: 2px solid rgba(255, 255, 255, 0.45);
+        animation: abertura-onda 1.8s ease-out infinite;
       }
 
       .abertura-onda.atrasada {
-        animation-delay: 1.15s;
+        animation-delay: 0.9s;
       }
 
       .abertura-nome {
@@ -83,14 +91,14 @@
         letter-spacing: 0.08em;
         text-transform: uppercase;
         color: #fff;
-        animation: abertura-sobe 0.6s ease-out 0.35s both;
+        animation: abertura-sobe 0.6s ease-out 0.15s both;
       }
 
       /* Três pontinhos pulsando, no lugar de uma barra de carregamento. */
       .abertura-pontos {
         display: flex;
         gap: 7px;
-        animation: abertura-sobe 0.6s ease-out 0.5s both;
+        animation: abertura-sobe 0.6s ease-out 0.3s both;
       }
 
       .abertura-pontos span {
@@ -109,39 +117,28 @@
         animation-delay: 0.3s;
       }
 
-      @keyframes abertura-entrada {
-        from {
-          opacity: 0;
-          transform: scale(0.5) rotate(-14deg);
-        }
-        to {
-          opacity: 1;
-          transform: scale(1) rotate(0deg);
-        }
-      }
-
       @keyframes abertura-balanco {
         0%,
         55%,
         100% {
-          transform: rotate(0deg);
+          transform: rotate(0deg) scale(1);
         }
         15% {
-          transform: rotate(-9deg);
+          transform: rotate(-9deg) scale(1.04);
         }
         35% {
-          transform: rotate(9deg);
+          transform: rotate(9deg) scale(1.04);
         }
       }
 
       @keyframes abertura-onda {
         from {
-          opacity: 0.6;
-          transform: scale(1);
+          opacity: 0.55;
+          transform: scale(0.8);
         }
         to {
           opacity: 0;
-          transform: scale(1.75);
+          transform: scale(1.7);
         }
       }
 
@@ -170,8 +167,7 @@
 
       /* Quem pediu menos animação no aparelho vê só a logo parada. */
       @media (prefers-reduced-motion: reduce) {
-        #abertura *,
-        #abertura *::before {
+        #abertura * {
           animation: none !important;
         }
       }
@@ -185,11 +181,11 @@
         <span class="abertura-onda"></span>
         <span class="abertura-onda atrasada"></span>
         <!-- Mesma nota musical do ícone do app (public/icone.svg). -->
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-             stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-          <path d="M9 18V5l12-2v13" />
-          <circle cx="6" cy="18" r="3" />
-          <circle cx="18" cy="16" r="3" />
+        <svg viewBox="0 0 512 512" aria-hidden="true">
+          <path
+            d="M330 120v168a56 56 0 1 1-32-50V186l-96 24v134a56 56 0 1 1-32-50V180a24 24 0 0 1 18-23l120-30a24 24 0 0 1 22 5 24 24 0 0 1 0 18z"
+            fill="currentColor"
+          />
         </svg>
       </div>
 
