@@ -6,34 +6,74 @@ import { StatusConexao } from './components/StatusConexao';
 import { BarraInferior } from './components/BarraInferior';
 
 /**
- * TELAS CARREGADAS SÓ QUANDO USADAS
+ * TELAS EM ARQUIVOS SEPARADOS
  *
  * Quem abre o app cai no Dashboard - ele vem junto, pronto. As outras telas
- * viram arquivos separados, baixados no clique do menu (e já guardados pelo
- * modo offline). Antes as dezessete telas vinham num arquivo só de 1,3 MB,
- * que o celular tinha de baixar e interpretar inteiro antes de desenhar
- * qualquer coisa.
+ * ficam em arquivos próprios, para não entrarem na conta da abertura: antes as
+ * dezessete vinham num arquivo só de 1,3 MB, que o celular tinha de baixar e
+ * interpretar inteiro antes de desenhar qualquer coisa.
+ *
+ * Elas não esperam o clique: logo depois do Dashboard aparecer, enquanto o
+ * app está parado, todas são buscadas em segundo plano (ver aquecerTelas).
+ * Quando o usuário clica no menu, o arquivo já está na mão e a tela abre na
+ * hora, sem indicação de carregamento - como era antes de dividir.
  */
-const CadastrarHino = lazy(() => import('./components/CadastrarHino').then(m => ({ default: m.CadastrarHino })));
-const HinosComuns = lazy(() => import('./components/HinosComuns').then(m => ({ default: m.HinosComuns })));
-const Harpa = lazy(() => import('./components/Harpa').then(m => ({ default: m.Harpa })));
-const BuscarMusica = lazy(() => import('./components/BuscarMusica').then(m => ({ default: m.BuscarMusica })));
-const OuvirMusica = lazy(() => import('./components/OuvirMusica').then(m => ({ default: m.OuvirMusica })));
-const MontarRepertorio = lazy(() => import('./components/MontarRepertorio').then(m => ({ default: m.MontarRepertorio })));
-const RepertoriosSalvos = lazy(() => import('./components/RepertoriosSalvos').then(m => ({ default: m.RepertoriosSalvos })));
-const ConfiguracoesView = lazy(() => import('./components/Configuracoes').then(m => ({ default: m.ConfiguracoesView })));
-const Relatorios = lazy(() => import('./components/Relatorios').then(m => ({ default: m.Relatorios })));
-const CampoHarmonico = lazy(() => import('./components/CampoHarmonico').then(m => ({ default: m.CampoHarmonico })));
-const Afinador = lazy(() => import('./components/Afinador').then(m => ({ default: m.Afinador })));
-const TomDaMusica = lazy(() => import('./components/TomDaMusica').then(m => ({ default: m.TomDaMusica })));
-const Anotacoes = lazy(() => import('./components/Anotacoes').then(m => ({ default: m.Anotacoes })));
+const carregarTela = {
+  CadastrarHino: () => import('./components/CadastrarHino'),
+  HinosComuns: () => import('./components/HinosComuns'),
+  Harpa: () => import('./components/Harpa'),
+  BuscarMusica: () => import('./components/BuscarMusica'),
+  OuvirMusica: () => import('./components/OuvirMusica'),
+  MontarRepertorio: () => import('./components/MontarRepertorio'),
+  RepertoriosSalvos: () => import('./components/RepertoriosSalvos'),
+  Configuracoes: () => import('./components/Configuracoes'),
+  Relatorios: () => import('./components/Relatorios'),
+  CampoHarmonico: () => import('./components/CampoHarmonico'),
+  Afinador: () => import('./components/Afinador'),
+  TomDaMusica: () => import('./components/TomDaMusica'),
+  Anotacoes: () => import('./components/Anotacoes')
+};
 
-/** Espera curta da tela que está sendo baixada, sem pular o layout. */
-const CarregandoTela = () => (
-  <div className="flex items-center justify-center py-20">
-    <div className="w-8 h-8 rounded-full border-2 border-gray-200 border-t-indigo-600 animate-spin" />
-  </div>
-);
+const CadastrarHino = lazy(() => carregarTela.CadastrarHino().then(m => ({ default: m.CadastrarHino })));
+const HinosComuns = lazy(() => carregarTela.HinosComuns().then(m => ({ default: m.HinosComuns })));
+const Harpa = lazy(() => carregarTela.Harpa().then(m => ({ default: m.Harpa })));
+const BuscarMusica = lazy(() => carregarTela.BuscarMusica().then(m => ({ default: m.BuscarMusica })));
+const OuvirMusica = lazy(() => carregarTela.OuvirMusica().then(m => ({ default: m.OuvirMusica })));
+const MontarRepertorio = lazy(() => carregarTela.MontarRepertorio().then(m => ({ default: m.MontarRepertorio })));
+const RepertoriosSalvos = lazy(() => carregarTela.RepertoriosSalvos().then(m => ({ default: m.RepertoriosSalvos })));
+const ConfiguracoesView = lazy(() => carregarTela.Configuracoes().then(m => ({ default: m.ConfiguracoesView })));
+const Relatorios = lazy(() => carregarTela.Relatorios().then(m => ({ default: m.Relatorios })));
+const CampoHarmonico = lazy(() => carregarTela.CampoHarmonico().then(m => ({ default: m.CampoHarmonico })));
+const Afinador = lazy(() => carregarTela.Afinador().then(m => ({ default: m.Afinador })));
+const TomDaMusica = lazy(() => carregarTela.TomDaMusica().then(m => ({ default: m.TomDaMusica })));
+const Anotacoes = lazy(() => carregarTela.Anotacoes().then(m => ({ default: m.Anotacoes })));
+
+/**
+ * Busca todas as telas em segundo plano, uma atrás da outra para não disputar
+ * a internet com o que o Dashboard ainda estiver carregando.
+ */
+function aquecerTelas() {
+  const fila = Object.values(carregarTela);
+
+  const proxima = (indice: number) => {
+    if (indice >= fila.length) return;
+    fila[indice]()
+      .catch(() => undefined) // Sem internet: o clique tenta de novo depois.
+      .then(() => proxima(indice + 1));
+  };
+
+  const comecar = () => proxima(0);
+
+  // requestIdleCallback: só roda quando o aparelho não tem nada melhor a fazer.
+  // Safari antigo não tem a função, daí o setTimeout no lugar.
+  const quandoOcioso = (window as any).requestIdleCallback;
+
+  if (typeof quandoOcioso === 'function') {
+    quandoOcioso(comecar, { timeout: 2000 });
+  } else {
+    window.setTimeout(comecar, 800);
+  }
+}
 
 import { initializeHarpaBase, getConfiguracoes } from './services/db';
 import { registrarAcesso } from './services/acessos';
@@ -60,6 +100,8 @@ export default function App() {
 
   useEffect(() => {
     initializeApp();
+    // Deixa as outras telas prontas antes de o usuário pedir por elas.
+    aquecerTelas();
   }, []);
 
   // Aparência escolhida nas configurações (cor, lado da logo, modo noturno).
@@ -303,7 +345,12 @@ export default function App() {
         <StatusConexao />
 
         <main className="flex-1 overflow-auto p-4 md:p-8">
-          <Suspense fallback={<CarregandoTela />}>
+          {/*
+            Sem tela de espera: as telas são aquecidas em segundo plano, então
+            na prática já estão prontas no clique. Se ainda não estiverem, fica
+            um instante vazio em vez de piscar um carregando no meio do app.
+          */}
+          <Suspense fallback={null}>
             {renderPage()}
           </Suspense>
         </main>
