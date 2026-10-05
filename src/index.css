@@ -96,6 +96,40 @@ select:focus {
   box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.1);
 }
 
+/**
+ * ZOOM DO IPHONE AO TOCAR NUM CAMPO
+ *
+ * O Safari do iPhone dá um zoom na página inteira quando a pessoa toca num
+ * campo cuja letra é menor que 16px - e NÃO volta ao normal depois, então a
+ * tela fica torta até recarregar. Varias telas usam campos com text-sm (14px)
+ * e text-xs (12px), por isso aparecia nas Configurações, na busca, nos
+ * modais... em qualquer lugar com formulário.
+ *
+ * A regra abaixo garante 16px em todo campo, só nas telas de toque (celular e
+ * tablet): no computador os campos continuam com o tamanho do desenho.
+ *
+ * De propósito NÃO usamos "maximum-scale=1" no index.html, que é o outro jeito
+ * de resolver: ele também proibiria o zoom com dois dedos, e tem gente da
+ * equipe que aumenta a tela para ler a cifra.
+ */
+@media (pointer: coarse) {
+  input,
+  select,
+  textarea {
+    /* 16px é o limite do Safari: daí para cima ele não dá zoom nenhum. */
+    font-size: 16px !important;
+  }
+
+  /* Caixas de marcar não têm letra e não precisam crescer. */
+  input[type='checkbox'],
+  input[type='radio'],
+  input[type='range'],
+  input[type='color'],
+  input[type='file'] {
+    font-size: inherit !important;
+  }
+}
+
 /* Botões */
 button {
   transition: all 0.2s ease;
