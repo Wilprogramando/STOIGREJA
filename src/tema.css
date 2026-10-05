@@ -76,10 +76,12 @@
 /* ==================== GRÁFICO DO DASHBOARD ==================== */
 
 /*
- * As barras de "hinos mais cantados" vinham fixas em índigo/violeta, então o
- * gráfico continuava azul mesmo com o sistema todo em outra cor. Agora a
- * barra e o cartão de cada linha seguem a cor escolhida (o trilho atrás da
- * barra já vinha de .bg-indigo-100, que usa a cor clara da paleta).
+ * O cartão de cada linha de "hinos mais cantados" vinha fixo em índigo, então
+ * o gráfico continuava azul mesmo com o sistema todo em outra cor.
+ *
+ * A barra em si é o único lugar que NÃO segue o tema: ela é um medidor, com
+ * cinza fraco no que falta e verde no que encheu (ver Dashboard.tsx). Aqui só
+ * o trilho cinza ganha a versão do modo noturno, para não sumir no escuro.
  */
 .bg-indigo-50\/60 {
   background-color: color-mix(in srgb, var(--cor-principal) 8%, #ffffff) !important;
@@ -87,6 +89,11 @@
 
 [data-modo='escuro'] .bg-indigo-50\/60 {
   background-color: color-mix(in srgb, var(--cor-principal) 16%, #0f172a) !important;
+}
+
+/* Trilho da barra: o quanto ainda falta encher. */
+[data-modo='escuro'] .bg-gray-200\/80 {
+  background-color: #2b3a52 !important;
 }
 
 input:focus,

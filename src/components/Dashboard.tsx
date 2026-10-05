@@ -467,9 +467,15 @@ export const Dashboard: React.FC<DashboardProps> = ({ onPageChange }) => {
                     <p className="text-sm sm:text-base font-bold text-gray-900 break-words">
                       {item.nome}
                     </p>
-                    <div className="mt-1.5 h-1.5 w-full bg-indigo-100 rounded-full overflow-hidden">
+                    {/*
+                      A barra lê como um medidor: o cinza fraco é o quanto
+                      falta e o verde é o quanto encheu. Fica de fora da cor
+                      do tema de propósito - aqui o verde quer dizer
+                      "cantado", e não a cor escolhida pela igreja.
+                    */}
+                    <div className="mt-2 h-2.5 w-full bg-gray-200/80 rounded-full overflow-hidden">
                       <div
-                        className="h-full rounded-full bg-gradient-to-r from-indigo-500 to-violet-600 transition-all duration-500"
+                        className="h-full rounded-full bg-gradient-to-r from-emerald-400 to-emerald-600 shadow-sm transition-all duration-700 ease-out"
                         style={{ width: `${largura}%` }}
                       />
                     </div>
