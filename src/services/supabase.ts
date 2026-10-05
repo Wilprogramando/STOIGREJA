@@ -411,3 +411,79 @@ export function ouvirTemaSupabase(aoMudar: (tema: any) => void): () => void {
     return () => {};
   }
 }
+
+// ==================== PESSOAS DOS APARELHOS ====================
+
+/**
+ * O nome que a pessoa deu na primeira vez que abriu o sistema no aparelho
+ * (ver supabase_pessoas.sql). Uma linha por aparelho.
+ */
+export async function salvarPessoaSupabase(
+  aparelhoId: string,
+  nome: string,
+  aparelho = ''
+): Promise<boolean> {
+  if (!supabase || !aparelhoId || !nome) return false;
+  try {
+    const { error } = await supabase.from('pessoas_aparelhos').upsert([
+      {
+        aparelho_id: aparelhoId,
+        nome,
+        aparelho,
+        atualizado_em: new Date().toISOString(),
+      },
+    ]);
+    if (error) throw error;
+
+    console.log('✅ Nome guardado no Supabase:', nome);
+    return true;
+  } catch (error) {
+    console.error('❌ Erro ao guardar o nome da pessoa:', error);
+    return false;
+  }
+}
+
+/**
+ * Nome já guardado para este aparelho. Serve para não perguntar de novo a quem
+ * limpou os dados do navegador ou abriu em outro navegador do mesmo celular.
+ */
+export async function lerPessoaSupabase(aparelhoId: string): Promise<string> {
+  if (!supabase || !aparelhoId) return '';
+  try {
+    const { data, error } = await supabase
+      .from('pessoas_aparelhos')
+      .select('nome')
+      .eq('aparelho_id', aparelhoId)
+      .maybeSingle();
+    if (error && error.code !== 'PGRST116') throw error;
+
+    return (data?.nome || '').trim();
+  } catch (error) {
+    console.error('❌ Erro ao ler o nome da pessoa:', error);
+    return '';
+  }
+}
+
+/** Todas as pessoas que já abriram o sistema, da mais recente para a mais antiga. */
+export async function lerPessoasSupabase(): Promise<
+  { aparelhoId: string; nome: string; aparelho: string; atualizadoEm: string }[]
+> {
+  if (!supabase) return [];
+  try {
+    const { data, error } = await supabase
+      .from('pessoas_aparelhos')
+      .select('*')
+      .order('atualizado_em', { ascending: false });
+    if (error) throw error;
+
+    return (data || []).map((linha: any) => ({
+      aparelhoId: linha.aparelho_id || '',
+      nome: linha.nome || '',
+      aparelho: linha.aparelho || '',
+      atualizadoEm: linha.atualizado_em || '',
+    }));
+  } catch (error) {
+    console.error('❌ Erro ao listar as pessoas:', error);
+    return [];
+  }
+}

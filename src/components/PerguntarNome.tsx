@@ -1,13 +1,9 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { Music } from 'lucide-react';
-import {
-  precisaPerguntarNome,
-  salvarNomePessoa,
-  marcarNomePerguntado,
-} from '../services/usuario';
+import { carregarNomePessoa, salvarNomePessoa } from '../services/usuario';
 
 interface PerguntarNomeProps {
-  /** Chamado depois de responder (ou deixar para depois). */
+  /** Chamado depois de responder. */
   onPronto: () => void;
 }
 
@@ -18,13 +14,37 @@ interface PerguntarNomeProps {
  * aberto para quem tem o endereço. O nome serve para a saudação do Dashboard
  * e para as Configurações mostrarem quem está conectado.
  *
- * Quem responder (ou tocar em "deixar para depois") não vê mais esta tela:
- * daí para frente o nome é trocado em Configurações.
+ * Não tem como passar sem responder, de propósito: um aparelho sem nome é
+ * justamente o que não dá para identificar na lista de quem está conectado.
+ * Depois de responder, a pergunta não volta mais - o nome é trocado em
+ * Configurações.
+ *
+ * A pergunta espera a resposta do Supabase antes de aparecer (ver
+ * carregarNomePessoa): quem já respondeu uma vez e depois limpou os dados do
+ * navegador não é perguntado de novo, e ninguém vê a tela piscar.
  */
 export const PerguntarNome: React.FC<PerguntarNomeProps> = ({ onPronto }) => {
-  const [mostrar, setMostrar] = useState(() => precisaPerguntarNome());
+  const [mostrar, setMostrar] = useState(false);
   const [nome, setNome] = useState('');
+  const [salvando, setSalvando] = useState(false);
   const campo = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    let cancelado = false;
+
+    carregarNomePessoa().then(encontrado => {
+      if (cancelado) return;
+
+      // Nome recuperado do Supabase: não pergunta nada, mas avisa igual, para
+      // o aparelho voltar a aparecer com o nome na lista de quem está online.
+      if (encontrado) onPronto();
+      else setMostrar(true);
+    });
+
+    return () => {
+      cancelado = true;
+    };
+  }, []);
 
   // O teclado do celular já abre no campo, para não ter nem esse toque extra.
   useEffect(() => {
@@ -33,22 +53,14 @@ export const PerguntarNome: React.FC<PerguntarNomeProps> = ({ onPronto }) => {
 
   if (!mostrar) return null;
 
-  const fechar = () => {
-    setMostrar(false);
-    onPronto();
-  };
-
   const confirmar = (evento: React.FormEvent) => {
     evento.preventDefault();
-    if (!nome.trim()) return;
+    if (!nome.trim() || salvando) return;
 
+    setSalvando(true);
     salvarNomePessoa(nome);
-    fechar();
-  };
-
-  const depois = () => {
-    marcarNomePerguntado();
-    fechar();
+    setMostrar(false);
+    onPronto();
   };
 
   return (
@@ -84,18 +96,10 @@ export const PerguntarNome: React.FC<PerguntarNomeProps> = ({ onPronto }) => {
 
         <button
           type="submit"
-          disabled={!nome.trim()}
+          disabled={!nome.trim() || salvando}
           className="mt-3 w-full px-4 py-3 bg-indigo-600 text-white rounded-xl font-semibold hover:bg-indigo-700 disabled:opacity-50 transition"
         >
           Entrar
-        </button>
-
-        <button
-          type="button"
-          onClick={depois}
-          className="mt-2 w-full px-4 py-2 text-sm text-gray-500 hover:text-gray-700 font-medium"
-        >
-          Deixar para depois
         </button>
 
         <p className="mt-3 text-[11px] text-gray-400 text-center">
