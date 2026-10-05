@@ -291,6 +291,37 @@ export function cifraParaTocar(cifra: Cifra): string {
   return transporCifra(cifra.cifra, original, escolhido)
 }
 
+/**
+ * Lista os acordes que a musica usa, na ordem em que aparecem e sem repetir.
+ *
+ * Serve para mostrar no alto da tela de tocar: dá para conferir num relance
+ * se o tom escolhido caiu em acordes confortáveis antes de começar.
+ */
+export function acordesUsados(texto: string): string[] {
+  const vistos: string[] = []
+
+  for (const linha of texto.split('\n')) {
+    if (!ehLinhaDeAcordes(linha)) continue
+
+    const { resto } = separarMarcador(linha)
+
+    for (const acorde of resto.trim().split(/\s+/).filter(Boolean)) {
+      if (!vistos.includes(acorde)) vistos.push(acorde)
+    }
+  }
+
+  return vistos
+}
+
+/** Sobe ou desce o tom em semitons, dando a volta no fim da lista. */
+export function tomVizinho(tom: string, semitons: number): string {
+  const base = normalizarTom(tom)
+  if (!base) return ''
+
+  const i = TONS.indexOf(base)
+  return TONS[(i + semitons + TONS.length * 2) % TONS.length]
+}
+
 // ==================== BUSCA NA INTERNET ====================
 
 /** Procura no Cifra Club pelo nome da música ou por um trecho da letra. */
