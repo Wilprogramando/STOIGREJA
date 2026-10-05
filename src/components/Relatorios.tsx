@@ -126,10 +126,16 @@ const LinhaRanking = ({
           </p>
         </div>
 
-        <div className="mt-1.5 h-1.5 w-full bg-indigo-100 rounded-full overflow-hidden">
+        {/* Mesma barra do Dashboard: cinza fraco no que falta, a cor do tema
+            no que encheu (ver Dashboard.tsx). */}
+        <div className="mt-2 h-2.5 w-full bg-gray-200/80 rounded-full overflow-hidden">
           <div
-            className="h-full rounded-full bg-gradient-to-r from-indigo-500 to-violet-600 transition-all duration-500"
-            style={{ width: `${largura}%` }}
+            className="h-full rounded-full shadow-sm transition-all duration-700 ease-out"
+            style={{
+              width: `${largura}%`,
+              backgroundImage:
+                'linear-gradient(to right, var(--cor-principal), var(--cor-escura))',
+            }}
           />
         </div>
       </div>

@@ -79,9 +79,10 @@
  * O cartão de cada linha de "hinos mais cantados" vinha fixo em índigo, então
  * o gráfico continuava azul mesmo com o sistema todo em outra cor.
  *
- * A barra em si é o único lugar que NÃO segue o tema: ela é um medidor, com
- * cinza fraco no que falta e verde no que encheu (ver Dashboard.tsx). Aqui só
- * o trilho cinza ganha a versão do modo noturno, para não sumir no escuro.
+ * A barra em si não precisa de regra aqui: ela usa as variáveis do tema
+ * direto no style (ver Dashboard.tsx), com cinza fraco no que falta e a cor
+ * escolhida no que encheu. Deste lado fica só o trilho cinza, que ganha a
+ * versão do modo noturno para não sumir no escuro.
  */
 .bg-indigo-50\/60 {
   background-color: color-mix(in srgb, var(--cor-principal) 8%, #ffffff) !important;

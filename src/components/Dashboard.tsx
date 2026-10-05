@@ -469,14 +469,22 @@ export const Dashboard: React.FC<DashboardProps> = ({ onPageChange }) => {
                     </p>
                     {/*
                       A barra lê como um medidor: o cinza fraco é o quanto
-                      falta e o verde é o quanto encheu. Fica de fora da cor
-                      do tema de propósito - aqui o verde quer dizer
-                      "cantado", e não a cor escolhida pela igreja.
+                      falta e a parte cheia é o quanto foi cantado.
+
+                      A cor cheia sai das variáveis do tema (--cor-principal /
+                      --cor-escura, escritas no <html> por services/tema.ts) e
+                      não de uma classe do Tailwind: assim ela acompanha na
+                      hora a cor escolhida em Configurações > Aparência, sem
+                      precisar de uma regra nova no tema.css para cada tom.
                     */}
                     <div className="mt-2 h-2.5 w-full bg-gray-200/80 rounded-full overflow-hidden">
                       <div
-                        className="h-full rounded-full bg-gradient-to-r from-emerald-400 to-emerald-600 shadow-sm transition-all duration-700 ease-out"
-                        style={{ width: `${largura}%` }}
+                        className="h-full rounded-full shadow-sm transition-all duration-700 ease-out"
+                        style={{
+                          width: `${largura}%`,
+                          backgroundImage:
+                            'linear-gradient(to right, var(--cor-principal), var(--cor-escura))',
+                        }}
                       />
                     </div>
                   </div>
