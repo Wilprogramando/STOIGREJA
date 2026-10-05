@@ -24,6 +24,7 @@
 /* ==================== COR ESCOLHIDA ==================== */
 
 /* Fundos e textos na cor principal, no lugar do índigo fixo. */
+.bg-indigo-500,
 .bg-indigo-600,
 .bg-indigo-700 {
   background-color: var(--cor-principal) !important;
@@ -34,6 +35,7 @@
   background-color: var(--cor-escura) !important;
 }
 
+.text-indigo-500,
 .text-indigo-600,
 .text-indigo-700 {
   color: var(--cor-principal) !important;
@@ -66,8 +68,25 @@
 }
 
 /* Cabeçalho e faixas em degradê. */
-.bg-gradient-to-r.from-indigo-600 {
+.bg-gradient-to-r.from-indigo-600,
+.bg-gradient-to-r.from-indigo-500 {
   background-image: linear-gradient(to right, var(--cor-principal), var(--cor-escura)) !important;
+}
+
+/* ==================== GRÁFICO DO DASHBOARD ==================== */
+
+/*
+ * As barras de "hinos mais cantados" vinham fixas em índigo/violeta, então o
+ * gráfico continuava azul mesmo com o sistema todo em outra cor. Agora a
+ * barra e o cartão de cada linha seguem a cor escolhida (o trilho atrás da
+ * barra já vinha de .bg-indigo-100, que usa a cor clara da paleta).
+ */
+.bg-indigo-50\/60 {
+  background-color: color-mix(in srgb, var(--cor-principal) 8%, #ffffff) !important;
+}
+
+[data-modo='escuro'] .bg-indigo-50\/60 {
+  background-color: color-mix(in srgb, var(--cor-principal) 16%, #0f172a) !important;
 }
 
 input:focus,
@@ -204,6 +223,7 @@ select:focus {
   background-color: color-mix(in srgb, var(--cor-principal) 26%, #0f172a) !important;
 }
 
+[data-modo='escuro'] .text-indigo-500,
 [data-modo='escuro'] .text-indigo-600,
 [data-modo='escuro'] .text-indigo-700 {
   color: color-mix(in srgb, var(--cor-principal) 55%, #ffffff) !important;

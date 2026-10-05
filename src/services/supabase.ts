@@ -338,3 +338,76 @@ export function getSupabaseStatus(): string {
   if (!supabase) return '❌ Supabase não conectado';
   return '✅ Supabase conectado';
 }
+
+// ==================== APARÊNCIA (tema do sistema) ====================
+
+/**
+ * A aparência é uma só para a igreja inteira: quem muda a cor nas
+ * Configurações muda em todos os aparelhos que abrem o sistema. Por isso mora
+ * numa linha única (id = 'tema') em vez de ficar só no localStorage.
+ */
+export async function lerTemaSupabase(): Promise<any | null> {
+  if (!supabase) return null;
+  try {
+    const { data, error } = await supabase
+      .from('tema_sistema')
+      .select('dados')
+      .eq('id', 'tema')
+      .maybeSingle();
+    if (error && error.code !== 'PGRST116') throw error;
+
+    return data?.dados || null;
+  } catch (error) {
+    console.error('❌ Erro ao ler a aparência:', error);
+    return null;
+  }
+}
+
+export async function salvarTemaSupabase(tema: any): Promise<boolean> {
+  if (!supabase) return false;
+  try {
+    const { error } = await supabase.from('tema_sistema').upsert([
+      { id: 'tema', dados: tema, atualizado_em: new Date().toISOString() },
+    ]);
+    if (error) throw error;
+
+    console.log('✅ Aparência salva para todos os aparelhos');
+    return true;
+  } catch (error) {
+    console.error('❌ Erro ao salvar a aparência:', error);
+    return false;
+  }
+}
+
+/**
+ * Avisa quando outro aparelho trocar a aparência, para a troca aparecer na
+ * hora sem ninguém precisar recarregar a página.
+ */
+export function ouvirTemaSupabase(aoMudar: (tema: any) => void): () => void {
+  if (!supabase) return () => {};
+
+  try {
+    const canal = supabase
+      .channel('tema-sistema')
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'tema_sistema' },
+        (payload: any) => {
+          const dados = payload?.new?.dados;
+          if (dados) aoMudar(dados);
+        }
+      )
+      .subscribe();
+
+    return () => {
+      try {
+        supabase.removeChannel(canal);
+      } catch {
+        /* nada a fazer: a página está fechando */
+      }
+    };
+  } catch (error) {
+    console.error('❌ Não foi possível ouvir a aparência:', error);
+    return () => {};
+  }
+}

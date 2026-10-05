@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   Check,
   Sun,
@@ -81,6 +81,13 @@ export const Aparencia: React.FC<AparenciaProps> = ({
   subtitulo,
 }) => {
   const [tema, setTema] = useState<Tema>(() => lerTema());
+
+  // Se alguém trocar a cor em outro aparelho, a tela aberta aqui acompanha.
+  useEffect(() => {
+    const aoMudar = () => setTema(lerTema());
+    window.addEventListener('repertorio-tema-mudou', aoMudar);
+    return () => window.removeEventListener('repertorio-tema-mudou', aoMudar);
+  }, []);
 
   const mudar = (novo: Partial<Tema>) => {
     const atualizado = { ...tema, ...novo };
@@ -287,7 +294,8 @@ export const Aparencia: React.FC<AparenciaProps> = ({
       </button>
 
       <p className="text-xs text-gray-500">
-        A aparência vale para este aparelho. Cada celular da equipe pode ter a sua.
+        A aparência vale para o sistema todo: ao trocar aqui, todos os aparelhos da equipe
+        passam a abrir com essa cor.
       </p>
     </div>
   );

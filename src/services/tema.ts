@@ -6,7 +6,15 @@
  * A escolha vira atributos no <html> (data-cor, data-modo, ...) e o arquivo
  * tema.css faz o resto. Assim a troca é instantânea, sem recarregar a página,
  * e nenhuma tela precisa saber que existe um tema.
+ *
+ * A aparência é UMA SÓ para a igreja inteira: fica numa linha do Supabase
+ * (ver supabase_tema.sql) e vale para todos os aparelhos que abrirem o
+ * sistema. O localStorage continua guardando uma cópia, mas só para a tela
+ * abrir já na cor certa antes do Supabase responder - e para o sistema
+ * seguir funcionando sem internet.
  */
+
+import { lerTemaSupabase, salvarTemaSupabase, ouvirTemaSupabase } from './supabase';
 
 export type PosicaoLogo = 'esquerda' | 'direita';
 export type ModoCor = 'claro' | 'escuro' | 'automatico';
@@ -70,7 +78,8 @@ export function lerTema(): Tema {
   }
 }
 
-export function salvarTema(tema: Tema): Tema {
+/** Guarda a cópia no aparelho, aplica no <html> e avisa as telas abertas. */
+function usarTema(tema: Tema): Tema {
   try {
     localStorage.setItem(CHAVE, JSON.stringify(tema));
   } catch (erro) {
@@ -84,6 +93,37 @@ export function salvarTema(tema: Tema): Tema {
   }
 
   return tema;
+}
+
+export function salvarTema(tema: Tema): Tema {
+  usarTema(tema);
+
+  // Em segundo plano: a troca de cor não espera a internet responder.
+  salvarTemaSupabase(tema).catch(erro =>
+    console.error('Não foi possível enviar a aparência para os outros aparelhos:', erro)
+  );
+
+  return tema;
+}
+
+/**
+ * Busca no Supabase a aparência escolhida pela igreja e aplica em cima da
+ * cópia local. Roda na abertura do sistema (main.tsx) e continua ouvindo:
+ * se alguém trocar a cor em outro aparelho, a troca chega na hora.
+ *
+ * Devolve a função que para de ouvir.
+ */
+export function sincronizarTema(): () => void {
+  const receber = (dados: any) => {
+    if (!dados || typeof dados !== 'object') return;
+    usarTema({ ...TEMA_PADRAO, ...dados });
+  };
+
+  lerTemaSupabase()
+    .then(receber)
+    .catch(erro => console.error('Não foi possível buscar a aparência da igreja:', erro));
+
+  return ouvirTemaSupabase(receber);
 }
 
 export function paletaDe(id: string): Paleta {

@@ -4,12 +4,15 @@ import App from './App'
 import './index.css'
 import './tema.css'
 import { sincronizarPendentes } from './services/db'
-import { aplicarTema, acompanharAparelho } from './services/tema'
+import { aplicarTema, acompanharAparelho, sincronizarTema } from './services/tema'
 import { garantirSaidaDaAbertura } from './services/abertura'
 
 // A aparencia escolhida entra antes de desenhar a tela, para nao piscar branco.
+// Primeiro a copia do aparelho (instantanea), depois a da igreja no Supabase -
+// que e a que vale: trocar a cor nas Configuracoes troca em todos os aparelhos.
 aplicarTema()
 acompanharAparelho()
+sincronizarTema()
 
 ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>
