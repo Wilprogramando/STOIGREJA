@@ -34,15 +34,22 @@ on conflict (id) do nothing;
 -- próxima vez que abrir. Com isto, a troca chega na hora.
 -- =====================================================================
 
--- O bloco engole o erro de "já está na publicação", para o arquivo poder
--- rodar de novo sem reclamar.
-do $
+-- O bloco só adiciona se ainda não estiver lá, para o arquivo poder rodar de
+-- novo sem reclamar de "já está na publicação".
+do $bloco$
 begin
-  alter publication supabase_realtime add table public.tema_sistema;
-exception
-  when duplicate_object then null;
-  when undefined_object then null;
-end $;
+  if exists (select 1 from pg_publication where pubname = 'supabase_realtime')
+     and not exists (
+       select 1 from pg_publication_tables
+       where pubname = 'supabase_realtime'
+         and schemaname = 'public'
+         and tablename = 'tema_sistema'
+     )
+  then
+    alter publication supabase_realtime add table public.tema_sistema;
+  end if;
+end
+$bloco$;
 
 -- =====================================================================
 -- PERMISSÕES
