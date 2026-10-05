@@ -6,6 +6,7 @@ import './tema.css'
 import { sincronizarPendentes } from './services/db'
 import { aplicarTema, acompanharAparelho, sincronizarTema } from './services/tema'
 import { garantirSaidaDaAbertura } from './services/abertura'
+import { prepararInstalacao } from './services/instalar'
 
 // A aparencia escolhida entra antes de desenhar a tela, para nao piscar branco.
 // Primeiro a copia do aparelho (instantanea), depois a da igreja no Supabase -
@@ -13,6 +14,11 @@ import { garantirSaidaDaAbertura } from './services/abertura'
 aplicarTema()
 acompanharAparelho()
 sincronizarTema()
+
+// O convite de "instalar como aplicativo" chega do navegador no carregamento,
+// bem antes de alguem abrir as Configuracoes. Guardamos aqui para o botao de
+// Configuracoes > Instalar no Celular poder usar depois.
+prepararInstalacao()
 
 ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>

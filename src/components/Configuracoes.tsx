@@ -18,6 +18,7 @@ import { OrdemMenus } from './OrdemMenus';
 import { SecaoConfig } from './SecaoConfig';
 import { Aparencia } from './Aparencia';
 import { AberturaConfig } from './AberturaConfig';
+import { InstalarApp } from './InstalarApp';
 import { CategoriasConfig } from './CategoriasConfig';
 import { NomesMenus } from './NomesMenus';
 import { lerAcessos, zerarAcessos, RegistroAcessos } from '../services/acessos';
@@ -392,6 +393,17 @@ Os hinos já cadastrados com esse cantor não mudam.`)) return;
             logoSistema={config.logoSistema}
             subtitulo={config.subtitulo}
           />
+        </SecaoConfig>
+
+        <SecaoConfig
+          id="instalar"
+          titulo="Instalar no Celular"
+          descricao="Guardar o sistema na tela inicial, como aplicativo"
+          icone={Download}
+          aberta={secaoAberta}
+          onAbrir={setSecaoAberta}
+        >
+          <InstalarApp />
         </SecaoConfig>
 
         <SecaoConfig
