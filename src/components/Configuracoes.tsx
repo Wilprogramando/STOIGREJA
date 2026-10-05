@@ -22,10 +22,12 @@ import { InstalarApp } from './InstalarApp';
 import { CategoriasConfig } from './CategoriasConfig';
 import { NomesMenus } from './NomesMenus';
 import { lerAcessos, zerarAcessos, RegistroAcessos } from '../services/acessos';
+import { lerNomePessoa, salvarNomePessoa } from '../services/usuario';
 import {
   carregarAparelhos,
   nomeDesteAparelho,
   salvarNomeDesteAparelho,
+  temNomeProprio,
   ResumoAparelho,
 } from '../services/aparelhos';
 import {
@@ -103,6 +105,9 @@ export const ConfiguracoesView: React.FC<ConfiguracoesProps> = ({ onConfigChange
   const [online, setOnline] = useState<AparelhoOnline[]>([]);
   const [rede, setRede] = useState<string>(() => redeDesteAparelho());
   const [redeSalva, setRedeSalva] = useState(false);
+  /** Nome de quem usa este aparelho, dado na primeira abertura do sistema. */
+  const [pessoa, setPessoa] = useState<string>(() => lerNomePessoa());
+  const [pessoaSalva, setPessoaSalva] = useState(false);
   /** Alterações que ainda não subiram para a nuvem. */
   const [pendencias, setPendencias] = useState<OperacaoPendente[]>(() => listarPendentes());
   const [enviandoPendencia, setEnviandoPendencia] = useState<string | null>(null);
@@ -165,6 +170,25 @@ export const ConfiguracoesView: React.FC<ConfiguracoesProps> = ({ onConfigChange
     await atualizarMeusDados();
     setRedeSalva(true);
     setTimeout(() => setRedeSalva(false), 2000);
+  };
+
+  /**
+   * Troca o nome de quem usa este aparelho. O nome do aparelho acompanha,
+   * para a lista do mes nao continuar mostrando o antigo - a nao ser que
+   * alguem tenha escolhido um apelido a mao para o aparelho.
+   */
+  const handleSalvarPessoa = async () => {
+    const salvo = salvarNomePessoa(pessoa);
+    setPessoa(salvo);
+
+    if (salvo && !temNomeProprio()) {
+      setNomeAparelho(await salvarNomeDesteAparelho(salvo));
+      setAparelhos(await carregarAparelhos(30));
+    }
+
+    await atualizarMeusDados();
+    setPessoaSalva(true);
+    setTimeout(() => setPessoaSalva(false), 2000);
   };
 
   const handleAdicionarCantor = () => {
@@ -952,12 +976,39 @@ Os hinos já cadastrados com esse cantor não mudam.`)) return;
 
         <SecaoConfig
           id="locais"
-          titulo="Local e rede dos aparelhos"
-          descricao="Cidade, provedor e apelido da rede de cada aparelho"
+          titulo="Quem esta conectado agora"
+          descricao="Nome da pessoa, cidade, provedor e rede de cada aparelho"
           icone={MapPin}
           aberta={secaoAberta}
           onAbrir={setSecaoAberta}
         >
+          <div className="mb-3 p-3 rounded-xl bg-gray-50 border border-gray-200">
+            <label className="block text-xs font-medium text-gray-600 mb-1">
+              Seu nome (quem usa este aparelho)
+            </label>
+            <div className="flex gap-2">
+              <input
+                type="text"
+                value={pessoa}
+                onChange={e => setPessoa(e.target.value)}
+                maxLength={40}
+                className="flex-1 px-3 py-2 border border-gray-300 rounded-lg text-sm"
+                placeholder="Ex.: Daniel"
+              />
+              <button
+                onClick={handleSalvarPessoa}
+                className="px-4 py-2 bg-indigo-600 text-white rounded-lg text-sm font-medium hover:bg-indigo-700"
+              >
+                {pessoaSalva ? 'Salvo!' : 'Salvar'}
+              </button>
+            </div>
+            <p className="text-[11px] text-gray-500 mt-2">
+              É o nome perguntado na primeira vez que o sistema abriu neste aparelho. Ele
+              aparece na saudação do Dashboard e na lista abaixo, para a equipe saber quem
+              está conectado.
+            </p>
+          </div>
+
           <div className="mb-4 p-3 rounded-xl bg-gray-50 border border-gray-200">
             <label className="block text-xs font-medium text-gray-600 mb-1">
               Nome da rede wi-fi deste aparelho
@@ -991,14 +1042,19 @@ Os hinos já cadastrados com esse cantor não mudam.`)) return;
             <div className="space-y-2">
               {online.map(ap => (
                 <div key={ap.aparelhoId} className="p-3 rounded-xl border border-gray-200">
+                  {/* Quem esta usando vem primeiro; o aparelho fica embaixo. */}
                   <p className="font-semibold text-gray-900 text-sm break-words">
-                    {ap.nome}
+                    {ap.pessoa || ap.nome}
                     {ap.esteAparelho && (
                       <span className="ml-2 text-[10px] px-1.5 py-0.5 rounded bg-indigo-100 text-indigo-700 align-middle">
                         este aparelho
                       </span>
                     )}
                   </p>
+
+                  {ap.pessoa && (
+                    <p className="text-xs text-gray-500 break-words">{ap.nome}</p>
+                  )}
 
                   <p className="text-xs text-gray-600 mt-1 flex items-center gap-1.5">
                     <MapPin size={13} className="text-gray-400 shrink-0" />

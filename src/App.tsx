@@ -79,10 +79,16 @@ function aquecerTelas() {
 
 import { initializeHarpaBase, getConfiguracoes } from './services/db';
 import { registrarAcesso } from './services/acessos';
-import { registrarAcessoDesteAparelho } from './services/aparelhos';
-import { acompanharOnline } from './services/presenca';
+import {
+  registrarAcessoDesteAparelho,
+  salvarNomeDesteAparelho,
+  temNomeProprio,
+} from './services/aparelhos';
+import { acompanharOnline, atualizarMeusDados } from './services/presenca';
 import { menuVisivel, lerMenusOcultos, lerOrdemMenus, lerNomesMenus } from './services/menus';
 import { lerTema, Tema } from './services/tema';
+import { PerguntarNome } from './components/PerguntarNome';
+import { lerNomePessoa } from './services/usuario';
 import { sincronizarCantoresDosHinos } from './services/cantores';
 import { Configuracoes, Repertorio, Hino } from './types';
 
@@ -325,8 +331,25 @@ export default function App() {
     }
   };
 
+  /**
+   * Respondeu o nome na primeira abertura: o aparelho reaparece na sala de
+   * online já com o nome, e o nome do aparelho passa a ser o da pessoa -
+   * mas só se ninguem tinha escolhido um a mao nas Configuracoes.
+   */
+  const aoResponderNome = async () => {
+    const nome = lerNomePessoa();
+
+    if (nome && !temNomeProprio()) {
+      await salvarNomeDesteAparelho(nome);
+    }
+
+    atualizarMeusDados();
+  };
+
   return (
     <div className="flex h-full bg-gray-100 overflow-hidden">
+      <PerguntarNome onPronto={aoResponderNome} />
+
       <Sidebar
         currentPage={currentPage}
         onPageChange={handlePageChange}

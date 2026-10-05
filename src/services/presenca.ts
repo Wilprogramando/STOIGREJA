@@ -14,6 +14,7 @@
 
 import { clienteSupabase } from './db';
 import { idDesteAparelho, nomeDesteAparelho } from './aparelhos';
+import { lerNomePessoa } from './usuario';
 
 const SALA = 'aparelhos-online';
 const CHAVE_REDE = 'repertorio:rede-wifi';
@@ -33,6 +34,8 @@ export interface LocalDoAparelho {
 export interface AparelhoOnline {
   aparelhoId: string;
   nome: string;
+  /** Nome de quem usa o aparelho, dado na primeira abertura. Pode vir vazio. */
+  pessoa: string;
   cidade: string;
   regiao: string;
   pais: string;
@@ -196,6 +199,7 @@ export function acompanharOnline(
       .map((dado: any) => ({
         aparelhoId: dado.aparelhoId || '',
         nome: dado.nome || 'Aparelho',
+        pessoa: dado.pessoa || '',
         cidade: dado.cidade || '',
         regiao: dado.regiao || '',
         pais: dado.pais || '',
@@ -222,6 +226,7 @@ export function acompanharOnline(
       await canal.track({
         aparelhoId: meuId,
         nome: nomeDesteAparelho(),
+        pessoa: lerNomePessoa(),
         cidade: local?.cidade || '',
         regiao: local?.regiao || '',
         pais: local?.pais || '',
@@ -258,6 +263,7 @@ export async function atualizarMeusDados(): Promise<void> {
   await canal.track({
     aparelhoId: idDesteAparelho(),
     nome: nomeDesteAparelho(),
+    pessoa: lerNomePessoa(),
     cidade: local?.cidade || '',
     regiao: local?.regiao || '',
     pais: local?.pais || '',

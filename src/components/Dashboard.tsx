@@ -13,6 +13,7 @@ import {
 import { getAllHinos, getAllRepertorios, getHinosByType } from '../services/db';
 import { rotuloDoMenu } from '../services/menus';
 import { fecharAbertura } from '../services/abertura';
+import { saudacao, ouvirNomePessoa } from '../services/usuario';
 import { Repertorio, Hino } from '../types';
 
 interface DashboardProps {
@@ -175,6 +176,12 @@ export const Dashboard: React.FC<DashboardProps> = ({ onPageChange }) => {
   });
   const [loading, setLoading] = useState(true);
   const frase = useFraseAnimada();
+  /** "Paz do Senhor, Daniel!" - o nome vem do que a pessoa deu na 1ª abertura. */
+  const [cumprimento, setCumprimento] = useState(() => saudacao());
+
+  // O nome pode chegar depois: na primeira vez o Dashboard já está desenhado
+  // atrás da pergunta, e também dá para trocar o nome nas Configurações.
+  useEffect(() => ouvirNomePessoa(() => setCumprimento(saudacao())), []);
 
   useEffect(() => {
     loadStats();
@@ -275,20 +282,13 @@ export const Dashboard: React.FC<DashboardProps> = ({ onPageChange }) => {
     );
   }
 
-  const saudacao = () => {
-    const hora = new Date().getHours();
-    if (hora < 12) return 'Bom dia';
-    if (hora < 18) return 'Boa tarde';
-    return 'Boa noite';
-  };
-
   const proximos = stats.proximosRepertorios;
 
   return (
     <div className="max-w-5xl mx-auto space-y-8">
       {/* Saudação */}
       <div>
-        <h2 className="text-2xl md:text-3xl font-bold text-gray-900">{saudacao()}! 🙌</h2>
+        <h2 className="text-2xl md:text-3xl font-bold text-gray-900">{cumprimento} 🙌</h2>
         <p className="text-gray-500 mt-1 min-h-[1.5rem] text-sm md:text-base">
           {frase}
           <span className="inline-block w-[2px] h-4 align-middle ml-0.5 bg-indigo-500 animate-pulse" />

@@ -131,3 +131,18 @@ export async function carregarAparelhos(dias = 30): Promise<ResumoAparelho[]> {
 
   return Array.from(porAparelho.values()).sort((a, b) => b.acessos - a.acessos);
 }
+
+/**
+ * A pessoa já deu um nome a este aparelho nas Configurações?
+ *
+ * Serve para o nome digitado na primeira abertura (ver services/usuario.ts)
+ * virar também o nome do aparelho, mas só quando ninguém escolheu um à mão:
+ * um "Celular da mesa de som" escrito de propósito não pode ser atropelado.
+ */
+export function temNomeProprio(): boolean {
+  try {
+    return !!localStorage.getItem(CHAVE_NOME);
+  } catch {
+    return false;
+  }
+}
