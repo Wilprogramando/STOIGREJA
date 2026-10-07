@@ -2,7 +2,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import {
   Search, Loader2, Play, Pause, Youtube, Music, Volume2, Upload, Link2,
   Trash2, Plus, SkipBack, SkipForward, Rewind, FastForward, Globe, ListMusic, Mic, Square, Copy, Check, Gauge, Star,
-  FileText, Send,
+  FileText, Send, Save,
 } from 'lucide-react';
 import { procurarParaOuvir, acharVideoNoYoutube, acharPrevia, MusicaParaOuvir } from '../services/audio';
 import {
@@ -93,6 +93,8 @@ export const OuvirMusica: React.FC = () => {
   const [enviando, setEnviando] = useState<string | null>(null);
   /** Recado curto que aparece no alto da lista (achou, não achou, enviou). */
   const [recado, setRecado] = useState('');
+  /** Qual resultado está sendo salvo em "Minhas músicas". */
+  const [salvandoNasMinhas, setSalvandoNasMinhas] = useState<string | null>(null);
 
   /** Procura a letra na internet pelo nome (e cantor) e abre na tela. */
   const verLetra = async (id: string, nome: string, cantor: string) => {
@@ -286,6 +288,63 @@ export const OuvirMusica: React.FC = () => {
   );
 
   // ==================== CADASTRO ====================
+
+  /**
+   * Salva a música achada na internet direto em "Minhas músicas", sem passar
+   * pelo formulário: ela aparece na outra aba já com o botão de tocar.
+   *
+   * O áudio guardado é a prévia oficial de 30 segundos (é o único que a Apple
+   * libera para tocar fora dos aplicativos dela). Para a música inteira, o
+   * caminho continua sendo cadastrar o arquivo ou o link na aba "Minhas
+   * músicas", ou abrir no YouTube.
+   */
+  const salvarNasMinhas = async (musica: MusicaParaOuvir) => {
+    const mesmoNome = (a: string, b: string) =>
+      (a || '').trim().toLocaleLowerCase('pt-BR') === (b || '').trim().toLocaleLowerCase('pt-BR');
+
+    if (musicas.some(m => mesmoNome(m.nome, musica.nome) && mesmoNome(m.cantor, musica.cantor))) {
+      setRecado(`"${musica.nome}" já está em Minhas músicas.`);
+      return;
+    }
+
+    setSalvandoNasMinhas(musica.id);
+    setRecado('');
+    setErro('');
+
+    try {
+      // Resultado que veio sem prévia: procura antes de salvar, senão a
+      // música entraria na lista sem nada para tocar.
+      let endereco = musica.previa;
+      if (!endereco) {
+        endereco = await acharPrevia(musica.nome, musica.cantor);
+      }
+
+      if (!endereco) {
+        setRecado(
+          `Não achei áudio de "${musica.nome}" para guardar. Use "Cadastrar música" com o arquivo ou um link.`
+        );
+        return;
+      }
+
+      const nova: MusicaAudio = {
+        id: `musica_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`,
+        nome: musica.nome,
+        cantor: musica.cantor,
+        url: endereco,
+        arquivo: '',
+        duracao: 30,
+        criadoEm: new Date().toISOString(),
+      };
+
+      await saveMusicaAudio(nova);
+      setMusicas(await getAllMusicasAudio());
+      setRecado(`"${musica.nome}" foi para Minhas músicas (prévia de 30 segundos).`);
+    } catch (e: any) {
+      setRecado(e?.message || `Não consegui salvar "${musica.nome}".`);
+    } finally {
+      setSalvandoNasMinhas(null);
+    }
+  };
 
   /** Abre o formulário já preenchido com a música achada na internet. */
   const cadastrarDaBusca = (musica: MusicaParaOuvir) => {
@@ -918,6 +977,18 @@ export const OuvirMusica: React.FC = () => {
                           )}
                         </button>
                         <button
+                          onClick={() => salvarNasMinhas(musica)}
+                          disabled={salvandoNasMinhas === f.id}
+                          title="Salvar em Minhas músicas"
+                          className="w-10 h-10 rounded-full bg-green-50 text-green-700 hover:bg-green-100 flex items-center justify-center disabled:opacity-60"
+                        >
+                          {salvandoNasMinhas === f.id ? (
+                            <Loader2 size={18} className="animate-spin" />
+                          ) : (
+                            <Save size={18} />
+                          )}
+                        </button>
+                        <button
                           onClick={() => abrirNoYoutube(musica)}
                           title="Ouvir no YouTube"
                           className="w-10 h-10 rounded-full bg-red-50 text-red-600 hover:bg-red-100 flex items-center justify-center"
@@ -1223,9 +1294,22 @@ export const OuvirMusica: React.FC = () => {
                       </button>
 
                       <button
+                        onClick={() => salvarNasMinhas(musica)}
+                        disabled={salvandoNasMinhas === musica.id}
+                        title="Salvar esta música em Minhas músicas"
+                        className="flex h-9 sm:h-10 rounded-lg bg-green-50 text-green-700 hover:bg-green-100 items-center justify-center transition disabled:opacity-60"
+                      >
+                        {salvandoNasMinhas === musica.id ? (
+                          <Loader2 size={18} className="animate-spin" />
+                        ) : (
+                          <Save size={18} />
+                        )}
+                      </button>
+
+                      <button
                         onClick={() => cadastrarDaBusca(musica)}
-                        title="Cadastrar esta música em Minhas músicas"
-                        className="flex h-9 sm:h-10 rounded-lg bg-green-50 text-green-700 hover:bg-green-100 items-center justify-center transition"
+                        title="Cadastrar com o arquivo ou o link da música inteira"
+                        className="flex h-9 sm:h-10 rounded-lg bg-gray-100 text-gray-600 hover:bg-gray-200 items-center justify-center transition"
                       >
                         <Plus size={18} />
                       </button>
@@ -1266,8 +1350,9 @@ export const OuvirMusica: React.FC = () => {
               })}
 
               <p className="text-xs text-gray-400 pt-2">
-                Aqui sai a prévia oficial de 30 segundos. Para ouvir inteira dentro do
-                sistema, cadastre a música na aba "Minhas músicas".
+                Aqui sai a prévia oficial de 30 segundos. O botão verde guarda a música
+                em "Minhas músicas" com essa prévia; para ouvir inteira dentro do sistema,
+                use o botão cinza e cadastre o arquivo ou o link.
               </p>
             </div>
           )}

@@ -32,18 +32,31 @@ export const ModalVisualizaLetra: React.FC<ModalVisualizaLetraProps> = ({
   return (
     <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
       <div className="bg-white rounded-3xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-auto">
-        <div className="sticky top-0 bg-gradient-to-r from-blue-600 to-indigo-600 text-white p-5 sm:p-6 flex items-start justify-between gap-3">
+        {/*
+          O cabeçalho segue a cor escolhida em Configurações > Aparência: o
+          degradê sai das variáveis do tema (--cor-principal / --cor-escura,
+          escritas no <html> por services/tema.ts). Antes era um azul fixo
+          pelas classes do Tailwind, então a letra abria azul mesmo com o
+          sistema todo em outra cor.
+        */}
+        <div
+          className="sticky top-0 text-white p-5 sm:p-6 flex items-start justify-between gap-3"
+          style={{
+            backgroundImage:
+              'linear-gradient(to right, var(--cor-principal), var(--cor-escura))',
+          }}
+        >
           <div className="min-w-0">
             <h2 className="text-xl sm:text-2xl font-bold break-words">
               {hino?.nome || 'Hino desconhecido'}
             </h2>
-            <p className="text-blue-100 text-sm mt-1">
+            <p className="text-white/80 text-sm mt-1">
               {[hino?.tom ? 'Tom: ' + hino.tom : null, hino?.cantor || null]
                 .filter(Boolean)
                 .join(' • ') || 'Letra'}
             </p>
             {temNavegacao && (
-              <p className="text-blue-200 text-xs mt-1">
+              <p className="text-white/70 text-xs mt-1">
                 Hino {(indice as number) + 1} de {total}
               </p>
             )}
