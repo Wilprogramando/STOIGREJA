@@ -177,3 +177,34 @@ export async function procurarParaOuvir(
 
   return { resultados: juntos };
 }
+
+/**
+ * Acha a prévia de 30 segundos de uma música que veio sem ela.
+ *
+ * Resultado vindo da letra (Genius) ou faixa que a Apple não liberou chegam com
+ * `previa` vazia. Aqui procuramos a mesma música no catálogo, primeiro pelo
+ * nome com o cantor e depois só pelo nome, e devolvemos o endereço da primeira
+ * faixa que combine. Vazio quando realmente não existe prévia.
+ */
+export async function acharPrevia(nome: string, cantor: string): Promise<string> {
+  const titulo = normalizar(nome);
+  if (!titulo) return '';
+
+  const termos = [`${nome} ${cantor}`.trim(), nome.trim()];
+
+  for (const termo of termos) {
+    const achados = await buscarNoCatalogo(termo, 10);
+    const comPrevia = achados.filter(m => m.previa);
+
+    // Mesmo nome é o ideal; se nenhuma bater, aceita a primeira com prévia.
+    const igual = comPrevia.find(m => {
+      const outro = normalizar(m.nome);
+      return outro === titulo || outro.includes(titulo) || titulo.includes(outro);
+    });
+
+    if (igual) return igual.previa;
+    if (comPrevia.length > 0 && termo !== nome.trim()) return comPrevia[0].previa;
+  }
+
+  return '';
+}

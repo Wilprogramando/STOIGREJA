@@ -4,7 +4,7 @@ import {
   Trash2, Plus, SkipBack, SkipForward, Rewind, FastForward, Globe, ListMusic, Mic, Square, Copy, Check, Gauge, Star,
   FileText, Send,
 } from 'lucide-react';
-import { procurarParaOuvir, acharVideoNoYoutube, MusicaParaOuvir } from '../services/audio';
+import { procurarParaOuvir, acharVideoNoYoutube, acharPrevia, MusicaParaOuvir } from '../services/audio';
 import {
   getAllMusicasAudio,
   saveMusicaAudio,
@@ -76,6 +76,8 @@ export const OuvirMusica: React.FC = () => {
   const [aviso, setAviso] = useState('');
   const [jaBuscou, setJaBuscou] = useState(false);
   const [previaTocando, setPreviaTocando] = useState<string | null>(null);
+  /** Música cuja prévia está sendo procurada no catálogo. */
+  const [buscandoPrevia, setBuscandoPrevia] = useState<string | null>(null);
   /** Qual resultado está procurando o vídeo no YouTube. */
   const [abrindoYoutube, setAbrindoYoutube] = useState<string | null>(null);
   /** Qual resultado está copiando o link, e qual acabou de ser copiado. */
@@ -565,7 +567,7 @@ export const OuvirMusica: React.FC = () => {
     }
   };
 
-  const tocarPrevia = (musica: MusicaParaOuvir) => {
+  const tocarPrevia = async (musica: MusicaParaOuvir) => {
     if (previaTocando === musica.id) {
       pararPrevia();
       return;
@@ -576,7 +578,31 @@ export const OuvirMusica: React.FC = () => {
     setTocando(false);
     pararPrevia();
 
-    const som = new Audio(musica.previa);
+    // Resultado sem prévia (veio pela letra, ou a Apple não liberou a faixa):
+    // procura a mesma música no catálogo antes de tocar.
+    let endereco = musica.previa;
+    if (!endereco) {
+      setBuscandoPrevia(musica.id);
+      setAviso('');
+      try {
+        endereco = await acharPrevia(musica.nome, musica.cantor);
+      } catch {
+        endereco = '';
+      }
+      setBuscandoPrevia(null);
+
+      if (!endereco) {
+        setAviso(`Não achei um pedaço de "${musica.nome}" para tocar aqui. Use o botão do YouTube.`);
+        return;
+      }
+
+      // Guarda para não procurar de novo no próximo toque.
+      const comPrevia = { ...musica, previa: endereco };
+      setResultados(lista => lista.map(m => (m.id === musica.id ? comPrevia : m)));
+      musica = comPrevia;
+    }
+
+    const som = new Audio(endereco);
     som.addEventListener('ended', () => setPreviaTocando(null));
     som.addEventListener('error', () => {
       setPreviaTocando(null);
@@ -877,15 +903,20 @@ export const OuvirMusica: React.FC = () => {
                       </div>
 
                       <div className="flex items-center gap-1 shrink-0">
-                        {f.previa && (
-                          <button
-                            onClick={() => tocarPrevia(musica)}
-                            title={estaTocando ? 'Parar' : 'Ouvir 30 segundos'}
-                            className="w-10 h-10 rounded-full bg-indigo-50 text-indigo-600 hover:bg-indigo-100 flex items-center justify-center"
-                          >
-                            {estaTocando ? <Pause size={18} /> : <Play size={18} />}
-                          </button>
-                        )}
+                        <button
+                          onClick={() => tocarPrevia(musica)}
+                          disabled={buscandoPrevia === f.id}
+                          title={estaTocando ? 'Parar' : 'Ouvir 30 segundos'}
+                          className="w-10 h-10 rounded-full bg-indigo-50 text-indigo-600 hover:bg-indigo-100 flex items-center justify-center disabled:opacity-60"
+                        >
+                          {buscandoPrevia === f.id ? (
+                            <Loader2 size={18} className="animate-spin" />
+                          ) : estaTocando ? (
+                            <Pause size={18} />
+                          ) : (
+                            <Play size={18} />
+                          )}
+                        </button>
                         <button
                           onClick={() => abrirNoYoutube(musica)}
                           title="Ouvir no YouTube"
@@ -1121,23 +1152,24 @@ export const OuvirMusica: React.FC = () => {
 
                     {/* Botões: uma linha só, dividindo a largura do cartão */}
                     <div className="mt-2.5 flex flex-nowrap items-center gap-1.5 [&>*]:flex-1">
-                      {musica.previa ? (
-                        <button
-                          onClick={() => tocarPrevia(musica)}
-                          title={estaTocando ? 'Parar' : 'Ouvir 30 segundos'}
-                          className={`flex h-9 sm:h-10 rounded-lg items-center justify-center transition ${
-                            estaTocando
-                              ? 'bg-indigo-600 text-white hover:bg-indigo-700'
-                              : 'bg-indigo-50 text-indigo-600 hover:bg-indigo-100'
-                          }`}
-                        >
-                          {estaTocando ? <Pause size={18} /> : <Play size={18} />}
-                        </button>
-                      ) : (
-                        <span className="flex h-9 sm:h-10 rounded-lg bg-gray-50 text-[10px] text-gray-400 items-center justify-center leading-tight">
-                          sem prévia
-                        </span>
-                      )}
+                      <button
+                        onClick={() => tocarPrevia(musica)}
+                        disabled={buscandoPrevia === musica.id}
+                        title={estaTocando ? 'Parar' : 'Ouvir 30 segundos'}
+                        className={`flex h-9 sm:h-10 rounded-lg items-center justify-center transition disabled:opacity-60 ${
+                          estaTocando
+                            ? 'bg-indigo-600 text-white hover:bg-indigo-700'
+                            : 'bg-indigo-50 text-indigo-600 hover:bg-indigo-100'
+                        }`}
+                      >
+                        {buscandoPrevia === musica.id ? (
+                          <Loader2 size={18} className="animate-spin" />
+                        ) : estaTocando ? (
+                          <Pause size={18} />
+                        ) : (
+                          <Play size={18} />
+                        )}
+                      </button>
 
                       <button
                         onClick={() => abrirNoYoutube(musica)}
