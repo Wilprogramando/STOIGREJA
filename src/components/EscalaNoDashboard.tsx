@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { CalendarDays, ChevronLeft, ChevronRight, ChevronRight as Seta } from 'lucide-react';
+import { CalendarDays, ChevronLeft, ChevronRight, Users } from 'lucide-react';
 import {
   Conjunto,
   DiaDaEscala,
@@ -13,12 +13,18 @@ import {
   MESES,
   emData,
   hoje,
-  porExtenso,
 } from '../services/escala';
 
 interface Props {
   /** Abre a tela cheia da escala. */
   onAbrir: () => void;
+}
+
+/** "Terça, 13 de Outubro" - como aparece na faixa do próximo culto. */
+function dataPorExtenso(texto: string): string {
+  const data = emData(texto);
+  const semana = ['Domingo', 'Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta', 'Sábado'];
+  return `${semana[data.getDay()]}, ${data.getDate()} de ${MESES[data.getMonth()]}`;
 }
 
 /**
@@ -28,10 +34,6 @@ interface Props {
  * fila, cada um na cor do conjunto, e à direita quem toca no próximo culto.
  * Os dias sem ninguém escalado não aparecem - o calendário completo, com as
  * casas vazias para marcar e desmarcar, fica na tela da Escala de Conjunto.
- *
- * Por que uma faixa e não um quadrado no canto: assim ela acompanha a largura
- * da tela sem deixar buraco do lado, e os dias crescem em fila à medida que o
- * mês é preenchido.
  */
 export const EscalaNoDashboard: React.FC<Props> = ({ onAbrir }) => {
   const [conjuntos, setConjuntos] = useState<Conjunto[]>(() => lerConjuntos());
@@ -86,6 +88,7 @@ export const EscalaNoDashboard: React.FC<Props> = ({ onAbrir }) => {
   }, [escala, mesVisivel]);
 
   const proximo = useMemo(() => escala.find(d => d.data >= hoje()), [escala]);
+  const corDoProximo = corDoConjunto(porId.get(proximo?.conjuntoId || ''));
 
   /** Quantos dias cada conjunto toca no mês que está na tela. */
   const totalDoMes = useMemo(() => {
@@ -99,54 +102,55 @@ export const EscalaNoDashboard: React.FC<Props> = ({ onAbrir }) => {
   }, [diasMarcados]);
 
   return (
-    <div className="bg-white rounded-2xl border border-gray-100 shadow-lg p-4">
-      {/* Cabeçalho da faixa: título à esquerda, mês à direita */}
-      <div className="flex items-center justify-between gap-3 mb-3">
-        <button onClick={onAbrir} className="flex items-center gap-2 min-w-0 text-left group">
-          <span className="bg-indigo-50 text-indigo-600 p-2 rounded-xl shrink-0">
-            <CalendarDays size={18} />
+    <div className="bg-white rounded-3xl border border-gray-100 shadow-lg p-5 sm:p-6">
+      {/* ===== Cabeçalho: ícone, título e navegação do mês ===== */}
+      <div className="flex items-center justify-between gap-3 mb-5">
+        <button onClick={onAbrir} className="flex items-center gap-3 min-w-0 text-left group">
+          <span className="w-12 h-12 shrink-0 rounded-2xl bg-indigo-600 text-white flex items-center justify-center shadow-sm">
+            <CalendarDays size={24} />
           </span>
           <span className="min-w-0">
-            <span className="block font-bold text-gray-900 leading-tight group-hover:text-indigo-700 transition">
+            <span className="block text-xl sm:text-2xl font-extrabold text-gray-900 leading-tight group-hover:text-indigo-700 transition">
               Escala de Conjunto
             </span>
-            <span className="block text-xs text-gray-500 leading-tight">
+            <span className="block text-sm text-gray-500 leading-tight">
               {diasMarcados.length === 0
                 ? 'Nenhum dia marcado'
                 : `${diasMarcados.length} dia(s) com conjunto`}
             </span>
           </span>
+          {/* Risquinho que separa o título da navegação, como no desenho */}
+          <span className="hidden lg:block w-px h-10 bg-gray-200 ml-3" />
         </button>
 
-        <div className="flex items-center gap-1 shrink-0">
+        <div className="flex items-center gap-2 shrink-0">
           <button
             onClick={() => andarMes(-1)}
             title="Mês anterior"
-            className="w-8 h-8 rounded-lg bg-gray-50 text-gray-500 hover:bg-gray-100 flex items-center justify-center"
+            className="w-10 h-10 rounded-2xl bg-gray-50 text-gray-600 hover:bg-gray-100 flex items-center justify-center transition"
           >
-            <ChevronLeft size={16} />
+            <ChevronLeft size={20} />
           </button>
-          <span className="text-xs font-bold text-gray-700 w-20 text-center leading-tight">
+          <span className="text-base font-extrabold text-gray-900 w-[5.5rem] text-center">
             {MESES[mesVisivel.mes].slice(0, 3)} {mesVisivel.ano}
           </span>
           <button
             onClick={() => andarMes(1)}
             title="Mês seguinte"
-            className="w-8 h-8 rounded-lg bg-gray-50 text-gray-500 hover:bg-gray-100 flex items-center justify-center"
+            className="w-10 h-10 rounded-2xl bg-gray-50 text-gray-600 hover:bg-gray-100 flex items-center justify-center transition"
           >
-            <ChevronRight size={16} />
+            <ChevronRight size={20} />
           </button>
         </div>
       </div>
 
-      {/* Corpo: dias em fila e, no computador, o próximo culto do lado */}
-      <div className="flex flex-col lg:flex-row lg:items-stretch gap-3">
-        {/* Dias marcados */}
+      {/* ===== Corpo: dias à esquerda, próximo culto à direita ===== */}
+      <div className="flex flex-col lg:flex-row lg:items-start gap-4 lg:gap-6">
         <div className="flex-1 min-w-0">
           {diasMarcados.length === 0 ? (
             <button
               onClick={onAbrir}
-              className="w-full h-full min-h-[4.5rem] rounded-xl border border-dashed border-indigo-200 p-3 text-sm font-semibold text-indigo-700 hover:bg-indigo-50 transition"
+              className="w-full rounded-2xl border border-dashed border-indigo-200 p-5 text-sm font-semibold text-indigo-700 hover:bg-indigo-50 transition"
             >
               {conjuntos.length === 0
                 ? 'Cadastrar os conjuntos e montar a escala'
@@ -158,7 +162,8 @@ export const EscalaNoDashboard: React.FC<Props> = ({ onAbrir }) => {
               className="w-full text-left"
               title="Abrir a escala para marcar os dias"
             >
-              <div className="flex flex-wrap gap-1.5">
+              {/* Casinhas dos dias marcados */}
+              <div className="flex flex-wrap gap-2.5">
                 {diasMarcados.map(casa => {
                   /* Um conjunto só no dia: a casinha inteira pinta na cor dele. */
                   const unico =
@@ -168,32 +173,39 @@ export const EscalaNoDashboard: React.FC<Props> = ({ onAbrir }) => {
                   return (
                     <span
                       key={casa.data}
-                      title={`${porExtenso(casa.data)} • ${casa.dias
+                      title={`${dataPorExtenso(casa.data)} • ${casa.dias
                         .map(d => porId.get(d.conjuntoId)?.nome || 'Conjunto excluído')
                         .join(', ')}`}
-                      className={`w-10 rounded-xl border py-1.5 flex flex-col items-center gap-0.5 transition ${
+                      className={`w-[4.25rem] rounded-2xl border overflow-hidden bg-white flex flex-col items-center transition ${
                         casa.ehHoje
-                          ? 'border-indigo-500 ring-1 ring-indigo-300'
+                          ? 'border-indigo-500 ring-2 ring-indigo-200'
                           : cor
-                            ? `${cor.fraco} ${cor.borda}`
-                            : 'bg-gray-50 border-gray-200'
-                      } ${casa.passou ? 'opacity-45' : ''}`}
+                            ? cor.borda
+                            : 'border-gray-200'
+                      } ${casa.passou ? 'opacity-50' : ''}`}
                     >
-                      <span className="text-[9px] font-bold text-gray-400 leading-none uppercase">
+                      {/* Faixinha de cima com o dia da semana */}
+                      <span
+                        className={`w-full text-center text-[11px] font-bold py-1 uppercase tracking-wide ${
+                          cor ? `${cor.fraco} ${cor.texto}` : 'bg-gray-50 text-gray-500'
+                        }`}
+                      >
                         {casa.semana}
                       </span>
+
                       <span
-                        className={`text-base font-extrabold leading-none ${
+                        className={`text-2xl font-extrabold leading-none pt-2 ${
                           cor ? cor.texto : 'text-gray-700'
                         }`}
                       >
                         {casa.dia}
                       </span>
-                      <span className="flex items-center gap-0.5">
+
+                      <span className="flex items-center gap-0.5 py-2">
                         {casa.dias.slice(0, 3).map(d => (
                           <span
                             key={d.id}
-                            className={`w-1.5 h-1.5 rounded-full ${
+                            className={`w-2 h-2 rounded-full ${
                               corDoConjunto(porId.get(d.conjuntoId)).forte
                             }`}
                           />
@@ -206,7 +218,7 @@ export const EscalaNoDashboard: React.FC<Props> = ({ onAbrir }) => {
 
               {/* Legenda: quem é cada cor, com o tanto de dias no mês */}
               {conjuntos.length > 0 && (
-                <div className="flex flex-wrap gap-1.5 mt-2.5">
+                <div className="flex flex-wrap gap-2 mt-3">
                   {conjuntos
                     .filter(c => totalDoMes.get(c.id))
                     .map(conjunto => {
@@ -214,13 +226,12 @@ export const EscalaNoDashboard: React.FC<Props> = ({ onAbrir }) => {
                       return (
                         <span
                           key={conjunto.id}
-                          className={`flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[11px] font-bold ${cor.fraco} ${cor.texto} border ${cor.borda}`}
+                          className={`flex items-center gap-2 pl-3 pr-3.5 py-1.5 rounded-full text-sm font-bold ${cor.fraco} ${cor.texto} border ${cor.borda}`}
                         >
-                          <span className={`w-1.5 h-1.5 rounded-full ${cor.forte}`} />
+                          <Users size={15} />
                           {conjunto.nome}
-                          <span className="text-gray-500 font-semibold">
-                            {totalDoMes.get(conjunto.id)}
-                          </span>
+                          <span className="w-px h-4 bg-current opacity-25" />
+                          <span>{totalDoMes.get(conjunto.id)}</span>
                         </span>
                       );
                     })}
@@ -234,26 +245,28 @@ export const EscalaNoDashboard: React.FC<Props> = ({ onAbrir }) => {
         {proximo && (
           <button
             onClick={onAbrir}
-            className="shrink-0 lg:w-60 flex items-center gap-2.5 rounded-xl bg-indigo-50/70 border border-indigo-100 p-3 text-left hover:bg-indigo-50 transition"
+            className="shrink-0 lg:w-[22rem] relative overflow-hidden rounded-2xl bg-gray-50 p-4 pl-5 flex items-center gap-3 text-left hover:bg-gray-100 transition"
           >
-            <span
-              className={`w-2.5 h-2.5 rounded-full shrink-0 ${
-                corDoConjunto(porId.get(proximo.conjuntoId)).forte
-              }`}
-            />
+            {/* Barra da cor do conjunto, na lateral esquerda */}
+            <span className={`absolute left-0 top-0 bottom-0 w-1.5 ${corDoProximo.forte}`} />
+
+            <span className={`w-3 h-3 rounded-full shrink-0 ${corDoProximo.forte}`} />
+
             <span className="flex-1 min-w-0">
-              <span className="block text-[10px] font-bold text-gray-500 uppercase tracking-wide leading-tight">
+              <span className="block text-[11px] font-bold text-gray-500 uppercase tracking-[0.12em] leading-tight">
                 {proximo.data === hoje() ? 'Hoje toca' : 'Próximo a tocar'}
               </span>
-              <span className="block font-bold text-gray-900 text-sm break-words leading-tight">
+              <span className="block text-lg font-extrabold text-gray-900 break-words leading-tight">
                 {porId.get(proximo.conjuntoId)?.nome || 'Conjunto excluído'}
               </span>
-              <span className="block text-xs text-gray-600 capitalize leading-tight">
-                {porExtenso(proximo.data)}
-                {proximo.horario && ` • ${proximo.horario}`}
+              <span className="flex items-center gap-1.5 text-sm text-gray-600 mt-0.5">
+                <CalendarDays size={15} className="text-indigo-600 shrink-0" />
+                {dataPorExtenso(proximo.data)}
+                {proximo.horario && ` - ${proximo.horario}`}
               </span>
             </span>
-            <Seta size={16} className="text-indigo-500 shrink-0" />
+
+            <ChevronRight size={22} className="text-indigo-600 shrink-0" />
           </button>
         )}
       </div>
