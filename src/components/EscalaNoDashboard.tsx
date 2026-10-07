@@ -110,10 +110,10 @@ export const EscalaNoDashboard: React.FC<Props> = ({ onAbrir }) => {
             <CalendarDays size={20} />
           </span>
           <span className="min-w-0">
-            <span className="block text-base font-bold text-gray-900 leading-tight group-hover:text-indigo-700 transition">
+            <span className="block text-sm font-bold text-gray-900 leading-tight truncate group-hover:text-indigo-700 transition">
               Escala de Conjunto
             </span>
-            <span className="block text-xs text-gray-500 leading-tight">
+            <span className="block text-[11px] text-gray-500 leading-tight truncate">
               {diasMarcados.length === 0
                 ? 'Nenhum dia marcado'
                 : `${diasMarcados.length} dia(s) com conjunto`}
