@@ -37,9 +37,6 @@ function tag(seletor: string, criar: () => HTMLLinkElement): HTMLLinkElement {
   return nova;
 }
 
-/** Endereço do manifesto montado por nós, para ser dispensado na troca seguinte. */
-let manifestoAnterior = '';
-
 /**
  * Põe o ícone na cor informada. Chamado pelo tema sempre que a cor muda.
  */
@@ -58,56 +55,38 @@ export function aplicarIconeDoTema(principal: string, escura: string): void {
     favicon.type = 'image/svg+xml';
     favicon.href = icone;
 
-    // Atalho do iPhone
+    // Atalho do iPhone: endereço de verdade, que o aparelho consegue baixar.
     const apple = tag('link[rel="apple-touch-icon"]', () => {
       const link = document.createElement('link');
       link.rel = 'apple-touch-icon';
       return link;
     });
-    apple.href = icone;
+    apple.href = enderecoDoIcone(principal);
 
-    aplicarManifesto(principal, escura, icone);
+    aplicarManifesto(principal, escura);
   } catch (erro) {
     console.error('Não foi possível pintar o ícone do app:', erro);
   }
 }
 
+/** Endereço do ícone colorido no servidor (ver api/icone.js). */
+export function enderecoDoIcone(cor: string): string {
+  return `/api/icone?cor=${encodeURIComponent(cor)}`;
+}
+
 /**
- * Troca o manifesto por uma cópia com o ícone e as cores escolhidas.
+ * Aponta o manifesto para a rota que o monta na cor escolhida.
  *
- * O arquivo public/manifest.webmanifest é fixo e não dá para reescrever num
- * site publicado, então montamos um igual na memória do navegador (Blob) e
- * apontamos o <link> para ele. Se qualquer coisa der errado, o manifesto
- * original fica no lugar - instalar o app continua funcionando.
+ * É de lá que o celular tira a COR DA TELA DE ABERTURA que ele mesmo desenha
+ * antes do app carregar - a que aparecia sempre no índigo de fábrica. Como o
+ * aparelho copia tudo isso no momento da instalação, o atalho que já está na
+ * tela inicial só muda de cor quando for instalado de novo.
  */
-function aplicarManifesto(principal: string, escura: string, icone: string): void {
+function aplicarManifesto(principal: string, escura: string): void {
   const link = document.head.querySelector<HTMLLinkElement>('link[rel="manifest"]');
-  if (!link || typeof Blob === 'undefined' || !URL.createObjectURL) return;
+  if (!link) return;
 
-  const manifesto = {
-    name: 'Conjunto Manancial - Repertório',
-    short_name: 'Repertório',
-    description: 'Gerenciador de hinos e repertórios de cultos',
-    start_url: '/',
-    scope: '/',
-    display: 'standalone',
-    lang: 'pt-BR',
-    // Cor da tela que o celular desenha antes do app abrir.
-    background_color: principal,
-    theme_color: escura || principal,
-    icons: [
-      { src: icone, sizes: '192x192', type: 'image/svg+xml', purpose: 'any' },
-      { src: icone, sizes: '192x192', type: 'image/svg+xml', purpose: 'maskable' },
-    ],
-  };
-
-  const endereco = URL.createObjectURL(
-    new Blob([JSON.stringify(manifesto)], { type: 'application/manifest+json' })
-  );
-
-  link.href = endereco;
-
-  // O endereço anterior não serve mais: libera a memória que ele segurava.
-  if (manifestoAnterior) URL.revokeObjectURL(manifestoAnterior);
-  manifestoAnterior = endereco;
+  link.href =
+    `/api/manifest?cor=${encodeURIComponent(principal)}` +
+    `&escura=${encodeURIComponent(escura)}`;
 }

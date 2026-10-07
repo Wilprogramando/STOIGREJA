@@ -24,7 +24,9 @@ body {
     sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  background-color: #f3f4f6;
+  /* Sai da variavel do tema (ver tema.css): assim o fundo ja nasce certo no
+     modo noturno, sem o piscar claro antes do React carregar. */
+  background-color: var(--fundo, #f3f4f6);
 }
 
 /* Scrollbar customizado */

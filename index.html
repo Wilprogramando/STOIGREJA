@@ -399,6 +399,22 @@
             var barra = document.querySelector('meta[name="theme-color"]');
             if (barra) barra.setAttribute('content', cores.principal);
 
+            // Manifesto na cor escolhida: é dele que o celular tira a cor da
+            // tela que ele desenha sozinho ao abrir o app (ver api/manifest.js).
+            var manifesto = document.querySelector('link[rel="manifest"]');
+            if (manifesto) {
+              manifesto.setAttribute(
+                'href',
+                '/api/manifest?cor=' +
+                  encodeURIComponent(cores.principal) +
+                  '&escura=' +
+                  encodeURIComponent(cores.escura || cores.principal)
+              );
+            }
+
+            // Fundo da página na cor do sistema, para não piscar cinza.
+            if (cores.fundo) raiz.style.setProperty('--fundo', cores.fundo);
+
             // Ícone da guia do navegador na cor escolhida (ver services/icone.ts).
             var marca = document.querySelector('link[rel="icon"]');
             if (marca) {

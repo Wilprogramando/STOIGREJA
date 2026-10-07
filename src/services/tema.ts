@@ -181,6 +181,8 @@ export function aplicarTema(tema: Tema = lerTema()): void {
         escura: paleta.escura,
         clara: paleta.clara,
         modo: html.dataset.modo,
+        // Fundo da tela, para o index.html não piscar cinza claro no escuro.
+        fundo: html.dataset.modo === 'escuro' ? '#0f172a' : '#f3f4f6',
       })
     );
   } catch {
