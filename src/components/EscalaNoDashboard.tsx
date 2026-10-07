@@ -9,9 +9,9 @@ import {
   lerEscala,
   carregarEscala,
   ouvirEscala,
-  diasDoCalendario,
   DIAS_SEMANA,
   MESES,
+  emData,
   hoje,
   porExtenso,
 } from '../services/escala';
@@ -24,9 +24,10 @@ interface Props {
 /**
  * ESCALA DOS CONJUNTOS NO DASHBOARD
  *
- * Calendário do mês só para olhar: mostra em que dias cada conjunto toca, com
- * a cor de cada um, e destaca o próximo dia escalado. Para marcar ou desmarcar
- * dias é só tocar no calendário, que leva para a tela da escala.
+ * Cartão pequeno, encostado à direita, só para bater o olho: mostra apenas os
+ * dias marcados do mês, cada um na cor do conjunto. Os dias sem ninguém
+ * escalado não aparecem - o calendário inteiro, com as casas vazias para
+ * marcar e desmarcar, fica na tela da Escala de Conjunto.
  */
 export const EscalaNoDashboard: React.FC<Props> = ({ onAbrir }) => {
   const [conjuntos, setConjuntos] = useState<Conjunto[]>(() => lerConjuntos());
@@ -45,21 +46,10 @@ export const EscalaNoDashboard: React.FC<Props> = ({ onAbrir }) => {
     recarregar();
   }, []);
 
-  // Outro aparelho mexeu na escala: o calendário acompanha na hora.
+  // Outro aparelho mexeu na escala: o cartão acompanha na hora.
   useEffect(() => ouvirEscala(() => recarregar()), []);
 
   const porId = useMemo(() => new Map(conjuntos.map(c => [c.id, c])), [conjuntos]);
-
-  const porDia = useMemo(() => {
-    const mapa = new Map<string, DiaDaEscala[]>();
-    escala.forEach(dia => mapa.set(dia.data, [...(mapa.get(dia.data) || []), dia]));
-    return mapa;
-  }, [escala]);
-
-  const casas = useMemo(
-    () => diasDoCalendario(mesVisivel.ano, mesVisivel.mes),
-    [mesVisivel]
-  );
 
   const andarMes = (passo: number) =>
     setMesVisivel(({ ano, mes }) => {
@@ -67,172 +57,156 @@ export const EscalaNoDashboard: React.FC<Props> = ({ onAbrir }) => {
       return { ano: data.getFullYear(), mes: data.getMonth() };
     });
 
-  const proximo = useMemo(() => escala.find(d => d.data >= hoje()), [escala]);
-
-  /** Quantos dias cada conjunto toca no mês que está na tela. */
-  const totalDoMes = useMemo(() => {
+  /**
+   * Só os dias marcados do mês na tela, um por data: a bolinha de cada
+   * conjunto que toca naquele dia fica junta na mesma casa.
+   */
+  const diasMarcados = useMemo(() => {
     const prefixo = `${mesVisivel.ano}-${String(mesVisivel.mes + 1).padStart(2, '0')}`;
-    const contagem = new Map<string, number>();
+    const mapa = new Map<string, DiaDaEscala[]>();
+
     escala
       .filter(d => d.data.startsWith(prefixo))
-      .forEach(d => contagem.set(d.conjuntoId, (contagem.get(d.conjuntoId) || 0) + 1));
-    return contagem;
+      .forEach(d => mapa.set(d.data, [...(mapa.get(d.data) || []), d]));
+
+    return Array.from(mapa.entries())
+      .sort((a, b) => a[0].localeCompare(b[0]))
+      .map(([data, dias]) => ({
+        data,
+        dias,
+        dia: Number(data.slice(8, 10)),
+        semana: DIAS_SEMANA[emData(data).getDay()],
+        ehHoje: data === hoje(),
+      }));
   }, [escala, mesVisivel]);
 
+  const proximo = useMemo(() => escala.find(d => d.data >= hoje()), [escala]);
+
   return (
-    <div className="bg-white rounded-2xl border border-gray-100 shadow-lg p-4 sm:p-5">
+    // Cartão estreito e encostado na direita (ml-auto).
+    <div className="w-full sm:max-w-xs sm:ml-auto bg-white rounded-2xl border border-gray-100 shadow-lg p-3">
       {/* Título e navegação do mês */}
-      <div className="flex items-center justify-between gap-2 mb-3">
-        <button
-          onClick={onAbrir}
-          className="flex items-center gap-2 min-w-0 text-left group"
-        >
-          <span className="bg-indigo-50 text-indigo-600 p-2 rounded-xl shrink-0">
-            <CalendarDays size={20} />
+      <div className="flex items-center justify-between gap-1 mb-2.5">
+        <button onClick={onAbrir} className="flex items-center gap-2 min-w-0 text-left group">
+          <span className="bg-indigo-50 text-indigo-600 p-1.5 rounded-lg shrink-0">
+            <CalendarDays size={16} />
           </span>
           <span className="min-w-0">
-            <span className="block text-lg font-bold text-gray-900 group-hover:text-indigo-700 transition">
-              Escala de Conjunto
+            <span className="block text-sm font-bold text-gray-900 leading-tight group-hover:text-indigo-700 transition">
+              Escala
             </span>
-            <span className="block text-xs text-gray-500">
-              {MESES[mesVisivel.mes]} de {mesVisivel.ano}
+            <span className="block text-[11px] text-gray-500 leading-tight">
+              {MESES[mesVisivel.mes]}
             </span>
           </span>
         </button>
 
-        <div className="flex items-center gap-1 shrink-0">
+        <div className="flex items-center gap-0.5 shrink-0">
           <button
             onClick={() => andarMes(-1)}
             title="Mês anterior"
-            className="w-9 h-9 rounded-xl bg-gray-50 text-gray-600 hover:bg-gray-100 flex items-center justify-center"
+            className="w-7 h-7 rounded-lg bg-gray-50 text-gray-500 hover:bg-gray-100 flex items-center justify-center"
           >
-            <ChevronLeft size={18} />
+            <ChevronLeft size={15} />
           </button>
           <button
             onClick={() => andarMes(1)}
             title="Mês seguinte"
-            className="w-9 h-9 rounded-xl bg-gray-50 text-gray-600 hover:bg-gray-100 flex items-center justify-center"
+            className="w-7 h-7 rounded-lg bg-gray-50 text-gray-500 hover:bg-gray-100 flex items-center justify-center"
           >
-            <ChevronRight size={18} />
+            <ChevronRight size={15} />
           </button>
         </div>
       </div>
 
-      {/* Legenda: um conjunto por cor, com o tanto de dias no mês */}
-      {conjuntos.length > 0 && (
-        <div className="flex flex-wrap gap-1.5 mb-3">
-          {conjuntos.map(conjunto => {
-            const cor = corDoConjunto(conjunto);
-            return (
-              <span
-                key={conjunto.id}
-                className={`flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold ${cor.fraco} ${cor.texto} border ${cor.borda}`}
-              >
-                <span className={`w-2 h-2 rounded-full ${cor.forte}`} />
-                {conjunto.nome}
-                <span className="text-gray-500 font-semibold">
-                  {totalDoMes.get(conjunto.id) || 0}
-                </span>
-              </span>
-            );
-          })}
-        </div>
-      )}
-
-      {/* Calendário */}
-      <div className="grid grid-cols-7 gap-1 mb-1">
-        {DIAS_SEMANA.map(dia => (
-          <div key={dia} className="text-center text-[10px] font-bold text-gray-400 py-0.5">
-            {dia}
-          </div>
-        ))}
-      </div>
-
-      <button onClick={onAbrir} className="w-full" title="Abrir a escala para marcar os dias">
-        <div className="grid grid-cols-7 gap-1">
-          {casas.map(casa => {
-            const marcados = porDia.get(casa.data) || [];
-            const unico = marcados.length === 1 ? porId.get(marcados[0].conjuntoId) : null;
-            const corUnica = unico ? corDoConjunto(unico) : null;
-
-            return (
-              <div
-                key={casa.data}
-                className={`relative aspect-square rounded-lg border flex items-start justify-center ${
-                  !casa.doMes
-                    ? 'border-transparent'
-                    : corUnica
-                      ? `${corUnica.fraco} ${corUnica.borda}`
-                      : marcados.length > 1
-                        ? 'bg-gray-50 border-gray-200'
-                        : 'border-gray-100'
-                }`}
-              >
-                <span
-                  className={`text-[11px] font-bold leading-none mt-1.5 ${
-                    !casa.doMes
-                      ? 'text-gray-300'
-                      : casa.ehHoje
-                        ? 'text-white bg-indigo-600 rounded-full w-5 h-5 flex items-center justify-center'
-                        : corUnica
-                          ? corUnica.texto
-                          : 'text-gray-600'
-                  }`}
-                >
-                  {casa.dia}
-                </span>
-
-                {marcados.length > 0 && (
-                  <span className="absolute bottom-1 flex items-center gap-0.5">
-                    {marcados.slice(0, 3).map(dia => (
-                      <span
-                        key={dia.id}
-                        className={`w-1.5 h-1.5 rounded-full ${
-                          corDoConjunto(porId.get(dia.conjuntoId)).forte
-                        }`}
-                      />
-                    ))}
-                  </span>
-                )}
-              </div>
-            );
-          })}
-        </div>
-      </button>
-
-      {/* Próximo dia escalado, ou o convite para montar a escala */}
-      {proximo ? (
+      {/* Só os dias marcados */}
+      {diasMarcados.length === 0 ? (
         <button
           onClick={onAbrir}
-          className="mt-3 w-full flex items-center gap-3 rounded-xl bg-indigo-50/70 border border-indigo-100 p-3 text-left hover:bg-indigo-50 transition"
+          className="w-full rounded-xl border border-dashed border-indigo-200 p-3 text-xs font-semibold text-indigo-700 hover:bg-indigo-50 transition"
         >
-          <span
-            className={`w-2.5 h-2.5 rounded-full shrink-0 ${
-              corDoConjunto(porId.get(proximo.conjuntoId)).forte
-            }`}
-          />
-          <span className="flex-1 min-w-0">
-            <span className="block text-xs font-semibold text-gray-500">
-              {proximo.data === hoje() ? 'Hoje toca' : 'Próximo a tocar'}
-            </span>
-            <span className="block font-bold text-gray-900 text-sm break-words">
-              {porId.get(proximo.conjuntoId)?.nome || 'Conjunto excluído'}
-            </span>
-            <span className="block text-xs text-gray-600 capitalize">
-              {porExtenso(proximo.data)}
-              {proximo.horario && ` • ${proximo.horario}`}
-            </span>
-          </span>
-          <Seta size={18} className="text-indigo-500 shrink-0" />
+          {conjuntos.length === 0
+            ? 'Cadastrar os conjuntos'
+            : `Nenhum dia marcado em ${MESES[mesVisivel.mes].toLowerCase()}`}
         </button>
       ) : (
         <button
           onClick={onAbrir}
-          className="mt-3 w-full rounded-xl border border-dashed border-indigo-200 p-3 text-sm font-semibold text-indigo-700 hover:bg-indigo-50 transition"
+          className="w-full"
+          title="Abrir a escala para marcar os dias"
         >
-          {conjuntos.length === 0
-            ? 'Cadastrar os conjuntos e montar a escala'
-            : 'Marcar os dias em que os conjuntos vão tocar'}
+          <div className="flex flex-wrap gap-1.5">
+            {diasMarcados.map(casa => {
+              /* Um conjunto só no dia: a casinha inteira pinta na cor dele. */
+              const unico =
+                casa.dias.length === 1 ? porId.get(casa.dias[0].conjuntoId) : null;
+              const cor = unico ? corDoConjunto(unico) : null;
+
+              return (
+                <span
+                  key={casa.data}
+                  title={`${porExtenso(casa.data)} • ${casa.dias
+                    .map(d => porId.get(d.conjuntoId)?.nome || 'Conjunto excluído')
+                    .join(', ')}`}
+                  className={`w-9 rounded-lg border py-1 flex flex-col items-center gap-0.5 ${
+                    casa.ehHoje
+                      ? 'border-indigo-500 ring-1 ring-indigo-300'
+                      : cor
+                        ? `${cor.fraco} ${cor.borda}`
+                        : 'bg-gray-50 border-gray-200'
+                  }`}
+                >
+                  <span className="text-[9px] font-bold text-gray-400 leading-none uppercase">
+                    {casa.semana}
+                  </span>
+                  <span
+                    className={`text-sm font-extrabold leading-none ${
+                      cor ? cor.texto : 'text-gray-700'
+                    }`}
+                  >
+                    {casa.dia}
+                  </span>
+                  <span className="flex items-center gap-0.5">
+                    {casa.dias.slice(0, 3).map(d => (
+                      <span
+                        key={d.id}
+                        className={`w-1.5 h-1.5 rounded-full ${
+                          corDoConjunto(porId.get(d.conjuntoId)).forte
+                        }`}
+                      />
+                    ))}
+                  </span>
+                </span>
+              );
+            })}
+          </div>
+        </button>
+      )}
+
+      {/* Próximo dia escalado */}
+      {proximo && (
+        <button
+          onClick={onAbrir}
+          className="mt-2.5 w-full flex items-center gap-2 rounded-xl bg-indigo-50/70 border border-indigo-100 p-2.5 text-left hover:bg-indigo-50 transition"
+        >
+          <span
+            className={`w-2 h-2 rounded-full shrink-0 ${
+              corDoConjunto(porId.get(proximo.conjuntoId)).forte
+            }`}
+          />
+          <span className="flex-1 min-w-0">
+            <span className="block text-[10px] font-semibold text-gray-500 leading-tight">
+              {proximo.data === hoje() ? 'Hoje toca' : 'Próximo'}
+            </span>
+            <span className="block font-bold text-gray-900 text-xs break-words leading-tight">
+              {porId.get(proximo.conjuntoId)?.nome || 'Conjunto excluído'}
+            </span>
+            <span className="block text-[11px] text-gray-600 capitalize leading-tight">
+              {porExtenso(proximo.data)}
+              {proximo.horario && ` • ${proximo.horario}`}
+            </span>
+          </span>
+          <Seta size={15} className="text-indigo-500 shrink-0" />
         </button>
       )}
     </div>
