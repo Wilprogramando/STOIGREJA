@@ -15,6 +15,7 @@
  */
 
 import { lerTemaSupabase, salvarTemaSupabase, ouvirTemaSupabase } from './supabase';
+import { aplicarIconeDoTema } from './icone';
 
 export type PosicaoLogo = 'esquerda' | 'direita';
 export type ModoCor = 'claro' | 'escuro' | 'automatico';
@@ -189,6 +190,9 @@ export function aplicarTema(tema: Tema = lerTema()): void {
   // Barra do navegador no celular acompanha o cabeçalho.
   const meta = document.querySelector('meta[name="theme-color"]');
   if (meta) meta.setAttribute('content', paleta.principal);
+
+  // Ícone da guia do navegador e do atalho do celular na mesma cor.
+  aplicarIconeDoTema(paleta.principal, paleta.escura);
 }
 
 /**

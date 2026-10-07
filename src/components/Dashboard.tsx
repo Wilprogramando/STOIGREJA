@@ -8,13 +8,17 @@ import {
   BarChart3,
   ChevronRight,
   TrendingUp,
-  Music2
+  Music2,
+  StickyNote
 } from 'lucide-react';
 import { getAllHinos, getAllRepertorios, getHinosByType } from '../services/db';
 import { rotuloDoMenu } from '../services/menus';
 import { fecharAbertura } from '../services/abertura';
 import { saudacao, ouvirNomePessoa } from '../services/usuario';
 import { EscalaNoDashboard } from './EscalaNoDashboard';
+import { blocoVisivel, lerBlocosOcultos, ouvirBlocos } from '../services/dashboard';
+import { listarAnotacoes } from '../services/anotacoes';
+import { Anotacao } from '../types';
 import { Repertorio, Hino } from '../types';
 
 interface DashboardProps {
@@ -176,9 +180,24 @@ export const Dashboard: React.FC<DashboardProps> = ({ onPageChange }) => {
     maisCantados: [] as HinoContado[],
   });
   const [loading, setLoading] = useState(true);
+  /** Pedaços da tela desligados em Configurações > O que aparece no Dashboard. */
+  const [ocultos, setOcultos] = useState<string[]>(() => lerBlocosOcultos());
+  /** Sugestões guardadas nas Anotações (bloco que começa desligado). */
+  const [anotacoes, setAnotacoes] = useState<Anotacao[]>([]);
   const frase = useFraseAnimada();
   /** "Paz do Senhor, Daniel!" - o nome vem do que a pessoa deu na 1ª abertura. */
   const [cumprimento, setCumprimento] = useState(() => saudacao());
+
+  // Ligou ou desligou um pedaço nas Configurações: a tela acompanha na hora.
+  useEffect(() => ouvirBlocos(() => setOcultos(lerBlocosOcultos())), []);
+
+  // As últimas anotações só são buscadas quando o bloco está ligado.
+  useEffect(() => {
+    if (ocultos.includes('anotacoes')) return;
+    listarAnotacoes()
+      .then(lista => setAnotacoes(lista.slice(0, 4)))
+      .catch(() => undefined);
+  }, [ocultos]);
 
   // O nome pode chegar depois: na primeira vez o Dashboard já está desenhado
   // atrás da pergunta, e também dá para trocar o nome nas Configurações.
@@ -285,9 +304,13 @@ export const Dashboard: React.FC<DashboardProps> = ({ onPageChange }) => {
 
   const proximos = stats.proximosRepertorios;
 
+  /** Este pedaço da tela está ligado nas Configurações? */
+  const ver = (id: string) => blocoVisivel(id, ocultos);
+
   return (
     <div className="max-w-5xl mx-auto space-y-8">
       {/* Saudação */}
+      {ver('saudacao') && (
       <div>
         <h2 className="text-2xl md:text-3xl font-bold text-gray-900">{cumprimento} 🙌</h2>
         <p className="text-gray-500 mt-1 min-h-[1.5rem] text-sm md:text-base">
@@ -295,8 +318,10 @@ export const Dashboard: React.FC<DashboardProps> = ({ onPageChange }) => {
           <span className="inline-block w-[2px] h-4 align-middle ml-0.5 bg-indigo-500 animate-pulse" />
         </p>
       </div>
+      )}
 
       {/* Próximos Repertórios */}
+      {ver('repertorios') && (
       <div>
         <div className="flex items-center justify-between mb-3">
           <h3 className="text-lg font-bold text-gray-900 flex items-center gap-2">
@@ -399,11 +424,15 @@ export const Dashboard: React.FC<DashboardProps> = ({ onPageChange }) => {
           </div>
         )}
       </div>
+      )}
 
       {/* Escala dos conjuntos: faixa com os dias marcados do mês */}
-      <EscalaNoDashboard onAbrir={() => onPageChange('escala-conjunto')} />
+      {ver('escala') && (
+        <EscalaNoDashboard onAbrir={() => onPageChange('escala-conjunto')} />
+      )}
 
       {/* Números */}
+      {ver('numeros') && (
       <div className="grid grid-cols-2 gap-3">
         <StatCard
           icon={Music}
@@ -428,8 +457,10 @@ export const Dashboard: React.FC<DashboardProps> = ({ onPageChange }) => {
           onClick={() => onPageChange('harpa')}
         />
       </div>
+      )}
 
       {/* Mais cantados nos últimos 30 dias */}
+      {ver('mais-cantados') && (
       <div className="bg-white rounded-2xl border border-gray-100 shadow-lg p-4 sm:p-6">
         <div className="flex items-start gap-3 mb-1">
           <div className="bg-indigo-50 text-indigo-600 p-2 rounded-xl shrink-0">
@@ -507,8 +538,53 @@ export const Dashboard: React.FC<DashboardProps> = ({ onPageChange }) => {
           </div>
         )}
       </div>
+      )}
+
+      {/* Últimas anotações (começa desligado nas Configurações) */}
+      {ver('anotacoes') && (
+        <div className="bg-white rounded-2xl border border-gray-100 shadow-lg p-4 sm:p-6">
+          <div className="flex items-center justify-between mb-3">
+            <h3 className="text-lg font-bold text-gray-900 flex items-center gap-2">
+              <StickyNote size={20} className="text-indigo-600" />
+              Últimas anotações
+            </h3>
+            <button
+              onClick={() => onPageChange('anotacoes')}
+              className="text-sm font-semibold text-indigo-600 hover:text-indigo-700"
+            >
+              Ver todas
+            </button>
+          </div>
+
+          {anotacoes.length === 0 ? (
+            <p className="text-gray-500 text-sm text-center py-6">
+              Nenhuma sugestão de hino guardada ainda.
+            </p>
+          ) : (
+            <div className="space-y-2">
+              {anotacoes.map(anotacao => (
+                <button
+                  key={anotacao.id}
+                  onClick={() => onPageChange('anotacoes')}
+                  className="w-full text-left rounded-xl border border-gray-100 bg-gray-50 p-3 hover:bg-gray-100 transition"
+                >
+                  <p className="font-bold text-gray-900 text-sm break-words">
+                    {anotacao.hino}
+                  </p>
+                  <p className="text-xs text-gray-500 break-words">
+                    {[anotacao.cantor, anotacao.tom && `Tom: ${anotacao.tom}`]
+                      .filter(Boolean)
+                      .join(' • ') || 'Sem cantor informado'}
+                  </p>
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
 
       {/* Ações rápidas */}
+      {ver('acoes') && (
       <div>
         <h3 className="text-lg font-bold text-gray-900 mb-3">Ações rápidas</h3>
         <div className="grid grid-cols-2 gap-3">
@@ -538,6 +614,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ onPageChange }) => {
           />
         </div>
       </div>
+      )}
 
     </div>
   );

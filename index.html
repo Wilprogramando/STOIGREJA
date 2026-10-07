@@ -398,6 +398,21 @@
             raiz.style.setProperty('--cor-principal', cores.principal);
             var barra = document.querySelector('meta[name="theme-color"]');
             if (barra) barra.setAttribute('content', cores.principal);
+
+            // Ícone da guia do navegador na cor escolhida (ver services/icone.ts).
+            var marca = document.querySelector('link[rel="icon"]');
+            if (marca) {
+              marca.setAttribute(
+                'href',
+                'data:image/svg+xml;charset=utf-8,' +
+                  encodeURIComponent(
+                    '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">' +
+                      '<rect width="512" height="512" rx="96" fill="' +
+                      cores.principal +
+                      '"/><path d="M330 120v168a56 56 0 1 1-32-50V186l-96 24v134a56 56 0 1 1-32-50V180a24 24 0 0 1 18-23l120-30a24 24 0 0 1 22 5 24 24 0 0 1 0 18z" fill="#fff"/></svg>'
+                  )
+              );
+            }
           }
           if (cores.escura) raiz.style.setProperty('--cor-escura', cores.escura);
           if (cores.clara) raiz.style.setProperty('--cor-clara', cores.clara);

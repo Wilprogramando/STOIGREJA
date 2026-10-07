@@ -3,7 +3,7 @@ import {
   Save, Download, Upload, Trash2, AlertCircle, Eye, EyeOff, BarChart3, Mic2,
   UserPlus, Pencil, BookOpen, Smartphone, Building2, Type, Image, ListChecks,
   ListOrdered, Database, Palette, Tag, TextCursorInput, Radio, MapPin, Wifi, CloudOff,
-  Sparkles,
+  Sparkles, LayoutDashboard,
 } from 'lucide-react';
 import {
   getConfiguracoes, saveConfiguracoes, exportData, importData, clearAllData,
@@ -16,6 +16,7 @@ import { ImportCSVModal } from './ImportCSVModal';
 import { MENUS, lerMenusOcultos, salvarMenusOcultos, rotuloDoMenu } from '../services/menus';
 import { OrdemMenus } from './OrdemMenus';
 import { SecaoConfig } from './SecaoConfig';
+import { DashboardConfig } from './DashboardConfig';
 import { Aparencia } from './Aparencia';
 import { AberturaConfig } from './AberturaConfig';
 import { InstalarApp } from './InstalarApp';
@@ -417,6 +418,17 @@ Os hinos já cadastrados com esse cantor não mudam.`)) return;
             logoSistema={config.logoSistema}
             subtitulo={config.subtitulo}
           />
+        </SecaoConfig>
+
+        <SecaoConfig
+          id="dashboard"
+          titulo="O que aparece no Dashboard"
+          descricao="Ligar e desligar o calendário, os repertórios, os números..."
+          icone={LayoutDashboard}
+          aberta={secaoAberta}
+          onAbrir={setSecaoAberta}
+        >
+          <DashboardConfig />
         </SecaoConfig>
 
         <SecaoConfig
