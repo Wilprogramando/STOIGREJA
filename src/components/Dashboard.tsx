@@ -296,16 +296,9 @@ export const Dashboard: React.FC<DashboardProps> = ({ onPageChange }) => {
         </p>
       </div>
 
-      {/*
-        No computador os repertórios ficam ao lado do calendário da escala: a
-        lista ocupa a largura que sobra e o cartão da escala fica na coluna
-        estreita da direita. No celular uma coisa cai embaixo da outra, na
-        mesma ordem de antes.
-      */}
-      <div className="grid lg:grid-cols-[minmax(0,1fr)_19rem] gap-4 lg:gap-6 items-start">
-        {/* Próximos Repertórios */}
-        <div>
-          <div className="flex items-center justify-between mb-3">
+      {/* Próximos Repertórios */}
+      <div>
+        <div className="flex items-center justify-between mb-3">
           <h3 className="text-lg font-bold text-gray-900 flex items-center gap-2">
             <Calendar size={22} className="text-indigo-600" />
             Próximos Repertórios
@@ -405,11 +398,10 @@ export const Dashboard: React.FC<DashboardProps> = ({ onPageChange }) => {
             </button>
           </div>
         )}
-        </div>
-
-        {/* Escala dos conjuntos: só os dias marcados do mês */}
-        <EscalaNoDashboard onAbrir={() => onPageChange('escala-conjunto')} />
       </div>
+
+      {/* Escala dos conjuntos: faixa com os dias marcados do mês */}
+      <EscalaNoDashboard onAbrir={() => onPageChange('escala-conjunto')} />
 
       {/* Números */}
       <div className="grid grid-cols-2 gap-3">
