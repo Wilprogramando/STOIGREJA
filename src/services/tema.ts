@@ -66,6 +66,16 @@ export const TEMA_PADRAO: Tema = {
 
 const CHAVE = 'repertorio:tema';
 
+/**
+ * As três cores da paleta escolhida, já em hexadecimal.
+ *
+ * Existe por causa da TELA DE ABERTURA: ela é desenhada pelo index.html antes
+ * do React carregar, e um script solto de lá não tem como importar a tabela
+ * de paletas. Com as cores prontas no aparelho, a abertura já nasce na cor
+ * escolhida em vez de piscar no índigo de fábrica.
+ */
+export const CHAVE_CORES = 'repertorio:cores';
+
 export function lerTema(): Tema {
   try {
     const bruto = localStorage.getItem(CHAVE);
@@ -160,6 +170,21 @@ export function aplicarTema(tema: Tema = lerTema()): void {
   html.style.setProperty('--cor-principal', paleta.principal);
   html.style.setProperty('--cor-escura', paleta.escura);
   html.style.setProperty('--cor-clara', paleta.clara);
+
+  // Cópia para a abertura do próximo carregamento (ver CHAVE_CORES).
+  try {
+    localStorage.setItem(
+      CHAVE_CORES,
+      JSON.stringify({
+        principal: paleta.principal,
+        escura: paleta.escura,
+        clara: paleta.clara,
+        modo: html.dataset.modo,
+      })
+    );
+  } catch {
+    /* aparelho sem espaço: a abertura só volta para a cor de fábrica */
+  }
 
   // Barra do navegador no celular acompanha o cabeçalho.
   const meta = document.querySelector('meta[name="theme-color"]');

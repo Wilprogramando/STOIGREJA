@@ -378,6 +378,35 @@
     -->
     <script>
       (function () {
+        /*
+         * COR ESCOLHIDA, ANTES DE QUALQUER COISA SER DESENHADA
+         *
+         * A abertura usa var(--cor-principal) / var(--cor-escura), mas quem
+         * escreve essas variáveis no <html> é o services/tema.ts, que só roda
+         * depois do React carregar. Até lá valia o índigo de fábrica, então a
+         * tela inicial aparecia azul mesmo com o sistema em outra cor.
+         *
+         * Aqui lemos a cópia que o tema.ts deixa no aparelho
+         * (repertorio:cores) e aplicamos na hora. O tema.ts aplica de novo
+         * logo depois - o valor é o mesmo, então nada pisca.
+         */
+        try {
+          var cores = JSON.parse(localStorage.getItem('repertorio:cores') || '{}') || {};
+          var raiz = document.documentElement;
+
+          if (cores.principal) {
+            raiz.style.setProperty('--cor-principal', cores.principal);
+            var barra = document.querySelector('meta[name="theme-color"]');
+            if (barra) barra.setAttribute('content', cores.principal);
+          }
+          if (cores.escura) raiz.style.setProperty('--cor-escura', cores.escura);
+          if (cores.clara) raiz.style.setProperty('--cor-clara', cores.clara);
+          // Modo noturno já no primeiro quadro, para não piscar claro.
+          if (cores.modo) raiz.dataset.modo = cores.modo;
+        } catch (e) {
+          /* sem cópia guardada: segue na cor de fábrica */
+        }
+
         var abertura = document.getElementById('abertura');
         if (!abertura) return;
 
