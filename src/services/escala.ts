@@ -25,6 +25,9 @@ import {
 export type { Conjunto, DiaDaEscala };
 export { ouvirEscalaSupabase as ouvirEscala };
 
+/** Horário que o dia já nasce marcando: é a hora do culto na maioria das vezes. */
+export const HORARIO_PADRAO = '19:00';
+
 const CHAVE_CONJUNTOS = 'repertorio:conjuntos';
 const CHAVE_ESCALA = 'repertorio:escala';
 
@@ -148,7 +151,12 @@ export async function salvarDia(dados: Partial<DiaDaEscala>): Promise<DiaDaEscal
     id: dados.id || novoId('escala'),
     conjuntoId: dados.conjuntoId,
     data: dados.data,
-    horario: dados.horario || '',
+    /*
+     * Dia novo já nasce às 19h (ver HORARIO_PADRAO). Quando o horário vem
+     * escrito - inclusive em branco, de quem apagou o campo a mão - vale o que
+     * veio, senão o padrão voltaria por cima da escolha da pessoa.
+     */
+    horario: dados.horario !== undefined ? dados.horario : antigo?.horario ?? HORARIO_PADRAO,
     observacoes: dados.observacoes || '',
     criadoEm: antigo?.criadoEm || new Date().toISOString(),
   };

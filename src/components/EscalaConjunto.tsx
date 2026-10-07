@@ -35,6 +35,7 @@ import {
   emTexto,
   hoje,
   porExtenso,
+  HORARIO_PADRAO,
 } from '../services/escala';
 
 /** Quantas semanas o "repetir toda semana" agenda de uma vez. */
@@ -140,17 +141,26 @@ export const EscalaConjunto: React.FC = () => {
     }
   };
 
-  /** Mesmo conjunto, mesmo dia da semana, pelas próximas semanas. */
+  /** Mesmo conjunto, mesmo dia da semana e mesmo horário, pelas próximas semanas. */
   const repetirTodaSemana = async (data: string) => {
     if (!conjuntoAtivo) return;
 
-    const base = emData(data);
+    const base = (porDia.get(data) || []).find(d => d.conjuntoId === conjuntoAtivo);
+    const horario = base?.horario ?? HORARIO_PADRAO;
+
+    const inicio = emData(data);
     const novos = Array.from({ length: SEMANAS_REPETIDAS }, (_, i) => {
-      const proxima = new Date(base.getFullYear(), base.getMonth(), base.getDate() + (i + 1) * 7);
+      const proxima = new Date(
+        inicio.getFullYear(),
+        inicio.getMonth(),
+        inicio.getDate() + (i + 1) * 7
+      );
       return emTexto(proxima);
     }).filter(dia => !(porDia.get(dia) || []).some(d => d.conjuntoId === conjuntoAtivo));
 
-    setEscala(await salvarDias(novos.map(dia => ({ conjuntoId: conjuntoAtivo, data: dia }))));
+    setEscala(
+      await salvarDias(novos.map(dia => ({ conjuntoId: conjuntoAtivo, data: dia, horario })))
+    );
   };
 
   const mudarDia = async (dia: DiaDaEscala, mudanca: Partial<DiaDaEscala>) => {
