@@ -24,6 +24,7 @@ const carregarTela = {
   Harpa: () => import('./components/Harpa'),
   BuscarMusica: () => import('./components/BuscarMusica'),
   OuvirMusica: () => import('./components/OuvirMusica'),
+  EscalaConjunto: () => import('./components/EscalaConjunto'),
   MontarRepertorio: () => import('./components/MontarRepertorio'),
   RepertoriosSalvos: () => import('./components/RepertoriosSalvos'),
   Configuracoes: () => import('./components/Configuracoes'),
@@ -40,6 +41,7 @@ const HinosComuns = lazy(() => carregarTela.HinosComuns().then(m => ({ default: 
 const Harpa = lazy(() => carregarTela.Harpa().then(m => ({ default: m.Harpa })));
 const BuscarMusica = lazy(() => carregarTela.BuscarMusica().then(m => ({ default: m.BuscarMusica })));
 const OuvirMusica = lazy(() => carregarTela.OuvirMusica().then(m => ({ default: m.OuvirMusica })));
+const EscalaConjunto = lazy(() => carregarTela.EscalaConjunto().then(m => ({ default: m.EscalaConjunto })));
 const MontarRepertorio = lazy(() => carregarTela.MontarRepertorio().then(m => ({ default: m.MontarRepertorio })));
 const RepertoriosSalvos = lazy(() => carregarTela.RepertoriosSalvos().then(m => ({ default: m.RepertoriosSalvos })));
 const ConfiguracoesView = lazy(() => carregarTela.Configuracoes().then(m => ({ default: m.ConfiguracoesView })));
@@ -282,6 +284,9 @@ export default function App() {
 
       case 'ouvir-musica':
         return <OuvirMusica />;
+
+      case 'escala-conjunto':
+        return <EscalaConjunto />;
 
       case 'montar-repertorio':
         return (

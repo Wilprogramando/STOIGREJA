@@ -487,3 +487,162 @@ export async function lerPessoasSupabase(): Promise<
     return [];
   }
 }
+
+// ==================== ESCALA DOS CONJUNTOS ====================
+
+/**
+ * A tabela usa nomes com underline (conjunto_id), e o app usa camelCase.
+ * A tradução fica nestas funções, para o resto do código não saber disso.
+ */
+function conjuntoDaTabela(linha: any) {
+  return {
+    id: String(linha.id),
+    nome: linha.nome || '',
+    cor: linha.cor || 'indigo',
+    criadoEm: linha.criado_em || new Date().toISOString(),
+  };
+}
+
+function diaDaTabela(linha: any) {
+  return {
+    id: String(linha.id),
+    conjuntoId: String(linha.conjunto_id || ''),
+    data: String(linha.data || '').slice(0, 10),
+    horario: linha.horario || '',
+    observacoes: linha.observacoes || '',
+    criadoEm: linha.criado_em || new Date().toISOString(),
+  };
+}
+
+/** Devolve null (e não lista vazia) quando não deu para falar com o servidor. */
+export async function lerConjuntosSupabase(): Promise<any[] | null> {
+  if (!supabase) return null;
+  try {
+    const { data, error } = await supabase
+      .from('conjuntos')
+      .select('*')
+      .order('criado_em', { ascending: true });
+    if (error) throw error;
+
+    return (data || []).map(conjuntoDaTabela);
+  } catch (error) {
+    console.error('❌ Erro ao ler os conjuntos:', error);
+    return null;
+  }
+}
+
+export async function salvarConjuntoSupabase(conjunto: any): Promise<boolean> {
+  if (!supabase) return false;
+  try {
+    const { error } = await supabase.from('conjuntos').upsert([
+      {
+        id: conjunto.id,
+        nome: conjunto.nome,
+        cor: conjunto.cor || 'indigo',
+        criado_em: conjunto.criadoEm || new Date().toISOString(),
+      },
+    ]);
+    if (error) throw error;
+
+    console.log('✅ Conjunto salvo no Supabase:', conjunto.nome);
+    return true;
+  } catch (error) {
+    console.error('❌ Erro ao salvar o conjunto:', error);
+    return false;
+  }
+}
+
+export async function removerConjuntoSupabase(id: string): Promise<boolean> {
+  if (!supabase) return false;
+  try {
+    // Os dias daquele conjunto saem junto, senão ficariam órfãos no calendário.
+    await supabase.from('escala_conjuntos').delete().eq('conjunto_id', id);
+
+    const { error } = await supabase.from('conjuntos').delete().eq('id', id);
+    if (error) throw error;
+
+    console.log('✅ Conjunto removido do Supabase:', id);
+    return true;
+  } catch (error) {
+    console.error('❌ Erro ao remover o conjunto:', error);
+    return false;
+  }
+}
+
+export async function lerEscalaSupabase(): Promise<any[] | null> {
+  if (!supabase) return null;
+  try {
+    const { data, error } = await supabase
+      .from('escala_conjuntos')
+      .select('*')
+      .order('data', { ascending: true });
+    if (error) throw error;
+
+    return (data || []).map(diaDaTabela);
+  } catch (error) {
+    console.error('❌ Erro ao ler a escala:', error);
+    return null;
+  }
+}
+
+export async function salvarDiaEscalaSupabase(dia: any): Promise<boolean> {
+  if (!supabase) return false;
+  try {
+    const { error } = await supabase.from('escala_conjuntos').upsert([
+      {
+        id: dia.id,
+        conjunto_id: dia.conjuntoId,
+        data: dia.data,
+        horario: dia.horario || '',
+        observacoes: dia.observacoes || '',
+        criado_em: dia.criadoEm || new Date().toISOString(),
+      },
+    ]);
+    if (error) throw error;
+
+    return true;
+  } catch (error) {
+    console.error('❌ Erro ao salvar o dia da escala:', error);
+    return false;
+  }
+}
+
+export async function removerDiaEscalaSupabase(id: string): Promise<boolean> {
+  if (!supabase) return false;
+  try {
+    const { error } = await supabase.from('escala_conjuntos').delete().eq('id', id);
+    if (error) throw error;
+
+    return true;
+  } catch (error) {
+    console.error('❌ Erro ao remover o dia da escala:', error);
+    return false;
+  }
+}
+
+/**
+ * Avisa quando outro aparelho mexer na escala, para a mudança aparecer na hora
+ * sem ninguém recarregar a página.
+ */
+export function ouvirEscalaSupabase(aoMudar: () => void): () => void {
+  if (!supabase) return () => {};
+
+  try {
+    const canal = supabase
+      .channel('escala-conjuntos')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'escala_conjuntos' }, aoMudar)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'conjuntos' }, aoMudar)
+      .subscribe();
+
+    return () => {
+      try {
+        supabase.removeChannel(canal);
+      } catch {
+        /* nada a fazer: a página está fechando */
+      }
+    };
+  } catch (error) {
+    console.error('❌ Não foi possível ouvir a escala:', error);
+    return () => {};
+  }
+}

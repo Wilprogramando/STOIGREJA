@@ -14,6 +14,7 @@ import { getAllHinos, getAllRepertorios, getHinosByType } from '../services/db';
 import { rotuloDoMenu } from '../services/menus';
 import { fecharAbertura } from '../services/abertura';
 import { saudacao, ouvirNomePessoa } from '../services/usuario';
+import { EscalaNoDashboard } from './EscalaNoDashboard';
 import { Repertorio, Hino } from '../types';
 
 interface DashboardProps {
@@ -398,6 +399,9 @@ export const Dashboard: React.FC<DashboardProps> = ({ onPageChange }) => {
           </div>
         )}
       </div>
+
+      {/* Escala dos conjuntos: calendário do mês */}
+      <EscalaNoDashboard onAbrir={() => onPageChange('escala-conjunto')} />
 
       {/* Números */}
       <div className="grid grid-cols-2 gap-3">

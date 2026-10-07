@@ -14,7 +14,8 @@ import {
   Globe,
   Volume2,
   ListMusic,
-  Mic
+  Mic,
+  CalendarDays
 } from 'lucide-react';
 
 interface SidebarProps {
@@ -48,6 +49,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
     { id: 'buscar-musica', label: 'Buscar Música', icon: Globe },
     { id: 'ouvir-musica', label: 'Ouvir Música', icon: Volume2 },
     { id: 'montar-repertorio', label: 'Montar Repertório', icon: Music },
+    { id: 'escala-conjunto', label: 'Escala de Conjunto', icon: CalendarDays },
 
     { id: 'repertorios', label: 'Repertórios Salvos', icon: List },
 

@@ -88,3 +88,24 @@ export interface Favorita {
   youtube?: string;
   criadoEm: string;
 }
+
+/** Conjunto da igreja (grupo que toca nos cultos). */
+export interface Conjunto {
+  id: string;
+  nome: string;
+  /** Id da cor usada no calendário (ver services/escala.ts). */
+  cor: string;
+  criadoEm: string;
+}
+
+/** Um dia em que um conjunto vai tocar. */
+export interface DiaDaEscala {
+  id: string;
+  conjuntoId: string;
+  /** AAAA-MM-DD */
+  data: string;
+  /** HH:MM (vazio quando não foi informado). */
+  horario: string;
+  observacoes: string;
+  criadoEm: string;
+}

@@ -20,6 +20,7 @@ export const MENUS: MenuDoSistema[] = [
   { id: 'buscar-musica', label: 'Buscar Música' },
   { id: 'ouvir-musica', label: 'Ouvir Música' },
   { id: 'montar-repertorio', label: 'Montar Repertório' },
+  { id: 'escala-conjunto', label: 'Escala de Conjunto' },
   { id: 'repertorios', label: 'Repertórios Salvos' },
   { id: 'tocar-cifra', label: 'Tocar por Cifra' },
   { id: 'campo-harmonico', label: 'Dicas' },
