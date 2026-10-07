@@ -67,6 +67,38 @@
   --tw-ring-color: var(--cor-principal) !important;
 }
 
+/*
+ * Tons de índigo que ainda tinham ficado de fora: os cantos claros com
+ * transparência, as bordas fracas, os anéis de destaque e o texto que acende
+ * ao passar o mouse. Sem estas regras, cartões como o da Escala de Conjunto
+ * continuavam com pedaços azuis mesmo com o sistema em outra cor.
+ */
+.bg-indigo-50/70 {
+  background-color: color-mix(in srgb, var(--cor-principal) 10%, #ffffff) !important;
+}
+
+[data-modo='escuro'] .bg-indigo-50/70 {
+  background-color: color-mix(in srgb, var(--cor-principal) 18%, #0f172a) !important;
+}
+
+.border-indigo-100 {
+  border-color: color-mix(in srgb, var(--cor-principal) 30%, #ffffff) !important;
+}
+
+.ring-indigo-300,
+.ring-indigo-500 {
+  --tw-ring-color: var(--cor-principal) !important;
+}
+
+.text-indigo-300 {
+  color: color-mix(in srgb, var(--cor-principal) 45%, #ffffff) !important;
+}
+
+.hover:text-indigo-700:hover,
+.group:hover .group-hover:text-indigo-700 {
+  color: var(--cor-escura) !important;
+}
+
 /* Cabeçalho e faixas em degradê. */
 .bg-gradient-to-r.from-indigo-600,
 .bg-gradient-to-r.from-indigo-500 {
