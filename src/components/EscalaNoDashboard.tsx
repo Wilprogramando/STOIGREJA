@@ -102,7 +102,7 @@ export const EscalaNoDashboard: React.FC<Props> = ({ onAbrir }) => {
   }, [diasMarcados]);
 
   return (
-    <div className="bg-white rounded-2xl border border-gray-100 shadow-lg p-4">
+    <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4">
       {/* ===== Cabeçalho: ícone, título e navegação do mês ===== */}
       <div className="flex items-center justify-between gap-2 mb-3">
         <button onClick={onAbrir} className="flex items-center gap-2.5 min-w-0 text-left group">
