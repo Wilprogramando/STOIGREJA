@@ -15,7 +15,7 @@ import { MusicaAudio, Hino } from '../types';
 import { DeletePasswordModal } from './DeletePasswordModal';
 import { comprimirMusica, QUALIDADES, QualidadeAudio } from '../services/compressao';
 import { listarFavoritas, alternarFavorita, removerFavorita, Favorita } from '../services/favoritos';
-import { procurarHino, buscarLetraDaSugestao } from '../services/letras';
+import { buscarLetraPorNome } from '../services/musicas';
 import { salvarAnotacao } from '../services/anotacoes';
 import { ModalVisualizaLetra } from './ModalVisualizaLetra';
 
@@ -102,16 +102,7 @@ export const OuvirMusica: React.FC = () => {
     setRecado('');
 
     try {
-      const busca = await procurarHino(nome);
-      let achada = busca.letra;
-
-      if (!achada && busca.resultados.length > 0) {
-        const igual = (a: string, b: string) =>
-          a.trim().toLowerCase() === b.trim().toLowerCase();
-        const escolhida =
-          busca.resultados.find(r => igual(r.cantor, cantor)) || busca.resultados[0];
-        achada = await buscarLetraDaSugestao(escolhida);
-      }
+      const achada = await buscarLetraPorNome(nome, cantor);
 
       if (!achada || !achada.letra) {
         setRecado(`Não achei a letra de "${nome}".`);
@@ -149,13 +140,8 @@ export const OuvirMusica: React.FC = () => {
 
       if (!letra) {
         try {
-          const busca = await procurarHino(nome);
-          letra = busca.letra?.letra || '';
-
-          if (!letra && busca.resultados.length > 0) {
-            const achada = await buscarLetraDaSugestao(busca.resultados[0]);
-            letra = achada.letra || '';
-          }
+          const achada = await buscarLetraPorNome(nome, cantor);
+          letra = achada?.letra || '';
         } catch {
           // Sem internet ou sem letra achada: envia a anotação mesmo assim.
         }

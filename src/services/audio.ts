@@ -12,7 +12,7 @@
  * resultado também traz o link para abrir no YouTube.
  */
 
-import { buscarMusicas } from './musicas';
+import { buscarMusicas, tituloLimpo } from './musicas';
 
 export interface MusicaParaOuvir {
   id: string;
@@ -130,10 +130,14 @@ export async function procurarParaOuvir(
 
   // 1) Pelo nome, direto no catálogo.
   const porNome = await buscarNoCatalogo(termo);
-  const palavras = termo.split(/\s+/).length;
+  const palavras = termo.split(/\s+/).filter(Boolean).length;
 
-  // Texto curto que já achou bastante coisa: é o nome da música mesmo.
-  if (porNome.length >= 3 && palavras <= 5) {
+  // Até três palavras com bastante resultado é o nome da música mesmo.
+  // Daí para cima pode ser um trecho da letra, e o catálogo da Apple não
+  // procura dentro da letra: ele devolve qualquer música que tenha uma
+  // daquelas palavras no título. Por isso, de quatro palavras em diante, a
+  // busca pela letra roda também, e os achados dela vêm na frente.
+  if (porNome.length >= 3 && palavras <= 3) {
     return { resultados: semRepetidos(porNome) };
   }
 
@@ -187,10 +191,19 @@ export async function procurarParaOuvir(
  * faixa que combine. Vazio quando realmente não existe prévia.
  */
 export async function acharPrevia(nome: string, cantor: string): Promise<string> {
-  const titulo = normalizar(nome);
+  // O título do Genius vem com "(Ao Vivo)", "(part. ...)" e afins, que o
+  // catálogo da Apple não reconhece. A versão limpa entra como última
+  // tentativa, para a prévia aparecer mesmo nesses casos.
+  const limpo = tituloLimpo(nome);
+  const titulo = normalizar(limpo || nome);
   if (!titulo) return '';
 
-  const termos = [`${nome} ${cantor}`.trim(), nome.trim()];
+  const termos = [
+    `${nome} ${cantor}`.trim(),
+    nome.trim(),
+    `${limpo} ${cantor}`.trim(),
+    limpo,
+  ].filter((termo, i, lista) => termo && lista.indexOf(termo) === i);
 
   for (const termo of termos) {
     const achados = await buscarNoCatalogo(termo, 10);
